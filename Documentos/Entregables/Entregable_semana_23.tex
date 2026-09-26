@@ -58,7 +58,8 @@
     \vfill
 
     {\large \textbf{Informe de Avance --- Semana 23}} \\
-    {\large Fase 5: Integración del sistema y realización de pruebas --- Cierre de implementación: congelación del código, segundo vehículo y medición de los pasillos reales} \\[1.5cm]
+    {\large Fase 5: integración del sistema y realización de pruebas} \\
+    {\large Cierre de la implementación, llegada del segundo vehículo y medición de los pasillos reales} \\[1.5cm]
 
     \textbf{Dirigido por:} \\
     Ing. Armando Mateus Rojas, Msc. \\
@@ -77,13 +78,15 @@
 
 \section{Introducción}
 
-El presente informe documenta el avance correspondiente a la \textbf{Semana 23} del cronograma de actividades (14 al 20 de septiembre de 2026), dentro de la \textbf{Fase 5 (Integración del sistema y realización de pruebas)}.
+Este informe presenta el avance de la semana 23 del cronograma (14 al 20 de septiembre de 2026), dentro de la fase 5, integración del sistema y realización de pruebas.
 
-Es la semana de \textbf{cierre de implementación}: el 18 de septiembre se congeló el código con la etiqueta \texttt{v0.4-implementacion-congelada} (hito H7), y a partir de ahí no entra funcionalidad nueva. Llegó a esa fecha con \textbf{tres de los cuatro objetivos específicos cerrados}.
+En esta semana se cerró la implementación. El 18 de septiembre se congeló el código con la etiqueta \texttt{v0.4-implementacion-congelada} (hito H7 del cronograma), y desde entonces no se añade funcionalidad nueva. En esa fecha estaban completos los objetivos específicos 1 (arquitectura funcional) y 3 (interfaz humano--robot). Al objetivo 4 (evaluación experimental) solo le faltaba la demostración física, que depende de la plataforma del objetivo 2.
 
-Tres resultados la definen. El \textbf{segundo vehículo} llegó el 14 de septiembre y la medida de red que llevaba un mes esperándolo se hizo ese mismo día; con ella cierran RF-15 y el riesgo R11, y el objetivo 2 se mueve por primera vez en cuatro semanas (Sección \ref{sec:red}). La \textbf{cancelación de misión} se verificó con corrida y control, y con ella el objetivo 3 cierra al 100~\% (Sección \ref{sec:rf29}). Y los \textbf{dos pasillos reales} quedaron medidos: ninguno da información de avance a la odometría láser, lo que cierra con evidencia la vía de construir el mapa del pasillo recorriéndolo y deja una sola ruta crítica (Sección \ref{sec:pisos}).
+El 14 de septiembre llegó el segundo vehículo, y ese mismo día se verificó la comunicación entre los dos (requisito RF-15), con lo que el objetivo 2 avanzó por primera vez en cuatro semanas (sección~\ref{sec:red}). Se verificó también la cancelación de misiones (RF-29), el último requisito pendiente del objetivo 3 (sección~\ref{sec:rf29}). Por último, se midió la información de avance en los pasillos reales de los dos pisos. En ninguno alcanza para que el vehículo construya el mapa mientras recorre el pasillo, así que la única ruta crítica que queda es publicar la odometría del vehículo (sección~\ref{sec:pisos}).
 
-\section{Objetivos de la Semana}
+De las tres partes del criterio de cierre de la semana se cumplieron dos. La corrida física completa no se realizó (sección~\ref{sec:cronograma}).
+
+\section{Objetivos de la semana}
 
 El cronograma fija para esta semana el siguiente criterio de cierre:
 
@@ -91,108 +94,112 @@ El cronograma fija para esta semana el siguiente criterio de cierre:
 \textit{El sistema corre de extremo a extremo en simulación y se ejecuta al menos una corrida física completa. Repositorio etiquetado.}
 \end{quote}
 
-Las actividades planificadas eran cuatro: verificación del funcionamiento general y corrección de fallas, ensayo en blanco del protocolo con los vehículos reales, congelación del código y emisión del informe de la Semana 22.
+Las actividades planificadas eran cuatro: verificación del funcionamiento general y corrección de fallas, ensayo del protocolo con los vehículos reales, congelación del código y emisión del informe de la semana 22. El criterio se cumplió en dos de sus tres partes; la corrida física completa no se realizó, y en la sección~\ref{sec:cronograma} se declara como no cumplida.
 
-\textbf{El criterio se cumple en dos de sus tres partes.} La corrida física completa no ocurrió; se declara en la Sección \ref{sec:cronograma} como incumplida, sin reinterpretar el criterio.
-
-\section{La cancelación de misión deja de ser inerte, y RF-29 se verifica corriendo}
+\section{Cancelación de misiones y verificación de RF-29}
 \label{sec:rf29}
 
-El botón de cancelar existía en la interfaz desde el 2 de septiembre y \textbf{no hacía nada}: \texttt{rclpy} rechaza por defecto toda cancelación si el servidor de acciones no registra un \texttt{cancel\_callback}, y nadie lo había registrado. El trabajo del fin de semana lo corrigió y, además, hace que una misión cancelada \textbf{devuelva el robot a la escalera de su piso} en lugar de dejarlo parado a mitad de pasillo.
+La interfaz tenía un botón para cancelar la misión desde el 2 de septiembre, pero no tenía efecto. En ROS~2, un servidor de acciones rechaza por defecto las solicitudes de cancelación si no se le programa una función que las atienda, y el coordinador no la tenía. Jonny Mejía corrigió el defecto el fin de semana anterior. Además, programó que una misión cancelada devuelva el vehículo a la escalera de su piso, que es el punto de transferencia, en lugar de dejarlo detenido en mitad del pasillo.
 
-Se enunció \textbf{RF-29} con cuatro condiciones y, en vez de dejarlo redactado, se corrió dos veces:
+Con esa corrección se redactó el requisito RF-29 (el usuario cancela una misión en curso y el vehículo regresa al punto de transferencia de su piso) y se verificó con dos corridas (Tabla~\ref{tab:rf29}).
 
 \begin{table}[H]
     \centering
     \small
-    \caption{Las dos corridas de RF-29.}
+    \caption{Corridas de verificación de RF-29.}
     \label{tab:rf29}
     \begin{tabular}{@{}p{3.6cm}p{10.4cm}@{}}
         \toprule
         \textbf{Corrida} & \textbf{Resultado} \\ \midrule
-        Cancelada & Marca \texttt{CANCELANDO}, cierre \texttt{FALLIDA}, robot a \textbf{0,121 m} de la escalera contra un criterio de 0,25 m \\ \addlinespace
-        Control, sin cancelar & Ninguna marca de cancelación; cierre \texttt{COMPLETADA} \\ \bottomrule
+        Con cancelación & El registro marca el estado \texttt{CANCELANDO} y la misión cierra como \texttt{FALLIDA}. El vehículo termina a 0,121~m de la escalera; el criterio es 0,25~m. \\ \addlinespace
+        De control, sin cancelación & Ninguna marca de cancelación; la misión cierra como \texttt{COMPLETADA}. \\ \bottomrule
     \end{tabular}
 \end{table}
 
-La cancelación se dispara \textbf{por distancia y no por tiempo} ---cuando \texttt{/odom} sitúa al robot a más de 8~m---, porque el robot nace a 1,4~m de la escalera: cancelar pronto satisfaría el criterio sin que el robot se hubiera movido.
+En la corrida con cancelación, la orden de cancelar se envía cuando la odometría indica que el vehículo se ha alejado más de 8~m, y no después de un tiempo fijo. El vehículo parte a 1,4~m de la escalera, así que una cancelación temprana cumpliría el criterio de regreso sin que el vehículo se hubiera desplazado.
 
-\textbf{La corrida corrigió al requisito.} Se había escrito pidiendo que el registro trajera el motivo ``Cancelada por el usuario'', y el registro \textbf{nunca} lo trae: ese texto viaja en el resultado de la acción, que no se graba. Un criterio escrito con cuidado pedía comprobar un campo que no existe donde decía, y se corrigió antes de darlo por verificado.
+La ejecución de la prueba mostró un error en el criterio de verificación. El criterio pedía comprobar que el registro de la misión incluyera el motivo ``Cancelada por el usuario'', pero ese texto se envía en la respuesta de la acción de ROS~2 y no queda guardado en el registro. El criterio se corrigió antes de dar el requisito por verificado.
 
-\section{El segundo vehículo, R11 cerrado y RF-15 medido}
+\section{Llegada del segundo vehículo y verificación de RF-15}
 \label{sec:red}
 
-El codirector entregó el segundo DeepRacer (\texttt{amss-jgm9}), y la latencia entre vehículos se midió el mismo día, con cotas fijadas \textbf{antes} de medir:
+El 14 de septiembre el codirector entregó el segundo vehículo (\texttt{amss-jgm9}), que estaba en intervención técnica desde agosto (riesgo R11). Ese mismo día se midió la comunicación entre los dos vehículos para el requisito RF-15, con los límites fijados antes de la medición (Tabla~\ref{tab:rf15}).
 
 \begin{table}[H]
     \centering
     \small
-    \caption{RF-15 medido entre los dos vehículos físicos, 14 de septiembre.}
+    \caption{Medición de RF-15 entre los dos vehículos, 14 de septiembre.}
     \label{tab:rf15}
-    \begin{tabular}{@{}p{5.0cm}p{4.4cm}p{3.6cm}@{}}
+    \begin{tabular}{@{}p{5.6cm}p{4.4cm}p{3.6cm}@{}}
         \toprule
-        \textbf{Magnitud} & \textbf{Medido} & \textbf{Cota} \\ \midrule
-        Mensajes & 600 de 600, 0~\% de pérdida & 0~\% \\ \addlinespace
-        Ida y vuelta, mediana & \textbf{7,61 ms} & 100 ms \\ \addlinespace
-        Ida y vuelta, p95 & \textbf{20,76 ms} & 250 ms \\ \bottomrule
+        \textbf{Magnitud} & \textbf{Medido} & \textbf{Límite} \\ \midrule
+        Mensajes recibidos & 600 de 600 (0~\% de pérdida) & 0~\% de pérdida \\ \addlinespace
+        Tiempo de ida y vuelta, mediana & 7,61~ms & 100~ms \\ \addlinespace
+        Tiempo de ida y vuelta, percentil 95 & 20,76~ms & 250~ms \\ \bottomrule
     \end{tabular}
 \end{table}
 
-Con un margen de 13 veces en la mediana, \textbf{la red no limita} la publicación de estado a 2~Hz. Cierra RF-15, cierra R11 tras 31 días, y el objetivo 2 sube del 55 al 65~\%.
+La mediana queda 13 veces por debajo del límite, así que la red no restringe la publicación del estado del sistema, que se hace a 2~Hz. Con esta medición se verificó RF-15, se cerró el riesgo R11 después de 31 días abierto y el avance del objetivo 2 pasó del 55 al 65~\%.
 
-La sesión enseñó dos cosas que no estaban en el guion. \textbf{El cortafuegos tenía cortada la pareja de vehículos en los dos sentidos}: \texttt{ping} pasaba y el grafo de ROS salía vacío, de modo que RF-15 estuvo un mes en rojo por dos causas y solo una era el hardware. Y \textbf{la IP no identifica un vehículo entre sesiones}, porque el DHCP la cambia: los identificadores permanentes pasan a ser el nombre de máquina y la MAC.
+Durante la prueba se encontraron dos problemas que el guion no preveía. El cortafuegos de los vehículos bloqueaba el tráfico entre ellos en los dos sentidos: la prueba de conectividad (\texttt{ping}) respondía, pero ninguno veía los nodos del otro. Por eso RF-15 no pudo verificarse durante un mes, aunque solo una de las dos causas era la falta del segundo vehículo. Además, el servidor DHCP asigna una dirección IP distinta en cada sesión, así que desde entonces cada vehículo se identifica por su nombre de equipo y su dirección MAC.
 
-\section{Los pasillos reales no dan información de avance}
+\section{Información de avance en los pasillos reales}
 \label{sec:pisos}
 
-El vehículo no tiene encoders: su odometría la deduce \texttt{rf2o} comparando barridos consecutivos del LiDAR. En un pasillo recto y uniforme \textbf{el barrido siguiente es igual al anterior aunque el vehículo haya avanzado}, y la odometría devuelve cero. La herramienta \texttt{medir\_informacion\_avance.py} mide qué fracción de los rayos de un barrido informa del avance. Las referencias eran 13,8~\% en una caja cerrada simulada ---mapa aceptado--- y 6,8~\% en el pasillo simulado ---mapa rechazado---.
+El vehículo no tiene codificadores en las ruedas, así que su odometría se estima con rf2o, un paquete que compara barridos consecutivos del LiDAR. Para que rf2o detecte el avance, parte de los rayos deben incidir sobre superficies orientadas hacia la dirección de marcha, porque solo esos rayos cambian de longitud cuando el vehículo avanza. En un pasillo recto de paredes uniformes casi todos los rayos caen sobre las paredes laterales, y el avance no se registra.
+
+La información de avance es la fracción de rayos de un barrido que inciden sobre superficies orientadas hacia la marcha, es decir, cuya normal forma menos de 45$^\circ$ con la dirección de avance. Se calcula con la herramienta \texttt{medir\_informacion\_avance.py}. Como referencia, en una caja cerrada simulada, cuyo mapa se construyó correctamente, vale 13,8~\%, y en el pasillo simulado, cuyo mapa falló, 6,8~\%. En los pasillos reales se midió lo que muestra la Tabla~\ref{tab:pisos}.
 
 \begin{table}[H]
     \centering
     \small
-    \caption{Información de avance de los dos pasillos reales.}
+    \caption{Información de avance en los pasillos reales.}
     \label{tab:pisos}
-    \begin{tabular}{@{}p{6.0cm}p{6.0cm}@{}}
+    \begin{tabular}{@{}p{6.0cm}p{6.4cm}@{}}
         \toprule
         \textbf{Entorno} & \textbf{Información de avance} \\ \midrule
-        Pasillo real, piso 1 & \textbf{5,1~\%} \\ \addlinespace
-        Pasillo real, piso 2 & \textbf{5,9~\%} ($n = 849$) \\ \bottomrule
+        Pasillo real del piso 1 & 5,1~\% (mediana de 700 barridos) \\ \addlinespace
+        Pasillo real del piso 2 & 5,9~\% (mediana de 849 barridos) \\ \bottomrule
     \end{tabular}
 \end{table}
 
-Para el piso 2 se escribió una \textbf{predicción antes de medir} ---entre 8 y 14~\%, porque tiene el doble de accidentes arquitectónicos--- y \textbf{quedó falsada}. La causa está en la Figura \ref{fig:decaimiento}: la información que aporta un hall \textbf{muere a los $\sim$6~m}, no a los 10--12~m de alcance del sensor que se habían supuesto. El umbral coincide con el que la Semana 22 había medido con otro instrumento.
+Antes de medir el piso 2 se registró una predicción de entre 8 y 14~\%, porque su pasillo tiene el doble de discontinuidades en las paredes que el del piso 1 (cuatro frente a dos). La medición no la confirmó. La Figura~\ref{fig:decaimiento} muestra la razón: la información que aporta el hall cae a partir de unos 6~m de distancia, y no a los 10 a 12~m del alcance del sensor, como se había supuesto.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.95\textwidth]{S23_decaimiento_informacion_avance.png}
-    \caption{Piso 2: la información de avance cae del 17,5~\% a 2,2~m del hall al 5,9~\% a partir de 6,2~m.}
+    \caption{Información de avance en el pasillo del piso 2 según la distancia al hall: 17,5~\% a 2,2~m y 5,9~\% a partir de 6,2~m. El umbral coincide con el medido en la semana 22 con otro método.}
     \label{fig:decaimiento}
 \end{figure}
 
-\textbf{Lo que esto no dice, y hay que escribirlo con el mismo peso:} no dice que el edificio no se pueda navegar. La campaña de evaluación en simulación corrió en esos mismos pasillos y dio \textbf{86,7~\% de éxito} con mapa conocido. Lo que el pasillo no soporta es \textbf{construir el mapa recorriéndolo}. De la corrida perdida del piso 2 salió además que \textbf{el LiDAR está montado girado 180$^\circ$}, de modo que su cuña ciega de 60$^\circ$ apunta hacia delante.
+Este resultado no impide navegar el edificio. La campaña de evaluación en simulación, sobre el modelo de esos mismos pasillos, alcanzó un 86,7~\% de éxito con el mapa conocido de antemano. Lo que el pasillo no permite es que el vehículo construya el mapa mientras lo recorre.
 
-\section{La escala de tracción, medida sobre el vehículo}
+Al revisar una corrida del piso 2 que no pudo usarse se encontró, además, que el LiDAR está montado girado 180$^\circ$, con lo que su sector ciego de 60$^\circ$ queda hacia delante.
+
+\section{Respuesta de tracción del vehículo (RF-14)}
 \label{sec:rf14}
 
-El 17 de septiembre se midió por primera vez la escala de \texttt{/cmd\_vel} sobre el carro, y trajo \textbf{dos defectos en lugar de uno}: además de que toda orden por debajo de 0,40~m/s sale como tracción cero, el nodo aplica un reescalado posterior que comprime los tres escalones a 0,4247 / 0,6242 / 0,7341. La dirección del vehículo nunca se había centrado, y se recalibró.
+El 17 de septiembre se midió por primera vez, sobre el vehículo, cómo se convierten las órdenes de velocidad de ROS~2 (tópico \texttt{/cmd\_vel}) en potencia del motor. La medición corresponde al requisito RF-14, según el cual cada vehículo se comanda desde ROS~2 sin pasar por la interfaz web del fabricante. Se encontraron dos defectos. El primero es una banda muerta: toda orden inferior a 0,40~m/s produce potencia cero. El segundo es que el nodo que convierte las órdenes aplica después un reescalado que reduce los tres niveles de potencia a 0,4247, 0,6242 y 0,7341 (en una escala de 0 a 1). En la misma sesión se recalibró la dirección, que nunca se había centrado.
 
-Y un \textbf{incidente de seguridad}: un solo comando de tracción \textbf{movió los dos vehículos}, porque comparten dominio de ROS y el tópico de servos no lleva espacio de nombres. Es el pendiente de espacios de nombres del objetivo 2 manifestándose como riesgo físico. Desde entonces, \textbf{en campo solo va encendido un vehículo}.
+Durante la sesión ocurrió un incidente de seguridad: una sola orden de tracción movió los dos vehículos. Los dos están en la misma red de ROS~2 y el tópico de las órdenes de servo no lleva espacio de nombres (un prefijo como \texttt{/robot1} que distinga a cada vehículo), así que ambos recibieron la orden. Es el pendiente de espacios de nombres del objetivo 2, ahora con consecuencias físicas. Desde entonces, en las pruebas de campo solo se enciende un vehículo.
 
-\section{Congelación, y el mapa de lo que queda}
+\section{Congelación del código y plan del trabajo restante}
+\label{sec:congelacion}
 
-El 18 de septiembre se congeló el código y se emitió \texttt{MAPA\_TRABAJO\_RESTANTE.md}, que acota en un solo documento todo lo que queda hasta la sustentación. Su lectura central: \textbf{hay una sola ruta crítica, y es publicar la transformada \texttt{odom} $\rightarrow$ \texttt{base\_link} en el vehículo real}. Los seis requisitos abiertos son todos de hardware.
+El 18 de septiembre se congeló el código con la etiqueta \texttt{v0.4-implementacion-congelada} y se publicó \texttt{MAPA\_TRABAJO\_RESTANTE.md}, que reúne en un solo documento el trabajo pendiente hasta la sustentación. Según ese análisis, el proyecto tiene una sola ruta crítica: publicar en el vehículo real la transformada \texttt{odom} $\rightarrow$ \texttt{base\_link}, es decir, la estimación de la posición del vehículo respecto a su punto de partida. Los seis requisitos que siguen abiertos dependen todos de la plataforma física.
 
-\section{Otros avances de la semana}
+\section{Otros avances}
+\label{sec:otros}
 
-\textbf{R14 queda cerrado} (16 de septiembre) con sus siete acciones, dos de ellas ejecutadas en contra de su enunciado y con la razón escrita. Al preparar la recomposición de los registros se comprobó que recomponer reescribía la procedencia en 44 de 44, así que \textbf{no se recompone ninguno}; de paso quedó probado que la cadena grabación $\rightarrow$ registro es reproducible, 44 de 44 sin mover un veredicto.
+El 16 de septiembre se cerró el riesgo R14 (dos criterios del protocolo experimental no podían dar un resultado negativo) con sus siete acciones. Dos de ellas se ejecutaron de forma distinta a como estaban enunciadas, con la razón documentada. Una de las acciones preveía regenerar los registros de las misiones a partir de las grabaciones de datos de ROS (\textit{rosbag}). Se comprobó que hacerlo reescribía la información de procedencia de los 44 registros, así que no se regeneró ninguno. La misma comprobación mostró que la regeneración es reproducible: los 44 registros se obtienen de nuevo a partir de las grabaciones sin que cambie ningún veredicto.
 
-\textbf{El entregable versionado pasa a ser la fuente \texttt{.tex}}, no el PDF compilado en Overleaf.
+Desde esta semana, el repositorio guarda la fuente LaTeX de cada entregable en lugar del PDF, que se compila en Overleaf.
 
-\textbf{La secuencia de arranque queda escrita} en \texttt{GUIA\_ARRANQUE.md}: vivía repartida en la cabeza de dos personas, y ahora la puede ejecutar alguien que no estuvo.
+Se documentó en \texttt{GUIA\_ARRANQUE.md} la secuencia completa de arranque del sistema, que hasta entonces solo conocían los dos integrantes del equipo, para que otra persona pueda ejecutarla.
 
-\textbf{El capítulo de resultados de la campaña en simulación se adelantó de la Semana 24} (19 de septiembre). Encontró que los cuatro fallos son \textbf{un solo modo con nombre} ---Nav2 declara \texttt{SUCCEEDED} y \texttt{/odom} sitúa al vehículo entre 0,269 y 0,345~m de la meta--- y lo atribuye a la estimación de pose, entre 1,35 y 2,22 veces lo presupuestado. Deja escritas dos anotaciones incómodas: los criterios C1 y C2 no son independientes en ese modo, y tres misiones se corrieron dos veces sin motivo registrado.
+El 19 de septiembre se escribió el capítulo de resultados de la campaña en simulación, previsto para la semana 24. Los cuatro fallos de la campaña tienen la misma forma. Nav2 informa que llegó a la meta, pero la posición real del vehículo en el simulador queda entre 0,269 y 0,345~m de ella, por fuera de la tolerancia de 0,25~m. El capítulo atribuye el error a la estimación de la posición: el presupuesto de error del protocolo le asigna 88~mm, y en esas cuatro corridas hizo falta entre 1,35 y 2,22 veces esa cantidad. El capítulo registra también dos limitaciones. Los criterios de llegada (C1) y de cierre de la misión (C2) no son independientes en este tipo de fallo, porque el coordinador declara fallida la misión con el mismo umbral de 0,25~m. Y tres misiones se ejecutaron dos veces sin que quedara registrado el motivo.
 
-\section{Aporte de la semana a los objetivos específicos}
+\section{Aporte a los objetivos específicos}
 \label{sec:aporte}
 
 \subsection{Relación entre actividades y objetivos}
@@ -200,17 +207,17 @@ El 18 de septiembre se congeló el código y se emitió \texttt{MAPA\_TRABAJO\_R
 \begin{table}[H]
     \centering
     \small
-    \caption{Trazabilidad entre las actividades ejecutadas y los objetivos específicos.}
+    \caption{Trazabilidad entre las actividades de la semana y los objetivos específicos.}
     \label{tab:trazabilidad}
-    \begin{tabular}{@{}p{4.4cm}cp{7.4cm}@{}}
+    \begin{tabular}{@{}p{4.6cm}cp{7.4cm}@{}}
         \toprule
-        \textbf{Actividad} & \textbf{Objetivo} & \textbf{Contribución} \\ \midrule
-        Cancelación de misión y RF-29 & OE3 & Último requisito del objetivo 3; lo cierra seis de seis \\ \addlinespace
-        RF-15 con los dos vehículos & OE2 & Primer requisito de hardware verificado; cierra R11 \\ \addlinespace
-        Información de avance de los dos pisos & OE2 & Cierra con evidencia la vía del mapa por SLAM en el pasillo \\ \addlinespace
-        Escala de tracción sobre el vehículo & OE2 & Convierte RF-14 en una medida pendiente acotada \\ \addlinespace
-        R14 y reproducibilidad de registros & OE4 & La campaña se regenera desde sus propios datos \\ \addlinespace
-        Capítulo de resultados & OE4 & Nombra el modo de fallo y lo atribuye con cifras \\ \bottomrule
+        \textbf{Actividad} & \textbf{Objetivo} & \textbf{Aporte} \\ \midrule
+        Cancelación de misiones (RF-29) & OE3 & Último requisito del objetivo 3; con él quedan verificados sus seis requisitos \\ \addlinespace
+        Comunicación entre los dos vehículos (RF-15) & OE2 & Primer requisito verificado sobre los vehículos reales; cierra el riesgo R11 \\ \addlinespace
+        Información de avance en los dos pisos & OE2 & Descarta, con mediciones, que el vehículo construya el mapa del pasillo real recorriéndolo \\ \addlinespace
+        Respuesta de tracción del vehículo & OE2 & Reduce lo pendiente de RF-14 a una medición concreta \\ \addlinespace
+        Cierre de R14 y reproducibilidad de los registros & OE4 & Los resultados de la campaña pueden regenerarse a partir de sus datos \\ \addlinespace
+        Capítulo de resultados & OE4 & Identifica el modo de fallo de la campaña y lo cuantifica \\ \bottomrule
     \end{tabular}
 \end{table}
 
@@ -219,21 +226,21 @@ El 18 de septiembre se congeló el código y se emitió \texttt{MAPA\_TRABAJO\_R
 \begin{table}[H]
     \centering
     \small
-    \caption{Avance por objetivo específico al cierre de la Semana 23.}
+    \caption{Avance por objetivo específico al cierre de la semana 23.}
     \label{tab:objetivos}
-    \begin{tabular}{@{}cp{2.8cm}p{4.2cm}p{4.6cm}@{}}
+    \begin{tabular}{@{}cp{2.8cm}p{4.6cm}p{4.2cm}@{}}
         \toprule
-        \textbf{ID} & \textbf{Avance} & \textbf{Cubierto esta semana} & \textbf{Componente que lo mantiene detenido} \\ \midrule
+        \textbf{Objetivo} & \textbf{Avance} & \textbf{Aporte de la semana} & \textbf{Pendiente} \\ \midrule
         OE1 & 100~\% & --- & --- \\ \addlinespace
-        OE2 & 55~\% $\rightarrow$ \textbf{65~\%} & RF-15 verificado; los dos pisos medidos & La cadena de odometría sobre el vehículo \\ \addlinespace
-        OE3 & 90~\% $\rightarrow$ \textbf{100~\%} & RF-29 verificado & --- \\ \addlinespace
-        OE4 & 85~\% & Resultados escritos; R14 cerrado & RF-27, la campaña física \\ \bottomrule
+        OE2 & 55~\% $\rightarrow$ 65~\% & RF-15 verificado; pasillos de los dos pisos medidos & La odometría sobre el vehículo real \\ \addlinespace
+        OE3 & 90~\% $\rightarrow$ 100~\% & RF-29 verificado & --- \\ \addlinespace
+        OE4 & 85~\% & Capítulo de resultados escrito; R14 cerrado & RF-27, la demostración física \\ \bottomrule
     \end{tabular}
 \end{table}
 
-El avance técnico agregado sin ponderar es del \textbf{87,5~\%} frente a un \textbf{71,9~\%} del calendario (semana 23 de 32). \textbf{Veintinueve de treinta y seis requisitos están verificados}. La tabla resumen del documento de requisitos decía 28, porque RF-15 no se había pasado a verificado en ella tras el 14 de septiembre; se corrigió el 25 de septiembre recontando fila por fila.
+El promedio simple del avance de los cuatro objetivos es 87,5~\%, frente al 71,9~\% que corresponde al calendario (semana 23 de 32). Están verificados 29 de los 36 requisitos.
 
-\textbf{Eso no es holgura.} Todo lo que falta es hardware, y no depende solo de horas de trabajo.
+Esta diferencia no representa un margen de tiempo. Todo lo pendiente depende de la plataforma física, y su avance no depende solo de las horas de trabajo.
 
 \section{Estado del cronograma y trabajo previsto}
 \label{sec:cronograma}
@@ -243,51 +250,49 @@ El avance técnico agregado sin ponderar es del \textbf{87,5~\%} frente a un \te
 \begin{table}[H]
     \centering
     \small
-    \caption{Criterio de cierre de la Semana 23 y su evidencia.}
+    \caption{Criterio de cierre de la semana 23 y su evidencia.}
     \label{tab:cierre}
-    \begin{tabular}{@{}p{5.6cm}cp{6.0cm}@{}}
+    \begin{tabular}{@{}p{5.4cm}cp{6.4cm}@{}}
         \toprule
-        \textbf{Exigencia del criterio} & \textbf{Estado} & \textbf{Evidencia} \\ \midrule
-        El sistema corre de extremo a extremo en simulación & Cumplido & Corridas de RF-29 el 14 de septiembre; misión desde teléfono de la Semana 22 \\ \addlinespace
-        Se ejecuta al menos una corrida física completa & \textbf{No cumplido} & La primera navegación sobre el vehículo ocurre el 24 de septiembre, en la Semana 24 \\ \addlinespace
-        Repositorio etiquetado & Cumplido & \texttt{v0.4-implementacion-congelada}, 18 de septiembre \\ \bottomrule
+        \textbf{Parte del criterio} & \textbf{Estado} & \textbf{Evidencia} \\ \midrule
+        El sistema funciona de extremo a extremo en simulación & Cumplida & Corridas de RF-29 del 14 de septiembre; misión operada desde un teléfono en la semana 22 \\ \addlinespace
+        Al menos una corrida física completa & No cumplida & La primera navegación sobre el vehículo real fue el 24 de septiembre, en la semana 24 \\ \addlinespace
+        Repositorio etiquetado & Cumplida & Etiqueta \texttt{v0.4-implementacion-congelada}, 18 de septiembre \\ \bottomrule
     \end{tabular}
 \end{table}
 
-\subsection{Lo planificado frente a lo hecho}
+\subsection{Actividades planificadas y ejecutadas}
 
-De las cuatro actividades previstas se ejecutaron \textbf{tres}: verificación y corrección de fallas, congelación del código y emisión del informe anterior. \textbf{El ensayo en blanco del protocolo con los vehículos reales no se ejecutó}, porque la cadena de odometría del vehículo no existía todavía.
+De las cuatro actividades planificadas se ejecutaron tres: la verificación y corrección de fallas, la congelación del código y la emisión del informe de la semana 22. El ensayo del protocolo con los vehículos reales no se hizo porque el vehículo aún no publicaba su odometría. Se realizaron además cuatro actividades no planificadas: la medición de la comunicación con el segundo vehículo, la medición de los pasillos de los dos pisos, la medición de la respuesta de tracción y el capítulo de resultados.
 
-Surgieron sin planificar la llegada del segundo vehículo, la medición de los dos pisos, la escala de tracción en campo y el capítulo de resultados. Se declaran como tales.
+\subsection{Trabajo previsto para la semana 24}
 
-\subsection{Trabajo previsto para la Semana 24}
+Para la semana 24 se prevé decidir si se intenta la demostración física con los vehículos reales (decisión GO/NO-GO) y publicar la odometría en el vehículo, que es la ruta crítica. También se consolidará el conjunto de datos de la campaña y se emitirá este informe.
 
-Resolver el GO/NO-GO de la demostración física, publicar la odometría en el vehículo ---la ruta crítica---, consolidar el conjunto de datos de la campaña y emitir este informe.
-
-\section{Conclusiones de la Semana}
+\section{Conclusiones}
 
 \begin{enumerate}[leftmargin=*]
-    \item \textbf{La implementación está congelada con tres de cuatro objetivos cerrados}, y el que falta es el de la plataforma física.
-    \item \textbf{El segundo vehículo cerró un requisito el día que llegó}, y enseñó que la mitad de su bloqueo no era hardware sino un cortafuegos.
-    \item \textbf{El objetivo 3 queda completo}, y su último requisito se corrigió al correrlo, no al escribirlo.
-    \item \textbf{Los pasillos reales no dan información de avance}, medido en los dos pisos y con una predicción falsada por el camino. Se cierra con evidencia una vía y queda una sola ruta crítica.
-    \item \textbf{La corrida física completa que pedía el criterio no ocurrió.} Se declara incumplida en lugar de reinterpretar el criterio.
+    \item El código quedó congelado el 18 de septiembre con los objetivos 1 y 3 completos. Lo pendiente de los objetivos 2 y 4 depende de la plataforma física.
+    \item El requisito de comunicación entre vehículos (RF-15) se verificó el mismo día en que llegó el segundo vehículo: latencia mediana de 7,61~ms frente a un límite de 100~ms, sin pérdida de mensajes.
+    \item El objetivo 3 quedó completo con la verificación de la cancelación de misiones (RF-29): el vehículo regresó a 0,121~m de la escalera, dentro del criterio de 0,25~m.
+    \item La información de avance en los pasillos reales es de 5,1~\% en el piso 1 y 5,9~\% en el piso 2, por debajo del 6,8~\% del pasillo simulado cuyo mapa falló. Queda descartado que el vehículo construya el mapa del pasillo recorriéndolo, y la única ruta crítica es publicar su odometría.
+    \item La corrida física completa que exigía el criterio de cierre no se realizó, y esa parte del criterio se declara no cumplida.
 \end{enumerate}
 
 \section{Anexos}
 
-Las cifras de este informe proceden de los registros y documentos de evidencia versionados en el repositorio del proyecto. Existe una versión en Markdown de este mismo informe, \texttt{Entregable\_semana\_23.md}, legible directamente en el repositorio.
+Las cifras de este informe proceden de los registros y documentos de evidencia del repositorio del proyecto, que se listan a continuación. El mismo informe está disponible en Markdown, en \texttt{Entregable\_semana\_23.md}, para leerlo directamente en el repositorio.
 
 \begin{thebibliography}{99}
 
 \bibitem{rf29}
 S. Hernández Ávila y J. A. Mejía León,
-``RF-29: corrida cancelada y corrida de control,''
+``RF-29: corrida con cancelación y corrida de control,''
 Repositorio del proyecto, \texttt{Documentos/Evidencia/registros/S23\_RF29\_cancelada.json} y \texttt{S23\_RF29\_control.json}, septiembre de 2026.
 
 \bibitem{rf15}
 S. Hernández Ávila y J. A. Mejía León,
-``RF-15 medido entre los dos vehículos físicos,''
+``RF-15 medido entre los dos vehículos,''
 Repositorio del proyecto, \texttt{Documentos/Evidencia/registros/S23\_RF15\_carroA\_carroB.json}, septiembre de 2026.
 
 \bibitem{pisos}
@@ -297,18 +302,23 @@ Repositorio del proyecto, \texttt{Documentos/Evidencia/S23\_informacion\_avance\
 
 \bibitem{rf14}
 S. Hernández Ávila,
-``RF-14: la escala de tracción medida sobre el vehículo,''
+``RF-14: respuesta de tracción medida sobre el vehículo,''
 Repositorio del proyecto, \texttt{Documentos/Evidencia/S23\_campo\_traccion\_RF14.md}, septiembre de 2026.
+
+\bibitem{mapa}
+S. Hernández Ávila y J. A. Mejía León,
+``Mapa del trabajo restante hasta la sustentación,''
+Repositorio del proyecto, \texttt{Documentos/MAPA\_TRABAJO\_RESTANTE.md}, septiembre de 2026.
 
 \bibitem{reproducibilidad}
 S. Hernández Ávila,
 ``Reproducibilidad de los registros de la campaña,''
 Repositorio del proyecto, \texttt{Documentos/Evidencia/S23\_reproducibilidad\_de\_los\_registros.md}, septiembre de 2026.
 
-\bibitem{mapa}
-S. Hernández Ávila y J. A. Mejía León,
-``Mapa del trabajo restante y plan hasta la sustentación,''
-Repositorio del proyecto, \texttt{Documentos/MAPA\_TRABAJO\_RESTANTE.md}, septiembre de 2026.
+\bibitem{arranque}
+S. Hernández Ávila,
+``Guía de arranque del sistema,''
+Repositorio del proyecto, \texttt{Documentos/GUIA\_ARRANQUE.md}, septiembre de 2026.
 
 \bibitem{resultados}
 S. Hernández Ávila y J. A. Mejía León,

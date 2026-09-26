@@ -58,7 +58,8 @@
     \vfill
 
     {\large \textbf{Informe de Avance --- Semana 24}} \\
-    {\large Fase 5: Integración del sistema y realización de pruebas --- El sistema llega al vehículo real: actuación, odometría, mapa y navegación sobre hardware} \\[1.5cm]
+    {\large Fase 5: integración del sistema y realización de pruebas} \\
+    {\large Actuación, odometría, mapas y navegación sobre el vehículo real} \\[1.5cm]
 
     \textbf{Dirigido por:} \\
     Ing. Armando Mateus Rojas, Msc. \\
@@ -77,32 +78,32 @@
 
 \section{Introducción}
 
-El presente informe documenta el avance correspondiente a la \textbf{Semana 24} del cronograma de actividades (21 al 27 de septiembre de 2026, con corte el viernes 25), dentro de la \textbf{Fase 5 (Integración del sistema y realización de pruebas)}.
+Este informe presenta el avance de la semana 24 del cronograma (21 al 27 de septiembre de 2026, con corte el viernes 25), dentro de la fase 5, integración del sistema y realización de pruebas.
 
-El cronograma reservaba esta semana para la campaña experimental en simulación, que se había adelantado a la Semana 21; lo que quedaba de ella ---consolidar los datos y escribir los resultados--- se cumplió (Sección \ref{sec:objetivos}). \textbf{La semana, en cambio, fue la del vehículo real}: empezó con la decisión de intentar la demostración física y terminó con \textbf{Nav2 navegando el carro de forma autónoma} sobre un mapa que el propio carro había construido.
+El cronograma reservaba esta semana para la campaña experimental en simulación, que se adelantó a la semana 21. Lo que quedaba de ella (consolidar los datos y escribir los resultados) se completó (sección~\ref{sec:objetivos}). La mayor parte del trabajo de la semana se hizo sobre el vehículo real. La semana comenzó con la decisión de intentar la demostración física y terminó con Nav2, el sistema de navegación de ROS~2, guiando al vehículo de forma autónoma sobre un mapa construido por el propio vehículo.
 
-El acta de decisión fija seis compuertas con fecha. Su estado al cierre de la semana es el siguiente:
+El acta de la decisión (sección~\ref{sec:decision}) fija seis compuertas: condiciones verificables, cada una con su fecha, que deben cumplirse para continuar con la demostración física. Su estado al cierre de la semana se resume en la Tabla~\ref{tab:compuertas}.
 
 \begin{table}[H]
     \centering
     \small
-    \caption{Las seis compuertas del acta al cierre de la Semana 24.}
+    \caption{Compuertas del acta GO/NO-GO al cierre de la semana 24.}
     \label{tab:compuertas}
-    \begin{tabular}{@{}p{3.4cm}p{5.6cm}p{5.0cm}@{}}
+    \begin{tabular}{@{}p{3.6cm}p{5.4cm}p{5.0cm}@{}}
         \toprule
-        \textbf{Compuerta} & \textbf{Qué pide} & \textbf{Estado} \\ \midrule
-        G-1 actuación & El vehículo responde a las órdenes de servo & \textbf{Alcanzada}, 22 de septiembre \\ \addlinespace
-        G-4 dos en el grafo & Dos vehículos y el coordinador sin colisión de nombres & \textbf{Alcanzada}, 22 de septiembre \\ \addlinespace
-        G-2 odometría & Error $\leq$ 10~\% sobre un recorrido medido de $\geq$ 5~m & Medida sobre 3~m; falta la de 5~m con cinta \\ \addlinespace
-        G-3 navegación de uno & Punto a punto con Nav2, llegada verificada & Navegó una vez; paró a 0,412~m con tolerancia de 0,25~m \\ \addlinespace
-        G-5 protocolo completo & Una misión con relevo sobre los dos vehículos & Pendiente \\ \addlinespace
-        G-6 RF-27 & Entre 5 y 10 misiones con el protocolo completo & Pide primero G-5 \\ \bottomrule
+        \textbf{Compuerta} & \textbf{Qué exige} & \textbf{Estado} \\ \midrule
+        G-1, actuación & El vehículo responde a las órdenes de dirección y tracción & Alcanzada el 22 de septiembre \\ \addlinespace
+        G-4, coexistencia & Los dos vehículos y el coordinador en la misma red, sin conflicto de nombres & Alcanzada el 22 de septiembre \\ \addlinespace
+        G-2, odometría & Error de hasta 10~\% sobre un recorrido medido de al menos 5~m & Pendiente. Se midió sobre 3~m; falta la medición de 5~m con flexómetro \\ \addlinespace
+        G-3, navegación de un vehículo & Un recorrido de punto a punto con Nav2, con la llegada verificada & Pendiente. Hubo una navegación completa, con parada a 0,412~m de la meta y tolerancia de 0,25~m \\ \addlinespace
+        G-5, protocolo completo & Una misión con relevo entre los dos vehículos & Pendiente \\ \addlinespace
+        G-6, RF-27 & Entre 5 y 10 misiones con el protocolo completo & Pendiente; requiere G-5 \\ \bottomrule
     \end{tabular}
 \end{table}
 
-G-2 y G-3 tienen fecha: el \textbf{corte C-1 del viernes 2 de octubre}.
+G-2 y G-3 deben alcanzarse antes del primer corte de evaluación (C-1), el viernes 2 de octubre.
 
-\section{Objetivos de la Semana}
+\section{Objetivos de la semana}
 \label{sec:objetivos}
 
 El cronograma fija para esta semana el siguiente criterio de cierre:
@@ -111,113 +112,110 @@ El cronograma fija para esta semana el siguiente criterio de cierre:
 \textit{30 corridas registradas y conjunto de datos versionado en el repositorio.}
 \end{quote}
 
-\textbf{Cumplido.} Las 30 corridas se hicieron en la Semana 21, y la consolidación del 21 de septiembre comprobó lo que hace útil a un conjunto de datos: \textbf{que un tercero, con solo el repositorio, llegue de los registros a las cifras publicadas}. El capítulo de resultados se escribió por adelantado el 19 de septiembre.
+El criterio se cumplió. Las 30 corridas se hicieron en la semana 21, y la consolidación del 21 de septiembre comprobó que una persona externa, con solo el repositorio, puede reproducir las cifras publicadas a partir de los registros. El capítulo de resultados se escribió por adelantado, el 19 de septiembre.
 
-\textbf{Con una reserva que se abrió el viernes (riesgo R15):} el mapa con que corrió aquella campaña leía como libre su espacio desconocido. No invalida el veredicto por sí solo ---los cuatro fallos fueron de precisión de llegada, no de trazado---, pero queda por decidir si se comprueba sobre las grabaciones conservadas o se declara como limitación.
+El viernes 25 se abrió una reserva sobre esa campaña (riesgo R15). El mapa con el que se ejecutó marcaba como libre el espacio no explorado, por el umbral de celda libre de 0,25 que tiene su archivo de configuración desde el 12 de agosto. Esto no invalida por sí solo el resultado, porque los cuatro fallos se debieron a la precisión de la llegada y no a la trayectoria. Queda por decidir si se comprueba sobre las grabaciones de la campaña o se declara como limitación del estudio.
 
-\section{La decisión: GO pleno, con los criterios de reversión escritos antes}
+\section{Decisión de intentar la demostración física}
+\label{sec:decision}
 
-El 21 de septiembre se resolvió el GO/NO-GO, abierto tres semanas: \textbf{la demostración física se intenta con los dos vehículos reales}. Lo que lo hace defendible no es el veredicto sino sus \textbf{seis compuertas con criterio de fallo y fecha escritos antes de intentarlas}, para que el GO no pueda degradarse en silencio. El mismo día se cerró el riesgo R6 con una fe de erratas del informe de la Semana 15 ---que solo existe como PDF--- en lugar de reescribirlo.
+El 21 de septiembre, después de tres semanas abierta, se tomó la decisión GO/NO-GO: la demostración física se intentará con los dos vehículos reales. El acta de la decisión fija seis compuertas, cada una con su criterio de fallo y su fecha, escritos antes de intentarlas. Si una compuerta no se alcanza en su fecha, el acta indica cómo se reduce el alcance de la demostración.
 
-\section{Una sola causa para tres semanas de síntomas}
+El mismo día se cerró el riesgo R6 (discrepancias entre los informes y el repositorio) con una fe de erratas del informe de la semana 15. Como ese informe solo existe en PDF, se publicó la fe de erratas en lugar de reescribirlo.
+
+\section{Causa de la falta de comunicación con el segundo vehículo}
 \label{sec:causa}
 
-El segundo vehículo se había dado por averiado, y \textbf{no lo estaba}. Los nodos del fabricante corren como \texttt{root}, y el middleware de ROS 2 comparte memoria con permisos solo del dueño: una orden lanzada como usuario normal \textbf{descubre los nodos pero no se comunica con ellos, y no da ningún error}. Eso explicaba a la vez listas de nodos vacías, servicios que no respondían y órdenes que no movían nada.
+Durante tres semanas el segundo vehículo pareció averiado: sus servicios no respondían y no reaccionaba a las órdenes de movimiento. La causa no estaba en el hardware. El software del fabricante se ejecuta con el usuario administrador del sistema (\textit{root}). La capa de comunicaciones de ROS~2 intercambia los datos entre procesos del mismo equipo a través de memoria compartida, y solo ese usuario tiene acceso a ella. Los programas lanzados con un usuario normal detectaban los nodos del fabricante, pero no podían intercambiar mensajes con ellos, y ningún error lo advertía. Lo mismo ocurre con el LiDAR: un programa sin privilegios de administrador no recibió ningún barrido en 20~s. Al ejecutar los programas como administrador, el vehículo respondió con normalidad.
 
-Con el dueño correcto, el 22 de septiembre se alcanzaron dos compuertas. \textbf{G-1, actuación}: dirección a los dos lados y proporcional, tracción en los dos sentidos, y parada en menos de un segundo al soltar la orden. \textbf{G-4, dos en el grafo}: los dos vehículos y el coordinador conviviendo sin colisión de nombres. Y la primera mitad de \textbf{RF-16} sobre hardware: los 22 ficheros del coordinador tienen \textbf{el mismo md5} en el repositorio y en los dos vehículos, y compilan sin un aviso en las dos distribuciones.
+Con esa corrección, el 22 de septiembre se alcanzaron dos compuertas. En G-1 (actuación) se comprobó que la dirección gira a los dos lados de forma proporcional, que la tracción funciona en los dos sentidos y que el vehículo se detiene en menos de un segundo al retirar la orden. En G-4 (coexistencia) se comprobó que los dos vehículos y el coordinador funcionan en la misma red sin conflicto de nombres.
 
-\section{Los vehículos se grababan el uno al otro}
+También se verificó en los vehículos la primera mitad del requisito RF-16, según el cual el mismo código fuente se instala en la simulación y en los vehículos. Se comprobó con su suma de verificación (md5) que los 22 archivos del coordinador son idénticos en el repositorio y en los dos vehículos. Además, compilan sin advertencias tanto en ROS~2 Humble, que usa el portátil, como en Jazzy, que usan los vehículos.
 
-El 23 de septiembre se descubrió que, con los dos vehículos encendidos, \textbf{la grabación de uno recoge también el LiDAR del otro}, intercalado, en un archivo que parece sano. Con cuatro confirmaciones independientes, \textbf{los cinco registros de la salida del 28 de agosto quedan retirados}. No hay comprobación en vivo que lo detecte, así que la regla es operativa: \textbf{un solo vehículo encendido}, y la comprobación se hace sobre la grabación ya hecha.
+\section{Interferencia entre las grabaciones de los dos vehículos}
 
-El mismo día, ensayar el guion de campo contra el vehículo encontró \textbf{tres defectos que no daban error}; el peor, que interrumpir una orden remota dejaba el grabador huérfano y grabando.
+El 23 de septiembre se comprobó que, con los dos vehículos encendidos, la grabación de datos de uno recoge también los barridos del LiDAR del otro, intercalados con los propios, sin que el archivo muestre ninguna anomalía. Tras cuatro comprobaciones independientes, se retiraron las cinco grabaciones de la salida de campo del 28 de agosto. Como no existe una comprobación en vivo que detecte la mezcla, se adoptó una regla de operación: en campo se enciende un solo vehículo, y cada grabación se revisa después de hecha.
 
-\section{La escalera de Nav2, peldaño a peldaño sobre el vehículo}
-\label{sec:escalera}
+El mismo día se ensayó el guion de campo sobre el vehículo y aparecieron tres defectos que no producían ningún mensaje de error. El más grave: al interrumpir una orden enviada por red, el proceso de grabación seguía activo en el vehículo, sin control.
 
-El 24 de septiembre la cadena de navegación se subió \textbf{por peldaños}, comprobando cada uno antes del siguiente.
+\section{Integración de la navegación en el vehículo real}
+\label{sec:integracion}
 
-\subsection{Peldaños 1 a 3: la odometría mide}
+El 24 de septiembre se integró la cadena de navegación en el vehículo en siete pasos, y cada uno se comprobó antes de pasar al siguiente.
 
-La transformada del vehículo quedó versionada, y \texttt{rf2o} publica la odometría. Sobre \texttt{amss-jgm9}, empujando a mano tres recorridos de 3,00~m medidos con flexómetro:
+\subsection{Odometría (pasos 1 a 3)}
+
+Se incorporó al repositorio la posición del LiDAR sobre el vehículo (la transformada entre el cuerpo del vehículo y el sensor) y se puso en marcha rf2o, el paquete que estima la odometría a partir de barridos consecutivos del LiDAR. Con el vehículo \texttt{amss-jgm9} desplazado manualmente, se midieron tres recorridos de 3,00~m con flexómetro (Tabla~\ref{tab:odometria}).
 
 \begin{table}[H]
     \centering
     \small
-    \caption{Odometría contra cinta sobre 3,00~m.}
+    \caption{Odometría frente a flexómetro en recorridos de 3,00~m.}
     \label{tab:odometria}
     \begin{tabular}{@{}cc@{}}
         \toprule
-        \textbf{Pasada} & \textbf{Odometría $\div$ cinta} \\ \midrule
+        \textbf{Pasada} & \textbf{Odometría / flexómetro} \\ \midrule
         1 & 0,963 \\
         2 & 1,019 \\
         3 & 0,966 \\ \bottomrule
     \end{tabular}
 \end{table}
 
-Media \textbf{0,982}, $\sigma$ 0,032: \textbf{las tres dentro del $\pm$10~\%}. \textbf{No es todavía G-2}: son 3~m, G-2 pide 5, y el sitio tenía estructura por los cuatro lados.
+La razón media es 0,982, con una desviación estándar de 0,032, y las tres pasadas quedan dentro del $\pm$10~\%. Esta medición todavía no cumple G-2, que exige un recorrido de 5~m, y se hizo en un lugar con paredes u objetos en los cuatro lados, lo que favorece a la odometría láser.
 
-\subsection{Peldaños 4 y 5: el mapa sobre el vehículo}
+\subsection{Mapas construidos a bordo (pasos 4 y 5)}
 
-El SLAM corrió a bordo por primera vez. En un cuarto de 1,60 $\times$ 0,76~m medidos con cinta, la sala salió de 1,50 $\times$ 0,80~m y de 1,60 $\times$ 0,95~m en dos corridas; y un extintor puesto como obstáculo apareció como una mancha aislada de 0,25 $\times$ 0,15~m.
+Por primera vez se ejecutó SLAM (construcción del mapa y localización simultáneas) a bordo del vehículo. En un cuarto de 1,60 $\times$ 0,76~m, medido con flexómetro, el mapa dio 1,50 $\times$ 0,80~m y 1,60 $\times$ 0,95~m en dos corridas. Un extintor colocado como obstáculo apareció como una mancha aislada de 0,25 $\times$ 0,15~m.
 
-\subsection{Mapear conduciendo}
+\subsection{Mapa del pasillo del piso 2}
 
-El vehículo se condujo solo por el pasillo del piso 2 midiendo contra su odometría ---6,093~m y 6,032~m con 6,00 pedidos---, con una deriva en reposo de 1 a 25~mm, y construyó el mapa de la Figura \ref{fig:mapa}.
+El vehículo avanzó en línea recta por el pasillo del piso 2, comandado por un programa que lo detiene cuando la odometría indica la distancia pedida, 6,00~m. La odometría registró 6,093~m y 6,032~m en las dos pasadas, y en reposo derivó entre 1 y 25~mm. Con esos recorridos se construyó el mapa de la Figura~\ref{fig:mapa}.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{S24_mapa_pasillo6m_HARDWARE.png}
-    \caption{Mapa del pasillo del piso 2 construido a bordo conduciendo 6~m: 447 $\times$ 108 celdas de 5~cm, pasillo de 2,70~m entre muros, y dos objetos aislados que son, casi con seguridad, las cajas que acotaban el tramo.}
+    \caption{Mapa del pasillo del piso 2 construido a bordo, de 447 $\times$ 108 celdas de 5~cm. El pasillo mide 2,70~m entre muros; los dos objetos aislados son, con alta probabilidad, las cajas que delimitaban el tramo.}
     \label{fig:mapa}
 \end{figure}
 
-\subsection{Peldaños 6 y 7: Nav2 navega el carro}
+\subsection{Navegación con Nav2 (pasos 6 y 7)}
 
-Esa misma noche se cargó ese mapa y \textbf{Nav2 llevó el vehículo de forma autónoma} (Figura \ref{fig:navegacion}).
+La noche del 24 de septiembre, Jonny Mejía cargó ese mapa en el vehículo y Nav2 lo guió de forma autónoma hasta la meta (Figura~\ref{fig:navegacion}). Para localizar el vehículo sobre el mapa, Nav2 usó AMCL, un método de localización basado en un filtro de partículas.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{S24_nav2_navegacion_mapa_guardado.png}
-    \caption{Navegación con Nav2 y AMCL sobre el mapa guardado: de x = 1,007 hacia una meta en x = 5,50, avance de 4,837~m y parada a 0,412~m de la meta.}
+    \caption{Navegación con Nav2 y AMCL sobre el mapa guardado: salida en x = 1,007~m hacia una meta en x = 5,50~m, avance de 4,837~m y parada a 0,412~m de la meta.}
     \label{fig:navegacion}
 \end{figure}
 
-Que fue navegación y no un empujón lo dicen tres cosas de la grabación: el plan \textbf{se fue consumiendo} (de 59 a 7 poses), \textbf{la dirección trabajó} ---corrigiendo el rumbo cuando el carro se desviaba--- y las órdenes salieron del planificador. \textbf{La precisión de llegada no}: 0,412~m contra una tolerancia de 0,25. La causa está medida: por debajo de 0,40~m/s el vehículo no se mueve, así que se aproxima a la meta sin poder frenar antes, y la sobrepasa.
+La grabación muestra que el movimiento lo produjo Nav2. La trayectoria planificada se fue acortando a medida que el vehículo avanzaba (de 59 a 7 puntos), la dirección corrigió el rumbo cuando el vehículo se desviaba y las órdenes de velocidad salieron del planificador.
 
-\section{Las compuertas, montadas; el bloqueo del sistema real, diseñado}
+El vehículo se detuvo a 0,412~m de la meta, por encima de la tolerancia de 0,25~m. La causa es la banda muerta del controlador de tracción: las órdenes de velocidad inferiores a 0,40~m/s no mueven el vehículo, por lo que la velocidad mínima de aproximación de Nav2 se fijó en 0,40~m/s. Sin una fase de aproximación lenta, el vehículo sobrepasa la meta.
+
+El avance de 4,837~m es el que registró la odometría; no se midió con flexómetro, así que esta navegación no sirve todavía para la compuerta G-2.
+
+\section{Preparación de las pruebas de G-2 y G-3 y aislamiento entre vehículos}
 \label{sec:campana}
 
-El 25 de septiembre quedó lista la sesión que convierte esa navegación en G-2 y G-3, en \texttt{GUIA\_CAMPANA\_NAV2\_HARDWARE.md}, escrita para que la ejecute cualquiera que descargue el repositorio (Figura \ref{fig:campana}).
+El 25 de septiembre quedó preparada la sesión de pruebas de las compuertas G-2 y G-3, documentada en \texttt{GUIA\_CAMPANA\_NAV2\_HARDWARE.md} para que cualquier persona con el repositorio pueda ejecutarla. La sesión consiste en tres corridas de 5~m, medidas con flexómetro, sobre el mapa del pasillo del piso 2 (Figura~\ref{fig:campana}). Con ellas se cierra G-2 y se evalúa G-3. Estas corridas, con un solo vehículo, no cuentan para RF-27, que exige el protocolo completo con los dos vehículos y el relevo entre pisos.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{S24_campana_disposicion_pasillo6m.png}
-    \caption{Disposición de la sesión de compuertas sobre el mapa. El tramo útil para el ancho del carro mide 5,45~m, así que caben corridas de 5~m ---lo que pide G-2--- sin volver a mapear.}
+    \caption{Disposición de la sesión de pruebas sobre el mapa. El tramo útil para el ancho del vehículo mide 5,45~m, suficiente para las corridas de 5~m que pide G-2 sin volver a mapear.}
     \label{fig:campana}
 \end{figure}
 
-\begin{itemize}[leftmargin=*]
-    \item \textbf{Tres corridas de 5~m con cinta cierran G-2 y dan G-3.} No cuentan para RF-27, que pide el protocolo completo sobre los dos carros.
-    \item \textbf{El bloqueo del sistema real, diseñado.} Con los dos carros encendidos, una orden mueve los dos y cada odometría recibe el láser del otro, porque los tópicos de fábrica no llevan espacio de nombres. La solución ---una partición DDS por vehículo para esos tópicos, sin tocar el software de AWS--- pasó \textbf{9 de 9} en el portátil y se confirma en los carros el lunes 28 (\texttt{DISENO\_AISLAMIENTO\_DOS\_CARROS.md}).
-    \item La herramienta que ejecuta cada corrida se \textbf{ensayó contra Nav2 en simulación} con los vehículos apagados. El ensayo encontró que la pose de AMCL, al parar, puede ir \textbf{hasta 25~cm atrasada}; forzando su corrección, AMCL y la odometría quedan a \textbf{1,7~cm}.
-    \item En paralelo se escribió \texttt{GUION\_NAVEGACION\_USTA.md}, la vía hermana: navegar el edificio sobre el mapa del modelo de Gazebo, \textbf{validando antes el modelo contra el edificio con flexómetro} ($\leq$ 2~\%). Las dos comparten el arranque, \texttt{nav2\_mapa\_guardado.sh}.
-    \item Ver la corrida después, en RViz, funciona. \textbf{Verla en vivo desde el portátil no}: las dos distribuciones de ROS se descubren pero no intercambian datos, y está medido.
-\end{itemize}
+El principal obstáculo para operar el sistema completo es que, con los dos vehículos encendidos, una orden de movimiento llega a los dos y la odometría de cada uno recibe también el LiDAR del otro. Ocurre porque los tópicos que publica el software del fabricante no llevan espacio de nombres. La solución diseñada asigna a cada vehículo una partición de comunicaciones propia para esos tópicos, de modo que cada vehículo solo intercambia esos mensajes con los procesos de su misma partición. No requiere modificar el software de AWS. El mecanismo pasó 9 de 9 pruebas en el portátil y se confirmará en los vehículos el lunes 28 de septiembre (\texttt{DISENO\_AISLAMIENTO\_DOS\_CARROS.md}).
 
-\section{Lo que la semana corrigió de sí misma}
+El programa que ejecuta cada corrida se ensayó contra Nav2 en simulación, con los vehículos apagados. En el ensayo se observó que la posición estimada por AMCL puede ir hasta 25~cm atrasada cuando el vehículo se detiene; al forzar su actualización, AMCL y la odometría coinciden con una diferencia de 1,7~cm.
 
-Cinco conclusiones de esta misma semana resultaron falsas, y se publican corregidas en vez de borrarse:
+En paralelo, Jonny Mejía escribió \texttt{GUION\_NAVEGACION\_USTA.md}, una alternativa que navega el edificio sobre el mapa del modelo de Gazebo, después de validar el modelo contra el edificio con flexómetro con una tolerancia del 2~\%. Las dos guías usan el mismo procedimiento de arranque, \texttt{nav2\_mapa\_guardado.sh}.
 
-\begin{enumerate}[leftmargin=*]
-    \item \textbf{La ``avería'' del segundo vehículo} (21 de septiembre) no existía: era la regla del dueño de la Sección \ref{sec:causa}.
-    \item \textbf{Que el LiDAR se podía leer sin privilegios} (24 de septiembre, mañana) se refutó esa misma tarde con cero barridos en 20~s.
-    \item \textbf{Que \texttt{amss-jgm9} no tenía Nav2 ni rf2o, y que Nav2 no podía navegar por cuatro defectos de configuración} (24 de septiembre, noche): falso las dos veces. El vehículo estaba nivelado ese día, y los defectos eran de un fichero que el vehículo no carga. Nav2 navegó esa misma noche.
-    \item \textbf{Que el carro ``avanzó 5~m''} (25 de septiembre): es la distancia entre las cajas y la impresión de que llegó cerca, no una medida.
-    \item \textbf{Que las corridas de un solo carro contaban para RF-27} (25 de septiembre): RF-27 pide el protocolo completo, con los dos carros y el relevo entre pisos.
-\end{enumerate}
+Cada corrida puede revisarse después en RViz, la herramienta de visualización de ROS, a partir de su grabación. Verla en vivo desde el portátil no es posible: el portátil usa ROS~2 Humble y los vehículos Jazzy, y aunque se detectan entre sí, no intercambian datos, como se comprobó experimentalmente.
 
-\section{Aporte de la semana a los objetivos específicos}
+\section{Aporte a los objetivos específicos}
 \label{sec:aporte}
 
 \subsection{Relación entre actividades y objetivos}
@@ -225,18 +223,18 @@ Cinco conclusiones de esta misma semana resultaron falsas, y se publican corregi
 \begin{table}[H]
     \centering
     \small
-    \caption{Trazabilidad entre las actividades ejecutadas y los objetivos específicos.}
+    \caption{Trazabilidad entre las actividades de la semana y los objetivos específicos.}
     \label{tab:trazabilidad}
-    \begin{tabular}{@{}p{4.6cm}cp{7.2cm}@{}}
+    \begin{tabular}{@{}p{4.8cm}cp{7.0cm}@{}}
         \toprule
-        \textbf{Actividad} & \textbf{Objetivo} & \textbf{Contribución} \\ \midrule
-        Acta GO/NO-GO & OE2, OE4 & Fija qué se intenta y cuándo se desiste, antes de intentarlo \\ \addlinespace
-        Causa raíz de la comunicación con el vehículo & OE2 & Explica tres semanas de síntomas y desbloquea todo lo demás \\ \addlinespace
-        G-1 y G-4 & OE2 & Actuación y dos vehículos en el mismo grafo, verificados \\ \addlinespace
+        \textbf{Actividad} & \textbf{Objetivo} & \textbf{Aporte} \\ \midrule
+        Acta GO/NO-GO & OE2, OE4 & Define qué se intentará y en qué condiciones se reduce el alcance, antes de empezar \\ \addlinespace
+        Causa de la falta de comunicación con el vehículo & OE2 & Explica tres semanas de fallos y permite avanzar en lo demás \\ \addlinespace
+        G-1 y G-4 & OE2 & Actuación y coexistencia de los dos vehículos, verificadas \\ \addlinespace
         Odometría medida sobre 3~m & OE2 & Primera evidencia física de RF-13 \\ \addlinespace
-        SLAM y Nav2 sobre el vehículo & OE2, OE4 & La navegación autónoma física existe \\ \addlinespace
-        Sesión de compuertas y diseño del aislamiento & OE2, OE4 & Deja G-2 y G-3 medibles antes del corte, y desbloquea el sistema real \\ \addlinespace
-        Consolidación de datos & OE4 & Criterio de cierre de la semana \\ \bottomrule
+        SLAM y Nav2 sobre el vehículo & OE2, OE4 & Primera navegación autónoma sobre el vehículo real \\ \addlinespace
+        Sesión de pruebas y diseño del aislamiento & OE2, OE4 & Deja G-2 y G-3 listas para medirse antes del corte y resuelve en diseño la interferencia entre vehículos \\ \addlinespace
+        Consolidación de datos & OE4 & Cumple el criterio de cierre de la semana \\ \bottomrule
     \end{tabular}
 \end{table}
 
@@ -245,21 +243,21 @@ Cinco conclusiones de esta misma semana resultaron falsas, y se publican corregi
 \begin{table}[H]
     \centering
     \small
-    \caption{Avance por objetivo específico al cierre de la Semana 24.}
+    \caption{Avance por objetivo específico al cierre de la semana 24.}
     \label{tab:objetivos}
-    \begin{tabular}{@{}cp{2.6cm}p{4.6cm}p{4.4cm}@{}}
+    \begin{tabular}{@{}cp{2.6cm}p{4.6cm}p{4.6cm}@{}}
         \toprule
-        \textbf{ID} & \textbf{Avance} & \textbf{Cubierto esta semana} & \textbf{Componente que lo mantiene detenido} \\ \midrule
+        \textbf{Objetivo} & \textbf{Avance} & \textbf{Aporte de la semana} & \textbf{Pendiente} \\ \midrule
         OE1 & 100~\% & --- & --- \\ \addlinespace
-        OE2 & \textbf{65~\%}, sin cambio & G-1, G-4, odometría, SLAM y Nav2 sobre el vehículo & Ninguno de sus cinco requisitos parciales cerró todavía \\ \addlinespace
+        OE2 & 65~\%, sin cambio & G-1, G-4, odometría, SLAM y Nav2 sobre el vehículo & Ninguno de sus cinco requisitos parciales se completó \\ \addlinespace
         OE3 & 100~\% & --- & --- \\ \addlinespace
-        OE4 & \textbf{85~\%}, sin cambio & Datos consolidados & RF-27, que pide el sistema completo; y la decisión sobre R15 \\ \bottomrule
+        OE4 & 85~\%, sin cambio & Datos consolidados & RF-27, que requiere el sistema completo, y la decisión sobre R15 \\ \bottomrule
     \end{tabular}
 \end{table}
 
-El avance agregado sin ponderar sigue en \textbf{87,5~\%}, frente a un \textbf{75,0~\%} del calendario (semana 24 de 32). \textbf{Veintinueve de treinta y seis requisitos verificados}, los mismos que la semana anterior.
+El promedio simple del avance de los cuatro objetivos se mantiene en 87,5~\%, frente al 75,0~\% que corresponde al calendario (semana 24 de 32). Siguen verificados 29 de los 36 requisitos, los mismos que la semana anterior.
 
-\textbf{Por qué el objetivo 2 no sube en la semana en que más avanzó.} El porcentaje se mueve cuando un requisito cierra, y ninguno de los cinco parciales del objetivo 2 cerró: cada uno tiene ahora evidencia sobre el vehículo, pero les falta la medida de 5~m, el espacio de nombres o la segunda mitad de su criterio. Subirlo por la sensación de avance sería exactamente lo que el tablero existe para impedir. \textbf{Lo que sí cambió es el riesgo}: la navegación autónoma física ya no es una pregunta abierta.
+El avance del objetivo 2 no cambia, aunque fue el que más trabajo recibió. El porcentaje de cada objetivo sube cuando se verifica un requisito completo, y ninguno de los cinco requisitos parciales del objetivo 2 se completó esta semana. Todos tienen ahora evidencia sobre el vehículo, pero a cada uno le falta una parte: la medición sobre 5~m, el espacio de nombres o la segunda mitad de su criterio. Lo que sí cambió es el riesgo: ya se comprobó que el vehículo real puede navegar de forma autónoma.
 
 \section{Estado del cronograma y trabajo previsto}
 \label{sec:cronograma}
@@ -269,38 +267,46 @@ El avance agregado sin ponderar sigue en \textbf{87,5~\%}, frente a un \textbf{7
 \begin{table}[H]
     \centering
     \small
-    \caption{Criterio de cierre de la Semana 24 y su evidencia.}
+    \caption{Criterio de cierre de la semana 24 y su evidencia.}
     \label{tab:cierre}
-    \begin{tabular}{@{}p{5.6cm}cp{6.0cm}@{}}
+    \begin{tabular}{@{}p{5.0cm}cp{6.8cm}@{}}
         \toprule
-        \textbf{Exigencia del criterio} & \textbf{Estado} & \textbf{Evidencia} \\ \midrule
-        30 corridas registradas & Cumplido & Semana 21; 30 registros validados \\ \addlinespace
-        Conjunto de datos versionado & Cumplido & Consolidación del 21 de septiembre: regenera sus propias métricas \\ \bottomrule
+        \textbf{Parte del criterio} & \textbf{Estado} & \textbf{Evidencia} \\ \midrule
+        30 corridas registradas & Cumplida & Semana 21; 30 registros validados \\ \addlinespace
+        Conjunto de datos versionado & Cumplida & Consolidación del 21 de septiembre: las métricas se regeneran a partir de los registros \\ \bottomrule
     \end{tabular}
 \end{table}
 
-\subsection{Lo planificado frente a lo hecho}
+\subsection{Actividades planificadas y ejecutadas}
 
-Las tres actividades planificadas se cumplieron: consolidar los datos, escribir el capítulo de resultados ---adelantado a la Semana 23--- y emitir el informe de la Semana 23. \textbf{Todo el trabajo sobre el vehículo real no estaba planificado para esta semana} y se declara como tal: el cronograma lo situaba en la Semana 25, y lo que se hizo aquí es la preparación que lo hace posible.
+Se cumplieron las tres actividades planificadas: consolidar los datos, escribir el capítulo de resultados (adelantado a la semana 23) y emitir el informe de la semana 23. El trabajo sobre el vehículo real no estaba planificado para esta semana. El cronograma lo situaba en la semana 25, y lo realizado es la preparación que permite ejecutarlo.
 
-\subsection{Trabajo previsto para la Semana 25}
+\subsection{Trabajo previsto para la semana 25}
 
-Con el plan día a día en \texttt{PLAN\_S25.md}: la sesión de compuertas G-2 y G-3 antes del corte C-1 del \textbf{viernes 2 de octubre}; aislar los dos carros y montar la pila con espacio de nombres; validar con cinta el modelo del edificio y medir la red entre pisos; y pedir por escrito a los directores el sitio de la etapa 3, el N de RF-27 y la tolerancia de llegada. \textbf{El sistema real ---G-5--- va en la Semana 26 y la campaña de RF-27 en la 27}, con cierre de datos el 16 de octubre.
+El plan detallado de la semana 25 está en \texttt{PLAN\_S25.md} y comprende:
 
-\section{Conclusiones de la Semana}
+\begin{itemize}[leftmargin=*]
+    \item la sesión de pruebas de G-2 y G-3, antes del corte C-1 del viernes 2 de octubre;
+    \item la instalación del aislamiento entre los dos vehículos y de la configuración con espacios de nombres;
+    \item la validación del modelo del edificio con flexómetro y la medición de la red entre pisos;
+    \item la solicitud por escrito a los directores para que definan el sitio de la etapa 3 del protocolo (la demostración física con relevo), el número de repeticiones de RF-27 y la tolerancia de llegada.
+\end{itemize}
+
+La misión completa con los dos vehículos (G-5) está prevista para la semana 26 y la campaña de RF-27 para la semana 27, con cierre de datos el 16 de octubre.
+
+\section{Conclusiones}
 
 \begin{enumerate}[leftmargin=*]
-    \item \textbf{El sistema llegó al vehículo real.} En cinco días se pasó de decidir intentarlo a que Nav2 navegara el carro de forma autónoma sobre un mapa construido por el propio carro.
-    \item \textbf{Una sola causa explicaba tres semanas de síntomas}, y encontrarla desbloqueó dos compuertas el mismo día.
-    \item \textbf{La odometría del vehículo mide}: tres de tres dentro del $\pm$10~\% sobre 3~m. Falta la medida de 5~m con cinta, que es G-2.
-    \item \textbf{La navegación funciona y la precisión de llegada no}, con el mecanismo medido. La tolerancia es decisión de los directores y tiene que tomarse antes de la campaña.
-    \item \textbf{La sesión que cierra G-2 y G-3 está montada, ensayada en simulación y documentada}, y el bloqueo que impide el sistema real ---los dos carros pisándose--- tiene un diseño probado en el portátil.
-    \item \textbf{Cinco conclusiones de la semana se corrigieron dentro de la misma semana}, y se publican corregidas.
+    \item En la misma semana en que se decidió intentar la demostración física, Nav2 guió al vehículo real de forma autónoma sobre un mapa construido por el propio vehículo.
+    \item Los fallos de comunicación con el vehículo, que venían de tres semanas atrás, tenían una sola causa: los permisos de usuario de los procesos. Corregida esa causa, el 22 de septiembre se alcanzaron las compuertas G-1 y G-4.
+    \item La odometría del vehículo quedó dentro del $\pm$10~\% en las tres pasadas de 3~m (razón media 0,982). Falta la medición sobre 5~m con flexómetro que exige la compuerta G-2.
+    \item Nav2 guía al vehículo, pero la parada queda a 0,412~m de la meta, por encima de la tolerancia de 0,25~m, a causa de la banda muerta de la tracción. Los directores deben decidir la tolerancia de llegada antes de la campaña.
+    \item La sesión de pruebas de G-2 y G-3 está documentada y ensayada en simulación. La interferencia entre los dos vehículos, que impide operar el sistema completo, tiene una solución diseñada y probada en el portátil (9 de 9 pruebas), pendiente de confirmar en los vehículos.
 \end{enumerate}
 
 \section{Anexos}
 
-Las cifras de este informe proceden de los registros y documentos de evidencia versionados en el repositorio del proyecto. Existe una versión en Markdown de este mismo informe, \texttt{Entregable\_semana\_24.md}, legible directamente en el repositorio.
+Las cifras de este informe proceden de los registros y documentos de evidencia del repositorio del proyecto, que se listan a continuación. El mismo informe está disponible en Markdown, en \texttt{Entregable\_semana\_24.md}, para leerlo directamente en el repositorio.
 
 \begin{thebibliography}{99}
 
@@ -309,45 +315,75 @@ S. Hernández Ávila y J. A. Mejía León,
 ``Acta de decisión GO/NO-GO de la demostración física,''
 Repositorio del proyecto, \texttt{Documentos/ACTA\_GO\_NOGO.md}, septiembre de 2026.
 
+\bibitem{erratas}
+S. Hernández Ávila,
+``Fe de erratas del informe de la semana 15,''
+Repositorio del proyecto, \texttt{Documentos/Evidencia/S24\_fe\_de\_erratas\_S15.md}, septiembre de 2026.
+
 \bibitem{g1}
 S. Hernández Ávila,
-``Sonda de actuación sobre \texttt{amss-ez9n}: la compuerta G-1,''
+``Prueba de actuación sobre \texttt{amss-ez9n}: compuerta G-1,''
 Repositorio del proyecto, \texttt{Documentos/Evidencia/S24\_sonda\_actuacion\_amss\_ez9n.md}, septiembre de 2026.
 
 \bibitem{g4}
 S. Hernández Ávila,
-``Compuerta G-4: dos vehículos en el mismo grafo,''
+``Compuerta G-4: los dos vehículos en la misma red,''
 Repositorio del proyecto, \texttt{Documentos/Evidencia/S24\_compuerta\_G4\_dos\_en\_el\_grafo.md}, septiembre de 2026.
 
 \bibitem{rf16}
 S. Hernández Ávila,
-``RF-16: compilación del coordinador sobre hardware,''
+``RF-16: compilación del coordinador en los vehículos,''
 Repositorio del proyecto, \texttt{Documentos/Evidencia/S24\_RF16\_compilacion\_jazzy\_hardware.md}, septiembre de 2026.
+
+\bibitem{grabaciones}
+S. Hernández Ávila,
+``Preparación de los dos vehículos e interferencia entre grabaciones,''
+Repositorio del proyecto, \texttt{Documentos/Evidencia/S24\_dos\_carros\_listos.md}, septiembre de 2026.
 
 \bibitem{odometria}
 J. A. Mejía León,
-``Peldaño 2: la odometría del vehículo medida contra flexómetro,''
+``Odometría del vehículo medida con flexómetro,''
 Repositorio del proyecto, \texttt{Documentos/Evidencia/S24\_peldano2\_odometria\_hardware.md}, septiembre de 2026.
+
+\bibitem{slam}
+S. Hernández Ávila,
+``Mapas del cuarto y del extintor construidos a bordo,''
+Repositorio del proyecto, \texttt{Documentos/Evidencia/S24\_mapas\_cuarto\_extintor.md}, septiembre de 2026.
 
 \bibitem{mapeo}
 S. Hernández Ávila,
-``El vehículo se conduce solo seis metros y construye el mapa,''
+``Mapa del pasillo del piso 2 construido a bordo,''
 Repositorio del proyecto, \texttt{Documentos/Evidencia/S24\_mapeo\_6m\_hardware.md}, septiembre de 2026.
 
 \bibitem{nav2}
 J. A. Mejía León,
-``Peldaños 6 y 7: Nav2 navega el vehículo sobre un mapa guardado,''
+``Navegación con Nav2 sobre un mapa guardado,''
 Repositorio del proyecto, \texttt{Documentos/Evidencia/S24\_nav2\_navegacion\_mapa\_guardado.md}, septiembre de 2026.
 
 \bibitem{consolidacion}
 S. Hernández Ávila,
-``El conjunto de datos de OE4, consolidado,''
+``Consolidación del conjunto de datos de OE4,''
 Repositorio del proyecto, \texttt{Documentos/Evidencia/S24\_consolidacion\_datos\_oe4.md}, septiembre de 2026.
 
 \bibitem{campana}
 S. Hernández Ávila y J. A. Mejía León,
-``Guía de la campaña de navegación con Nav2 sobre el vehículo real,''
+``Guía de la sesión de pruebas con Nav2 sobre el vehículo real,''
 Repositorio del proyecto, \texttt{Documentos/GUIA\_CAMPANA\_NAV2\_HARDWARE.md}, septiembre de 2026.
+
+\bibitem{usta}
+J. A. Mejía León,
+``Guion de navegación sobre el modelo del edificio,''
+Repositorio del proyecto, \texttt{Documentos/GUION\_NAVEGACION\_USTA.md}, septiembre de 2026.
+
+\bibitem{aislamiento}
+S. Hernández Ávila,
+``Diseño del aislamiento entre los dos vehículos,''
+Repositorio del proyecto, \texttt{Documentos/DISENO\_AISLAMIENTO\_DOS\_CARROS.md}, septiembre de 2026.
+
+\bibitem{plan}
+S. Hernández Ávila,
+``Plan de la semana 25,''
+Repositorio del proyecto, \texttt{Documentos/PLAN\_S25.md}, septiembre de 2026.
 
 \end{thebibliography}
 
