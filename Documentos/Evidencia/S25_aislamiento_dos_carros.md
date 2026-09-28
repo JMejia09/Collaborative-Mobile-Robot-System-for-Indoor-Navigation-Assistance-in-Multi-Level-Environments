@@ -8,7 +8,8 @@ Registro del bloque A de [`PLAN_S25.md`](../PLAN_S25.md). El diseño y su justif
 El bloque A quedó cerrado el lunes 28 de septiembre, con los dos vehículos. Cada vehículo solo
 intercambia los mensajes de servos, LiDAR y transformadas con los procesos de su propia partición, y
 un proceso sin perfil no llega a ninguno. Por primera vez los dos vehículos pueden estar encendidos a
-la vez sin que uno reciba las órdenes o el láser del otro.
+la vez sin que uno reciba las órdenes de servo o el láser del otro. La pila del proyecto, en cambio,
+todavía corre en un vehículo cada vez (ver «Qué cambia desde hoy»).
 
 Las pruebas las ejecutó Claude por SSH desde el portátil, a petición de Santiago. Las observaciones
 del movimiento de las ruedas (A4) las hicieron Santiago y Jonny delante de los vehículos, que estaban
@@ -67,9 +68,13 @@ publique en `/ctrl_pkg/servo_msg` o `/ctrl_pkg/raw_pwm`, tiene que cargar el per
 da ningún error. Los scripts del repositorio ya lo cargan solos (`nav2_mapa_guardado.sh`,
 `correr_corrida_nav2.sh`, `mapear_conduciendo.sh`, `lanzar_bag.inc`).
 
-La regla del 23 de septiembre de encender un solo vehículo en campo existía porque las grabaciones
-mezclaban los dos láseres. Con la partición instalada y todo lanzado con el perfil, eso ya no
-ocurre (A5).
+Los dos vehículos pueden estar encendidos a la vez: el LiDAR y los servos de cada uno ya no
+llegan al otro (A5). Lo que todavía no puede correr en los dos a la vez es la pila del proyecto
+(el puente de velocidad, rf2o, el SLAM, Nav2 y las grabaciones), porque la partición solo cubre los
+cinco tópicos del fabricante. `/cmd_vel`, `/odom` y `/map` son comunes: el `/cmd_vel` que publica la
+pila de un vehículo llega también al puente del otro y lo mueve, y cada odometría recibe la del
+otro. Eso lo resuelven los espacios de nombres del bloque C de [`PLAN_S25.md`](../PLAN_S25.md).
+Hasta entonces, la pila corre en un vehículo cada vez.
 
 ## Cómo deshacerlo
 

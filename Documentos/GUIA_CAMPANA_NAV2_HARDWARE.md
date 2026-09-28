@@ -74,10 +74,12 @@ Los dos vehículos tienen Nav2 1.3.13, `slam_toolbox` 2.8.5 y rf2o desde la nive
 guía añade a `~/tesis/`: la copia del §3.1 va **a los dos**, aunque la campaña corra en uno. Es
 regla del proyecto desde el 24-sep: **todo cambio en un vehículo se aplica a los dos en la misma
 sesión**, porque un procedimiento que depende de algo instalado en uno solo falla en el otro, y
-falla tarde, cuando ya se está midiendo. Desde el 28-sep los dos pueden estar encendidos a la vez:
-cada uno tiene su partición de comunicaciones y los scripts de esta guía la cargan solos
-([`S25_aislamiento_dos_carros.md`](Evidencia/S25_aislamiento_dos_carros.md)). Lo que se lance a mano
-en un carro y lea el LiDAR o las transformadas tiene que cargar el perfil, o no recibe nada.
+falla tarde, cuando ya se está midiendo. Desde el 28-sep los dos pueden estar **encendidos** a la
+vez: cada uno tiene su partición de comunicaciones para el LiDAR, los servos y las transformadas
+([`S25_aislamiento_dos_carros.md`](Evidencia/S25_aislamiento_dos_carros.md)). Pero **la pila de esta
+guía corre en un solo carro cada vez**: `/cmd_vel`, `/odom`, `/map` y Nav2 no están en la partición,
+y el `/cmd_vel` de un carro movería al otro. Lo que se lance a mano en un carro y lea el LiDAR o las
+transformadas tiene que cargar el perfil, o no recibe nada.
 
 > Una versión anterior de esta guía y el commit `e990a72` decían que `amss-jgm9` no tenía esos
 > paquetes. Era falso; se había afirmado sin comprobarlo en el vehículo.
