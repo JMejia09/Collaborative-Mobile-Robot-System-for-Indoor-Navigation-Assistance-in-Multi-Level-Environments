@@ -176,7 +176,7 @@ arrancar() {
   "Start occupied" = la salida cae en celda no libre: mueve el carro o corrige la pose.
 
   GRABA, y despues manda la meta:
-    ssh $USUARIO@$CARRO "sudo -n bash -c 'cd ~deepracer && timeout -s INT 150 ros2 bag record -s mcap -o nav2_usta_01 /rplidar_ros/scan /odom /cmd_vel /tf /tf_static /plan /map /amcl_pose; chown -R deepracer:deepracer ~deepracer/nav2_usta_01'"
+    ssh $USUARIO@$CARRO "sudo -n bash -c '$FUENTES && cd ~deepracer && timeout -s INT 150 ros2 bag record -s mcap -o nav2_usta_01 /rplidar_ros/scan /odom /cmd_vel /tf /tf_static /plan /map /amcl_pose; chown -R deepracer:deepracer ~deepracer/nav2_usta_01'"
 
   LA META (el script NO la manda: la mandas tu mirando el carro):
     ssh $USUARIO@$CARRO "sudo -n bash -c '$FUENTES && ros2 action send_goal --feedback /navigate_to_pose nav2_msgs/action/NavigateToPose \"{pose: {header: {frame_id: map}, pose: {position: {x: 6.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}}\"'"
