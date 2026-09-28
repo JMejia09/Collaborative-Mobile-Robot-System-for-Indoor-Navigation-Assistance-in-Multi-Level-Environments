@@ -21,7 +21,7 @@ lleva más riesgo.
 | Lun 28 | F | Hecho: las tres decisiones, acordadas con el director Armando Mateus (acta §6.1) | Santiago | no |
 | Lun 28 | A | Hecho: los dos carros aislados, A1 a A5 en verde ([registro](Evidencia/S25_aislamiento_dos_carros.md)) | Santiago y Jonny | los dos |
 | Lun 28 – mar 29 | **C** | La pila con espacio de nombres, en el escritorio | Santiago | no |
-| Lun 28 – mié 30 | **D** | Validar el modelo del edificio con cinta; red entre pisos | Jonny | uno, para la red |
+| Lun 28 – mié 30 | **D** | Red entre pisos, con un carro en cada piso | Jonny | los dos |
 | **Mar 29** | **B** | **Sesión de compuertas G-2 y G-3** (miércoles de reserva) | Santiago | uno |
 | Mar 29 – mié 30 | **B2** | Pasillo liso con los dos carros: odometría contra cinta, como caracterización | Santiago y Jonny | **los dos** |
 | Mié 30 | **C** | Un carro navega con espacio de nombres | Santiago | uno |
@@ -208,19 +208,12 @@ parámetros efectivos de cada nodo. **Cierre:** con `namespace:=robot2`, todos l
 
 ---
 
-## 4. Bloque D — el edificio (lunes a miércoles, Jonny)
+## 4. Bloque D — la red entre pisos (lunes a miércoles, Jonny)
 
-### D1 · El modelo contra el edificio, con cinta y sin robot
+Las medidas de los mundos de Gazebo son las del edificio real, así que el sistema navega sobre los
+mapas del modelo sin validarlos aparte (aclarado por el equipo el 28-sep).
 
-El sistema real navega el edificio sobre los mapas del modelo de Gazebo. Si el modelo no se parece al
-edificio, AMCL se localiza **con confianza en el sitio equivocado**, y eso no lo corrige nada.
-Procedimiento: el Bloque 1 de [`GUION_NAVEGACION_USTA.md`](GUION_NAVEGACION_USTA.md) —diez medidas
-del modelo, criterio ≤ 2 % fijado antes de medir—.
-
-**Cierre:** la tabla de las diez medidas. **Decide qué mapa usa el sistema en cada piso**: si pasa,
-el del modelo; si no, hay que decir cuál y por qué, y eso va a los directores con el sitio.
-
-### D2 · La red entre pisos
+### D1 · La red entre pisos
 
 **Por qué:** con un carro en el piso 1 y otro en el 2, el coordinador los tiene que alcanzar a los
 dos. Nadie ha medido si la red llega de un piso a otro.
@@ -294,6 +287,6 @@ enviar el mensaje escrito. Lo acordado quedó en el §6.1 de [`ACTA_GO_NOGO.md`]
 |---|---|---|
 | **La partición no funciona en Jazzy** | A1 no da `PASA` | Plan B del diseño (§7): LiDAR y servos fuera de `deepracer-core`. Retrasa C3 y E; G-2 y G-3 no se ven afectadas, que son de un carro |
 | **G-3 no entra en 0,5 m** | el error por cinta pasa de 0,5 m | Es un resultado, con mecanismo medido; va al director. Si el acta obliga a revertir, se revierte |
-| **La red no llega de un piso a otro** | D2 no da `CUMPLE` | Es lo más grave para S26: sin red entre pisos no hay relevo. Llevarlo a los directores con el sitio (F1) |
+| **La red no llega de un piso a otro** | D1 no da `CUMPLE` | Es lo más grave para S26: sin red entre pisos no hay relevo. Llevarlo a los directores con el sitio (F1) |
 | **Batería o disponibilidad de los carros** | un carro no enciende o cae | Los dos cargados el domingo por la noche; el jueves tiene holgura |
 | **Algo se lanza sin el perfil** | un proceso no ve el láser y no avisa | Los scripts lo cargan solos; a mano, el `export` del recuadro de A2 |
