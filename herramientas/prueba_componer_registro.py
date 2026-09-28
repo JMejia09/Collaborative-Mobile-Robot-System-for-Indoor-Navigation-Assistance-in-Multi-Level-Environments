@@ -1182,6 +1182,39 @@ def _por_que(registro, esquema):
         return f"-> {'/'.join(str(p) for p in e.absolute_path)}: {e.message}"
 
 
+def pruebas_de_tolerancia():
+    """0,25 m en simulacion y 0,50 m en el banco fisico, igual que el registrador."""
+    from componer_registro import TOLERANCIA_POR_BANCO
+    sys.path.insert(0, os.path.join(RAIZ, "Robot", "aws-deepracer", "coordinacion"))
+    from coordinacion.registrador import TOLERANCIA_POR_CONDICION
+    check("simulacion: la misma tolerancia que el registrador",
+          TOLERANCIA_POR_BANCO["simulacion"] == TOLERANCIA_POR_CONDICION["simulacion"],
+          f"{TOLERANCIA_POR_BANCO['simulacion']} contra "
+          f"{TOLERANCIA_POR_CONDICION['simulacion']}")
+    check("banco fisico: la misma tolerancia que 'hardware' en el registrador",
+          TOLERANCIA_POR_BANCO["fisico"] == TOLERANCIA_POR_CONDICION["hardware"],
+          f"{TOLERANCIA_POR_BANCO['fisico']} contra "
+          f"{TOLERANCIA_POR_CONDICION['hardware']}")
+    check("los valores son 0,25 y 0,50",
+          (TOLERANCIA_POR_BANCO["simulacion"], TOLERANCIA_POR_BANCO["fisico"]) == (0.25, 0.50))
+
+    estados = [(10.0, RECIBIDA, "", "m1"), (11.0, TRAMO_1, "robot1", "m1"),
+               (40.0, COMPLETADA, "robot1", "m1")]
+    mov = {"robot1": [(12.0, 0.3, 0.0)] * 3}
+    marcas = marcas_de(estados, mov, "A")
+    v = veredicto_de(marcas, estados, 0.40, "A", 0)
+    check("0,40 m falla con la tolerancia por defecto (simulacion)",
+          v["c1_posicion"] is False and "0.25 m" in v["motivo_fallo"], v["motivo_fallo"])
+    v = veredicto_de(marcas, estados, 0.40, "A", 0,
+                     tolerancia_m=TOLERANCIA_POR_BANCO["fisico"])
+    check("0,40 m es llegada valida en el banco fisico",
+          v["c1_posicion"] is True and v["exito"] is True, str(v))
+    v = veredicto_de(marcas, estados, 0.60, "A", 0,
+                     tolerancia_m=TOLERANCIA_POR_BANCO["fisico"])
+    check("0,60 m falla en el banco fisico y el motivo cita 0.5 m",
+          v["c1_posicion"] is False and "0.5 m" in v["motivo_fallo"], v["motivo_fallo"])
+
+
 def main():
     with open(ESQUEMA, encoding="utf-8") as f:
         esquema = json.load(f)
@@ -1197,6 +1230,8 @@ def main():
     pruebas_de_escenario(esquema)
     print("Condicion inicial (criterio 1 del §8, el que no sobrevivia)")
     pruebas_de_condicion_inicial(esquema)
+    print("Tolerancia de llegada por banco (acta §6.1)")
+    pruebas_de_tolerancia()
     print("Lectura del bag y ensamblado (necesita el workspace sourceado)")
     pruebas_de_bag(esquema)
     print(f"\n{len(fallos)} fallo(s).")

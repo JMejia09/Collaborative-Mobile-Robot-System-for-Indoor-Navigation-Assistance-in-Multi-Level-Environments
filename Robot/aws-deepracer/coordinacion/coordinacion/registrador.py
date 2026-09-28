@@ -55,16 +55,25 @@ import json
 import math
 from pathlib import Path
 
-ESQUEMA_VERSION = "1.0"
+# 1.1 el 2026-09-28: la tolerancia de llegada depende de la condicion, asi que
+# 'criterios_exito.llegada_a_025_m' pasa a 'llegada_dentro_de_tolerancia' y las
+# metricas llevan 'tolerancia_llegada_m'.
+ESQUEMA_VERSION = "1.1"
 
 # §3.1: primera muestra con |v| >= UMBRAL y las dos siguientes tambien. Las tres
 # consecutivas estan para no disparar con un pico de ruido.
 UMBRAL_MOVIMIENTO_MS = 0.02
 MUESTRAS_CONSECUTIVAS = 3
 
-# §3.3: la misma xy_goal_tolerance que Nav2 declara. El criterio de exito es "el
-# sistema hizo lo que se le pidio con la precision que dice tener".
+# §3.3 de PROTOCOLO_EXPERIMENTAL.md: distancia maxima entre la pose final en
+# /<ns>/odom y el destino para dar la llegada por buena. Depende de la condicion:
+#   simulacion  0.25 m, el valor de los requisitos; con el corrio la campana OE4.
+#   hardware    0.50 m desde el 2026-09-28, decision del director para los
+#               vehiculos reales (ACTA_GO_NOGO.md §6.1 y enmienda del §3.3).
+# El coordinador lee esta misma tabla. herramientas/componer_registro.py la
+# copia, y su prueba comprueba que las dos coinciden.
 TOLERANCIA_LLEGADA_M = 0.25
+TOLERANCIA_POR_CONDICION = {"simulacion": TOLERANCIA_LLEGADA_M, "hardware": 0.50}
 
 # RECIBIDA es la 6 y no la 1 porque se anadio despues, el 2026-08-29, para que
 # el tiempo de asignacion del §3.2 dejara de valer cero. Va al final para no
@@ -87,6 +96,7 @@ class RegistroMision:
         self.destino_id = destino_id
         self.asignacion = dict(asignacion)
         self.condicion = condicion
+        self.tolerancia_llegada_m = TOLERANCIA_POR_CONDICION[condicion]
         # t_solicitud es el instante en que el servidor ACEPTA el goal (§3.1), no
         # el envio de la HRI: la latencia del navegador no es del sistema
         # robotico y no se puede medir desde dentro.
@@ -167,7 +177,8 @@ class RegistroMision:
         m = {"t_respuesta_s": None, "t_asignacion_s": None,
              "hueco_relevo_s": None, "continuidad": None,
              "error_llegada_m": None, "rumbo_llegada_rad": None,
-             "exito": False, "criterios_exito": {}}
+             "exito": False, "criterios_exito": {},
+             "tolerancia_llegada_m": self.tolerancia_llegada_m}
 
         tramo1 = self._marca_de(1)
         if tramo1:
@@ -212,13 +223,13 @@ class RegistroMision:
 
             # §3.3: las tres condiciones, y ninguna es el SUCCEEDED de Nav2
             c1 = (m["error_llegada_m"] is not None
-                  and m["error_llegada_m"] <= TOLERANCIA_LLEGADA_M)
+                  and m["error_llegada_m"] <= self.tolerancia_llegada_m)
             c2 = (any(x["etapa_num"] == 4 for x in self.marcas)
                   and not any(x["etapa_num"] == 5 for x in self.marcas))
             entre_niveles = transferencia is not None
             c3 = (self.cierre["num_relevos"] == 1) if entre_niveles else True
             m["criterios_exito"] = {
-                "llegada_a_025_m": c1, "completada_sin_fallida": c2,
+                "llegada_dentro_de_tolerancia": c1, "completada_sin_fallida": c2,
                 "relevo_si_entre_niveles": c3}
             m["exito"] = bool(c1 and c2 and c3)
         return m

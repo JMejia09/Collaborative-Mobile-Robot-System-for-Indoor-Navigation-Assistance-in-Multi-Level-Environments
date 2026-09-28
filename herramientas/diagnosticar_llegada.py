@@ -78,7 +78,11 @@ from deepracer_raiz_repo import pose_por_defecto  # noqa: E402
 # mismo. La tolerancia dice cuando Nav2 PARA, y se midio contra el /odom del
 # bag; este numero dice cuando la llegada se acepta. Separarlos fue el arreglo
 # de ese dia: parar en 0.15 es lo que deja margen para cumplir 0.25.
+#
+# Por banco, como en componer_registro.py: 0.25 m en simulacion y 0.50 m en el
+# banco fisico desde el 2026-09-28 (ACTA_GO_NOGO.md §6.1). Se elige con --banco.
 TOLERANCIA_LLEGADA_M = 0.25
+TOLERANCIA_POR_BANCO = {"simulacion": TOLERANCIA_LLEGADA_M, "fisico": 0.50}
 
 
 def _yaw(q):
@@ -216,7 +220,12 @@ def main():
                     default=None,
                     help="pose declarada de spawn, para la pieza 1; por defecto "
                          "la de POSE_INICIAL para --robot")
+    ap.add_argument("--banco", choices=sorted(TOLERANCIA_POR_BANCO),
+                    default="simulacion",
+                    help="decide el criterio de llegada: 0.25 m en simulacion, "
+                         "0.50 m en el banco fisico")
     args = ap.parse_args()
+    tolerancia = TOLERANCIA_POR_BANCO[args.banco]
     if args.spawn is None:
         fila = pose_por_defecto(args.robot)
         args.spawn = [fila["x"], fila["y"]]
@@ -310,7 +319,7 @@ def main():
                   f"{_d(cr[0], cr[1], odom[i][1], odom[i][2]):.3f} m")
             print(f"   (correccion de AMCL vigente, publicada {cr[2]:.2f} s "
                   f"antes)")
-            if creida < TOLERANCIA_LLEGADA_M <= real:
+            if creida < tolerancia <= real:
                 print("   <-- paro creyendo que habia llegado, sin haber "
                       "llegado.")
                 print("       Margen cero: bajar xy_goal_tolerance.")
@@ -328,8 +337,9 @@ def main():
     err = _d(odom[-1][1], odom[-1][2], mx, my)
     print(f"  destino {nombre} en ({mx:.3f}, {my:.3f})")
     print(f"  el robot acabo en ({odom[-1][1]:.3f}, {odom[-1][2]:.3f})")
-    print(f"  error de llegada: {err:.3f} m   (criterio {TOLERANCIA_LLEGADA_M} m)")
-    if err <= TOLERANCIA_LLEGADA_M:
+    print(f"  error de llegada: {err:.3f} m   (criterio {tolerancia} m, "
+          f"banco {args.banco})")
+    if err <= tolerancia:
         print("  CUMPLE.")
         return 0
     print("  NO CUMPLE. Mirar cual de las tres piezas de arriba lo explica")

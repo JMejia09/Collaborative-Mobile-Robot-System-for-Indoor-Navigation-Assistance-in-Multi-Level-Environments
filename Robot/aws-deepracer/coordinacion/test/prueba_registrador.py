@@ -19,7 +19,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from coordinacion.registrador import (  # noqa: E402
-    ESQUEMA_VERSION, TOLERANCIA_LLEGADA_M, UMBRAL_MOVIMIENTO_MS,
+    ESQUEMA_VERSION, TOLERANCIA_LLEGADA_M, TOLERANCIA_POR_CONDICION,
+    UMBRAL_MOVIMIENTO_MS,
     RegistroMision, entorno_hardware, entorno_simulacion)
 
 OK = FALLOS = 0
@@ -108,8 +109,10 @@ comprueba("el instante es 0.2 y no 0.0",
 
 # ------------------------------------------------------ 4. criterios de exito
 print("\n4. Los tres criterios del §3.3, uno a uno")
-def mision_simple(error_m, completada=True, fallida=False, relevos=0):
-    r = RegistroMision("mx", "a", "b", {"1": "robot1"}, t_solicitud=0.0)
+def mision_simple(error_m, completada=True, fallida=False, relevos=0,
+                  condicion="simulacion"):
+    r = RegistroMision("mx", "a", "b", {"1": "robot1"}, t_solicitud=0.0,
+                       condicion=condicion)
     r.marca(0.1, 1, "robot1", "b")
     traza(r, "robot1", 0.0, 0.02, [0.5] * 10)
     if fallida:
@@ -125,14 +128,26 @@ comprueba("llegada dentro de tolerancia -> exito", m["exito"] is True, f"{m['err
 m = mision_simple(0.30)
 comprueba("llegada fuera de tolerancia -> fallo", m["exito"] is False, f"{m['error_llegada_m']} m")
 comprueba("y el criterio que falla es el de llegada",
-          m["criterios_exito"]["llegada_a_025_m"] is False
+          m["criterios_exito"]["llegada_dentro_de_tolerancia"] is False
           and m["criterios_exito"]["completada_sin_fallida"] is True)
 m = mision_simple(0.10, fallida=True)
 comprueba("si paso por FALLIDA no hay exito aunque llegue", m["exito"] is False)
 m = mision_simple(0.10, completada=False)
 comprueba("sin COMPLETADA no hay exito", m["exito"] is False)
-comprueba("el umbral es exactamente la xy_goal_tolerance de Nav2",
+comprueba("el umbral de simulacion es 0,25 m (§3.3)",
           abs(TOLERANCIA_LLEGADA_M - 0.25) < 1e-9)
+comprueba("simulacion usa 0,25 m y lo deja escrito en el registro",
+          abs(mision_simple(0.10)["tolerancia_llegada_m"] - 0.25) < 1e-9)
+comprueba("hardware usa 0,50 m (acta §6.1, 2026-09-28)",
+          abs(TOLERANCIA_POR_CONDICION["hardware"] - 0.50) < 1e-9)
+m = mision_simple(0.30, condicion="hardware")
+comprueba("en hardware 0,30 m es llegada valida", m["exito"] is True,
+          f"{m['error_llegada_m']} m contra {m['tolerancia_llegada_m']} m")
+m = mision_simple(0.60, condicion="hardware")
+comprueba("en hardware 0,60 m sigue fuera", m["exito"] is False
+          and m["criterios_exito"]["llegada_dentro_de_tolerancia"] is False)
+m = mision_simple(0.30)
+comprueba("y la misma llegada de 0,30 m en simulacion falla", m["exito"] is False)
 comprueba("el umbral de movimiento es el del §3.1",
           abs(UMBRAL_MOVIMIENTO_MS - 0.02) < 1e-9)
 

@@ -23,6 +23,7 @@ lleva más riesgo.
 | Lun 28 – mar 29 | **C** | La pila con espacio de nombres, en el escritorio | Santiago | no |
 | Lun 28 – mié 30 | **D** | Validar el modelo del edificio con cinta; red entre pisos | Jonny | uno, para la red |
 | **Mar 29** | **B** | **Sesión de compuertas G-2 y G-3** (miércoles de reserva) | Santiago | uno |
+| Mar 29 – mié 30 | **B2** | Pasillo liso con los dos carros: odometría contra cinta, como caracterización | Santiago y Jonny | **los dos** |
 | Mié 30 | **C** | Un carro navega con espacio de nombres | Santiago | uno |
 | Jue 1 | **C + E** | Los dos carros a la vez; coordinador e interfaz en un carro | los dos | **los dos** |
 | **Vie 2** | — | **Corte C-1**, y corte semanal | los dos | no |
@@ -132,6 +133,25 @@ tramo encajonado del piso 2, con `amss-ez9n`. Resumido:
 > el error debería bajar, y es lo que se mide. Si alguna corrida pasa de 0,5 m, se reporta con su
 > causa.
 
+### B2 · El pasillo liso, con los dos carros (martes después de B, o miércoles)
+
+**Por qué:** las misiones van a recorrer el pasillo abierto, donde la información de avance es 5,1 %
+(piso 1) y 5,9 % (piso 2), y el tramo de la sesión de compuertas tiene cajas en los dos extremos, que
+le dan a rf2o la estructura que necesita. Esto mide la odometría donde va a operar el sistema, y con
+los dos carros. **Se declara antes de correr como caracterización:** no cuenta para G-2 ni cambia su
+resultado.
+
+| | |
+|---|---|
+| **Objetivo** | La razón odometría ÷ cinta de cada carro en el tramo liso del pasillo, con su grabación. |
+| **Sitio** | Tramo liso, a más de 6 m del hall y lejos de puertas abiertas, con **11 m libres** por delante y la salida marcada con cinta. Cada carro en el pasillo del piso donde va a operar: `amss-jgm9` (robot1) en el piso 1 y `amss-ez9n` (robot2) en el piso 2. |
+| **Copia** | La del §2 de [`GUION_CAMPO_PISO2.md`](GUION_CAMPO_PISO2.md) (`mapear_conduciendo.sh`, `avanzar_y_detener.py`, `lanzar_bag.inc`, `slam_toolbox_carro.yaml`), **en los dos carros**. |
+| **Comando** | `ssh deepracer@192.168.0.101 "sudo -n bash ~/tesis/mapear_conduciendo.sh 5.0 0.5 40"`, y lo mismo con `192.168.0.102`. **Si el bloque A no está cerrado, un carro apagado mientras corre el otro.** |
+| **Esperado** | Si rf2o ve el avance: `motivo de parada : DISTANCIA ALCANZADA`, con la cinta cerca de 5 m. Si no lo ve: `tope de tiempo`, con más metros por cinta que por rf2o. Las dos salidas son resultado. |
+| **Seguridad** | El tope de 40 s limita el recorrido a unos 10 m (0,26 m/s es la velocidad máxima medida). Una persona camina al lado, lista para levantar el carro. |
+| **Después** | Cinta desde la raya de salida hasta el eje delantero, **antes de tocar el carro**. La grabación queda en `~deepracer/mapeo_<hora>/`: copiarla al portátil y medir su información de avance con `python3 herramientas/medir_informacion_avance.py <carpeta del bag> /rplidar_ros/scan`. |
+| **Cierre** | Por carro: metros por cinta, metros por rf2o, motivo de parada y la grabación en `~/tesis_evidencia/`. |
+
 ---
 
 ## 3. Bloque C — la pila con espacio de nombres
@@ -211,17 +231,17 @@ teléfono llega a él por `rosbridge`.
 
 | Paso | Qué | Cierre |
 |---|---|---|
+| E0 | Llevar a los dos carros el coordinador con la tolerancia por condición (2026-09-28). Antes, `ssh deepracer@192.168.0.101 "ls ~/coordinacion_ws/src"` debe listar `coordinacion`; si no, parar y avisar. Luego `scp -r Robot/aws-deepracer/coordinacion deepracer@192.168.0.101:~/coordinacion_ws/src/` y `ssh deepracer@192.168.0.101 "source /opt/ros/jazzy/setup.bash && cd ~/coordinacion_ws && colcon build --packages-select coordinacion"`; lo mismo con `192.168.0.102` | `md5sum` de `coordinador.py` y `registrador.py` igual en el repositorio y en los dos carros |
 | E1 | ¿Está `rosbridge` en los carros? `ssh deepracer@192.168.0.101 "source /opt/ros/jazzy/setup.bash; ros2 pkg list \| grep rosbridge_server"`. Si no, `sudo -n apt-get update && sudo -n apt-get install -y ros-jazzy-rosbridge-suite` **en los dos** | el paquete en los dos |
-| E2 | Coordinador y `rosbridge` en `amss-jgm9`, agentes en los dos, la interfaz desde un teléfono conectado a la red de los carros | la interfaz muestra los dos robots |
+| E2 | Coordinador y `rosbridge` en `amss-jgm9`, agentes en los dos, la interfaz desde un teléfono conectado a la red de los carros. El coordinador, **con `condicion:=hardware`**: `ssh -t deepracer@192.168.0.101 "sudo -n bash -c 'cd ~deepracer/coordinacion_ws && source /opt/ros/jazzy/setup.bash && source install/setup.bash && ros2 run coordinacion coordinador --ros-args -p condicion:=hardware -p ruta_puntos:=src/deepracer_bringup/config/puntos_interes.yaml'"`. Si la ruta del catálogo no existe, buscarla con `ssh deepracer@192.168.0.101 "find ~ -name puntos_interes.yaml"` | la interfaz muestra los dos robots, y el coordinador escribe al arrancar `condicion 'hardware': la llegada se acepta a 0.5 m o menos` |
 | E3 | **Una misión dentro de un mismo piso, pedida desde el teléfono**, con un solo carro moviéndose | el registro de la misión, compuesto con `componer_registro.py` |
 
 E3 es el **ensayo general de G-5 sin el relevo**. Depende de C2: si el miércoles no se cerró, E pasa
 al lunes 5.
 
-> **Antes del jueves:** el coordinador acepta la llegada con 0,25 m, fijo en el código
-> (`TOLERANCIA_LLEGADA_M` en `coordinador.py` y en `registrador.py`, y una prueba que exige ese
-> valor). Con la tolerancia nueva de 0,5 m, una misión que pare entre 0,25 y 0,5 m se cerraría como
-> `FALLIDA`. Hay que decidir cómo se cambia antes de E3.
+> La tolerancia de llegada depende de la condición desde el 28-sep: 0,25 m en simulación y 0,5 m en
+> los vehículos. Sin `condicion:=hardware`, el coordinador aplica 0,25 m en el carro y una misión que
+> pare entre 0,25 y 0,5 m se cierra como `FALLIDA`. Al componer el registro de E3, `--banco fisico`.
 
 ---
 

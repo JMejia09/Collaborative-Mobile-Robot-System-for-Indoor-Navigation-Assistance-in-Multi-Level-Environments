@@ -43,7 +43,8 @@ from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
 from coordinacion_msgs.action import GuiarUsuario
 from coordinacion_msgs.msg import EstadoMision, ListaPuntosInteres, PuntoInteres
-from coordinacion.registrador import RegistroMision, entorno_simulacion
+from coordinacion.registrador import (
+    TOLERANCIA_POR_CONDICION, RegistroMision, entorno_simulacion)
 
 from coordinacion.planificador import (
     ASIGNACION_POR_DEFECTO, CANCELANDO, COMPLETADA, ErrorPlanificacion,
@@ -68,8 +69,10 @@ class _Cancelada(Exception):
         self.robot = robot
 
 # Criterio de llegada del §3.3 de PROTOCOLO_EXPERIMENTAL.md, medido contra
-# /<ns>/odom. No inventar otro aqui: si se cambia, se cambia en el protocolo
-# primero, y entonces las corridas anteriores dejan de ser comparables.
+# /<ns>/odom. Sale de TOLERANCIA_POR_CONDICION (registrador.py) segun el
+# parametro 'condicion': 0.25 m en simulacion y 0.50 m en los vehiculos reales
+# desde el 2026-09-28. No inventar otro aqui: si se cambia, se cambia en el
+# protocolo primero, y entonces las corridas anteriores dejan de ser comparables.
 #
 # YA NO ES la 'xy_goal_tolerance' de Nav2, aunque lo fue hasta el 2026-08-27.
 # Son dos numeros distintos y conviene que lo sean: la tolerancia dice cuando
@@ -78,8 +81,7 @@ class _Cancelada(Exception):
 # 27-ago una etapa paro creyendose a 0.240 m, dentro, estando a 0.297 m, fuera.
 # La tolerancia bajo a 0.15 justamente para comprar ese margen: 0.150 de parada
 # + 0.065 de error previsto de AMCL + 0.023 de desfase del fin del plan = 0.238,
-# que cabe en estos 0.25. Bajar este numero a 0.15 destruiria ese presupuesto.
-TOLERANCIA_LLEGADA_M = 0.25
+# que cabe en los 0.25 de simulacion. Bajarlos a 0.15 destruiria ese presupuesto.
 
 
 def _normalizar(a):
@@ -112,6 +114,13 @@ class Coordinador(Node):
         self.prefijo_mision = self.get_parameter("prefijo_mision").value
         self.ruta_registros = self.get_parameter("ruta_registros").value
         self.condicion = self.get_parameter("condicion").value
+        if self.condicion not in TOLERANCIA_POR_CONDICION:
+            raise ValueError(f"condicion debe ser 'simulacion' o 'hardware', "
+                             f"no {self.condicion!r}")
+        self.tolerancia_llegada_m = TOLERANCIA_POR_CONDICION[self.condicion]
+        self.get_logger().info(
+            f"condicion '{self.condicion}': la llegada se acepta a "
+            f"{self.tolerancia_llegada_m} m o menos (§3.3 del protocolo)")
         self.registro = None   # RegistroMision de la mision en curso
 
         self.catalogo = self._cargar_catalogo()
@@ -589,7 +598,7 @@ class Coordinador(Node):
 
         dx = float(punto["pose"]["x"]) - od.pose.pose.position.x
         dy = float(punto["pose"]["y"]) - od.pose.pose.position.y
-        if math.hypot(dx, dy) < TOLERANCIA_LLEGADA_M:
+        if math.hypot(dx, dy) < self.tolerancia_llegada_m:
             # Demasiado cerca: el rumbo de aproximacion es ruido.
             return yaml_yaw, "el robot ya esta sobre el punto"
 
@@ -663,11 +672,11 @@ class Coordinador(Node):
             return False, (
                 f"'{robot}' dijo SUCCEEDED pero no publica /odom, asi que "
                 f"la llegada no se puede verificar. No se acepta")
-        if d > TOLERANCIA_LLEGADA_M:
+        if d > self.tolerancia_llegada_m:
             return False, (
                 f"'{robot}' dijo SUCCEEDED pero /odom lo situa a "
                 f"{d:.3f} m del punto, por encima de los "
-                f"{TOLERANCIA_LLEGADA_M} m de tolerancia")
+                f"{self.tolerancia_llegada_m} m de tolerancia")
         self.get_logger().info(f"    llegada verificada contra /odom: {d:.3f} m")
         return True, ""
 

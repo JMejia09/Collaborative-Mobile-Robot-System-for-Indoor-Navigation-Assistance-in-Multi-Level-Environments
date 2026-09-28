@@ -188,7 +188,7 @@ Dos puntos que exceden esta acta y se llevan a los directores:
 ### 6.1 Resolución del 28 de septiembre de 2026
 
 Los autores trataron los dos puntos anteriores, y además la tolerancia de llegada, directamente con
-el director, Ing. Armando Mateus Rojas, y acordaron lo siguiente:
+el director, Ing. Armando Mateus Rojas. Los acuerdos fueron verbales y esta sección es su registro:
 
 1. Sitio de la etapa 3. Se mantiene D3: la etapa 3 se realiza en los pasillos reales del edificio,
    que son los que están modelados en la simulación. Si aparecen novedades, por ejemplo en la red

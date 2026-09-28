@@ -51,7 +51,13 @@ CANCELANDO = 8
 
 UMBRAL_MOVIMIENTO_MS = 0.02
 MUESTRAS_CONSECUTIVAS = 3
-TOLERANCIA_LLEGADA_M = 0.25   # la misma de coordinador.py y del §5 del protocolo
+# §3.3 del protocolo, por banco: 0.25 m en simulacion, el valor con el que corrio
+# la campana OE4, y 0.50 m en el banco fisico desde el 2026-09-28, por decision
+# del director (ACTA_GO_NOGO.md §6.1). Es la tabla de coordinacion/registrador.py,
+# donde el banco fisico se llama 'hardware'; prueba_componer_registro.py comprueba
+# que coinciden.
+TOLERANCIA_LLEGADA_M = 0.25
+TOLERANCIA_POR_BANCO = {"simulacion": TOLERANCIA_LLEGADA_M, "fisico": 0.50}
 
 # 1.1.0 el 2026-08-31: se anade veredicto.continuidad (RF-24). Sube la MENOR y
 # no la MAYOR porque el cambio es aditivo: un lector de 1.1.0 entiende los
@@ -191,7 +197,7 @@ def marcas_en_orden(marcas):
 
 
 def veredicto_de(marcas, estados, error_posicion_m, condicion, num_relevos,
-                 cancelada=False):
+                 cancelada=False, tolerancia_m=TOLERANCIA_LLEGADA_M):
     """Las tres condiciones del §3.3 del protocolo, por separado.
 
     Se guardan sueltas y no solo su AND porque si la tasa de exito sale baja hay
@@ -211,7 +217,7 @@ def veredicto_de(marcas, estados, error_posicion_m, condicion, num_relevos,
     describe como un fracaso lo unico que una cancelacion puede hacer. Anadido
     el 2026-09-14, despues de leer el motivo que produjo la primera corrida.
     """
-    c1 = None if error_posicion_m is None else error_posicion_m <= TOLERANCIA_LLEGADA_M
+    c1 = None if error_posicion_m is None else error_posicion_m <= tolerancia_m
     hubo_fallida = any(e == FALLIDA for _, e, _, _ in estados)
     c2 = marcas["t_completada"] is not None and not hubo_fallida
     c3 = (num_relevos == 1) if condicion == "B" else None
@@ -248,10 +254,10 @@ def veredicto_de(marcas, estados, error_posicion_m, condicion, num_relevos,
         if c1 is False:
             partes.append(
                 (f"regreso a {error_posicion_m:.3f} m del punto de "
-                 f"transferencia, fuera de {TOLERANCIA_LLEGADA_M} m")
+                 f"transferencia, fuera de {tolerancia_m} m")
                 if cancelada else
                 (f"llegada a {error_posicion_m:.3f} m, fuera de "
-                 f"{TOLERANCIA_LLEGADA_M} m"))
+                 f"{tolerancia_m} m"))
         if not c2:
             partes.append(
                 "cerro en FALLIDA, que es como cierra una cancelacion"
@@ -579,7 +585,8 @@ def componer(ruta_bag, banco, campana, error_posicion_m=None, rtf=None,
                 f"robot, y NO contra el destino pedido {destino}")
 
     veredicto = veredicto_de(marcas, estados, error_posicion_m, condicion,
-                             relevos, cancelada)
+                             relevos, cancelada,
+                             tolerancia_m=TOLERANCIA_POR_BANCO[banco])
     # RF-24 va DENTRO de veredicto pero FUERA del AND que decide el exito. Ver
     # continuidad_de(): es la variable de respuesta, no un criterio del §3.3.
     veredicto["continuidad"] = continuidad_de(estados, marcas, condicion)

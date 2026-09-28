@@ -233,7 +233,7 @@ las calcula.
 `exito` (bool) · `c1_posicion` · `c2_completada_sin_fallida` · `c3_relevo` (`null` en condición A) ·
 `motivo_fallo`
 
-- `c1_posicion` — `error_posicion_m ≤ 0,25 m`
+- `c1_posicion` — `error_posicion_m ≤ 0,25 m` en el banco `simulacion` y `≤ 0,50 m` en el banco `fisico`, desde el 2026-09-28 (enmienda del §3.3 del protocolo)
 - `c2_completada_sin_fallida` — la misión llegó a `COMPLETADA` sin pasar por `FALLIDA`
 - `c3_relevo` — en condición B, `num_relevos == 1`
 

@@ -222,8 +222,10 @@ Una misión es **exitosa** si y solo si se cumplen las tres:
 > la campaña de RF-27. La campaña en simulación conserva los 0,25 m, y sus resultados no cambian. La
 > decisión se tomó después de la navegación del 24 de septiembre, que se detuvo a 0,412 m de la meta,
 > y antes de las corridas que miden G-3; está registrada en el §6.1 de
-> [`ACTA_GO_NOGO.md`](ACTA_GO_NOGO.md). El coordinador y el registrador aplican todavía 0,25 m en el
-> código, así que la condición 2 no refleja la enmienda hasta que se ajusten.
+> [`ACTA_GO_NOGO.md`](ACTA_GO_NOGO.md). El coordinador aplica el umbral según su parámetro
+> `condicion` (`simulacion` o `hardware`) y `componer_registro.py` según `--banco` (`simulacion` o
+> `fisico`), así que las condiciones 1 y 2 usan el mismo valor. En los vehículos el coordinador se
+> lanza con `-p condicion:=hardware`.
 
 > **Qué comprueba realmente la condición 3, dicho desde el 2026-09-16.** `num_relevos` sale de
 > `res.num_relevos = relevos` en el coordinador, y ése es **lo que devolvió `planificar()`**, no lo
