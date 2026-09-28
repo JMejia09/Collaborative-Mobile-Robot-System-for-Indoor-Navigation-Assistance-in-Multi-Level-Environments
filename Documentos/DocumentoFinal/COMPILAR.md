@@ -1,5 +1,24 @@
 # Cómo compilar el documento final
 
+## El atajo: un solo comando
+
+```bash
+bash herramientas/armar_documento.sh --zip --pdf
+```
+
+Hace tres cosas de una vez:
+
+- **`DocumentoFinal_COMPLETO.tex`** — todo el documento en UN archivo, con los
+  capítulos ya insertados. Sirve para leerlo entero de una sentada, o para
+  pegarlo en Overleaf sin subir la carpeta. Cada bloque dice de qué archivo
+  viene: **si editas ahí, el cambio se pierde al regenerar**.
+- **`DocumentoFinal_overleaf.zip`** — la forma correcta de llevarlo a Overleaf:
+  *New Project → Upload Project → ese .zip*. Copiar y pegar `main.tex` a secas
+  **no funciona**, porque sus `\input` apuntan a archivos que allí no existen y
+  el documento sale vacío sin decir por qué.
+- **`main.pdf`** — compilado y verificado, con el número de páginas y los
+  errores si los hay.
+
 ## En este portátil (ya está instalado)
 
 ```bash

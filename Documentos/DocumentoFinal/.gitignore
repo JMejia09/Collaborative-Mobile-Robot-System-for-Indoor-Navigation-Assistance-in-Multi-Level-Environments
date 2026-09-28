@@ -13,4 +13,12 @@
 *.run.xml
 *.toc
 *.synctex.gz
-main.pdf
+# El .tex de una pieza y el .zip de Overleaf son GENERADOS: se rehacen con
+# 'bash herramientas/armar_documento.sh --zip'. Versionarlos daria conflictos
+# cada vez que dos personas tocan capitulos distintos.
+DocumentoFinal_COMPLETO.tex
+DocumentoFinal_overleaf.zip
+
+# El PDF SI se versiona, al contrario que los artefactos de arriba: es como se
+# ve el estado del documento sin compilar, y es la convencion que el repositorio
+# ya sigue con los entregables semanales.
