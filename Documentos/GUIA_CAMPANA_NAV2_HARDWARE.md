@@ -466,10 +466,10 @@ python3 herramientas/analizar_campana_nav2.py ~/tesis_evidencia/campana_c1/campa
 Sale una tabla por corrida y el resumen de G-2 y G-3, en Markdown, listo para pegar en el
 registro de evidencia. Las corridas **sin cinta no cuentan**, y la herramienta las nombra.
 
-> **La tolerancia de llegada no se toca aquí.** Es 0,25 m y está cuestionada desde los dos lados:
-> la campaña OE4 en simulación se quedó corta 0,28–0,35 m y la navegación del 24-sep se pasó
-> 0,412 m. Decidirla es de los directores, **antes** de correr y por escrito. El análisis acepta
-> `--tolerancia` para mostrar la sensibilidad, y cuando se usa lo dice en la primera línea.
+> **La tolerancia de llegada es 0,5 m** desde el 28-sep, por decisión del director Armando Mateus
+> ([`ACTA_GO_NOGO.md`](ACTA_GO_NOGO.md) §6.1), tomada antes de estas corridas. El análisis la usa por
+> defecto. `--tolerancia` sirve solo para mostrar la sensibilidad, y cuando se usa lo dice en la
+> primera línea.
 
 **5. Escribir el registro** en `Documentos/Evidencia/S25_campana_c1.md`: la tabla del análisis,
 una imagen por corrida del §6.3, las notas de papel y lo que **no** establece. Enlazarlo desde la
@@ -545,7 +545,6 @@ nombre equivocado.
 
 ## 10. Lo que esta guía no resuelve
 
-- **La tolerancia de llegada.** Es decisión de directores, antes de la campaña.
 - **Las esquinas.** El mapa es un tramo recto. Nadie ha mapeado ni navegado una esquina en el
   vehículo, y es lo que falta para que la navegación demostrada sea la del guiado real.
 - **El pasillo abierto.** Este tramo tiene cajas en los dos extremos, que es la geometría que da

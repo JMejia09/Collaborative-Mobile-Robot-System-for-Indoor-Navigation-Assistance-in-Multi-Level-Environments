@@ -18,7 +18,7 @@ lleva más riesgo.
 
 | Día | Bloque | Qué | Quién (propuesta) | ¿Carros? |
 |---|---|---|---|---|
-| **Lun 28** | **F** | Las tres decisiones a los directores, por escrito | Santiago | no |
+| Lun 28 | F | Hecho: las tres decisiones, acordadas con el director Armando Mateus (acta §6.1) | Santiago | no |
 | **Lun 28** | **A** | Aislar los dos carros: partición DDS en cada uno | Santiago y Jonny | **los dos** |
 | Lun 28 – mar 29 | **C** | La pila con espacio de nombres, en el escritorio | Santiago | no |
 | Lun 28 – mié 30 | **D** | Validar el modelo del edificio con cinta; red entre pisos | Jonny | uno, para la red |
@@ -122,17 +122,15 @@ tramo encajonado del piso 2, con `amss-ez9n`. Resumido:
 
 | Compuerta | Qué la cierra | Depende de |
 |---|---|---|
-| **G-2** | Las tres corridas con la razón `/odom` ÷ cinta dentro del ±10 % | nada: se puede correr aunque falte la tolerancia |
-| **G-3** | Llegada verificada contra `/odom` y cinta, dentro de la tolerancia | **la tolerancia escrita por los directores** (bloque F) |
+| **G-2** | Las tres corridas con la razón `/odom` ÷ cinta dentro del ±10 % | nada |
+| **G-3** | Llegada verificada contra `/odom` y cinta, a 0,5 m o menos de la meta | nada: la tolerancia se fijó el 28-sep (acta §6.1) |
 
-> **Si el martes no ha contestado nadie sobre la tolerancia, se corre igual y se analiza solo G-2.**
-> G-3 se analiza con los mismos datos cuando llegue la respuesta —los datos no cambian—, pero la
-> tolerancia **no se fija viendo los resultados**. Si el viernes sigue sin respuesta, G-3 se reporta
-> contra 0,25 m y se dice que la tolerancia estaba pendiente.
+> La tolerancia de 0,5 m la fijó el director el 28-sep, antes de estas corridas, y
+> `analizar_campana_nav2.py` ya la usa por defecto. No se cambia viendo los resultados.
 
-> **El riesgo de G-3 es real.** Con la escala en 0,9, la navegación del 24-sep se pasó 0,412 m. Ir
-> a 0,68 **debería** reducir el error, y es lo que se mide. Si con 0,68 tampoco entra en 0,25, el
-> resultado es el hallazgo y se lleva a los directores con el mecanismo medido.
+> Con la escala en 0,9, la navegación del 24-sep paró a 0,412 m de la meta, dentro de 0,5 m. Con 0,68
+> el error debería bajar, y es lo que se mide. Si alguna corrida pasa de 0,5 m, se reporta con su
+> causa.
 
 ---
 
@@ -220,42 +218,23 @@ teléfono llega a él por `rosbridge`.
 E3 es el **ensayo general de G-5 sin el relevo**. Depende de C2: si el miércoles no se cerró, E pasa
 al lunes 5.
 
+> **Antes del jueves:** el coordinador acepta la llegada con 0,25 m, fijo en el código
+> (`TOLERANCIA_LLEGADA_M` en `coordinador.py` y en `registrador.py`, y una prueba que exige ese
+> valor). Con la tolerancia nueva de 0,5 m, una misión que pare entre 0,25 y 0,5 m se cerraría como
+> `FALLIDA`. Hay que decidir cómo se cambia antes de E3.
+
 ---
 
-## 6. Bloque F — lo que decide otro, y cuándo (lunes por la mañana)
+## 6. Bloque F — decisiones del director (resuelto el lunes 28)
 
-El acta tiene **dos decisiones que no son de los autores** (§6) y la campaña añade una. Y la casilla
-«comunicada a los directores el» del acta **está vacía**: el acta nunca se les ha enviado.
+Los tres puntos se trataron directamente con el director, Armando Mateus, el 28-sep, en lugar de
+enviar el mensaje escrito. Lo acordado quedó en el §6.1 de [`ACTA_GO_NOGO.md`](ACTA_GO_NOGO.md):
 
-| # | Decisión | Por qué no puede esperar |
+| # | Decisión | Lo acordado |
 |---|---|---|
-| 1 | **El sitio de la etapa 3** | El acta dice textualmente que *no se corre nada de la etapa 3 hasta que esto esté por escrito*. El sistema real con relevo entre pisos **es** la etapa 3 (S26) |
-| 2 | **N = 5 o N = 10 en RF-27** | Fija cuántas misiones hay que meter en S27 |
-| 3 | **La tolerancia de llegada** | G-3 se mide el martes; si se fija después de ver resultados, los resultados dejan de valer |
-
-**Borrador del mensaje**, para enviarlo el lunes con el acta adjunta:
-
-> Buenos días. Les enviamos el acta de decisión GO/NO-GO de la demostración física, que resolvimos el
-> 21 de septiembre como GO pleno con seis compuertas y fechas de reversión. Dos de sus compuertas ya
-> están alcanzadas, y el 24 de septiembre Nav2 navegó por primera vez uno de los vehículos reales de
-> forma autónoma.
->
-> Necesitamos su decisión por escrito sobre tres puntos antes de seguir, y por eso se los pedimos
-> ahora:
->
-> 1. **El sitio de la etapa 3.** El pasillo real no da a la odometría láser la información que
->    necesita para construir el mapa recorriéndolo (medido: 5,1 % y 5,9 %). Sí se puede navegar con un
->    mapa conocido. Proponemos navegar el edificio sobre el mapa del modelo, validado antes con
->    flexómetro.
-> 2. **N = 5 o N = 10 misiones en la demostración física.** La norma ASTM F3244-21 respalda
->    numéricamente 10 y no 5.
-> 3. **La tolerancia de llegada.** Hoy es 0,25 m. En simulación el vehículo se queda corto entre
->    0,28 y 0,35 m, y en el vehículo real se pasó 0,41 m, por un mecanismo medido: por debajo de
->    0,40 m/s el motor no arranca, así que se aproxima a la meta sin poder frenar antes. Queremos
->    fijarla antes de medir, no después.
->
-> La compuerta de navegación de un vehículo tiene corte el viernes 2 de octubre, así que nos ayudaría
-> mucho tener su respuesta al punto 3 antes del martes 29.
+| 1 | Sitio de la etapa 3 | Se mantienen los pasillos reales del edificio, los mismos de la simulación. Si aparecen novedades, por ejemplo en la red entre pisos, se ven cambios y adaptaciones con él |
+| 2 | N de RF-27 | Sin número fijo: se elige según cómo salgan las primeras corridas del sistema completo |
+| 3 | Tolerancia de llegada | 0,5 m en los vehículos reales; la simulación conserva 0,25 m. Enmienda en el §3.3 de [`PROTOCOLO_EXPERIMENTAL.md`](PROTOCOLO_EXPERIMENTAL.md) |
 
 ---
 
@@ -275,7 +254,7 @@ El acta tiene **dos decisiones que no son de los autores** (§6) y la campaña a
 | Semana | Qué | Corte |
 |---|---|---|
 | **S26 · 5–9 oct** | **G-5: una misión completa desde el teléfono, con relevo entre pisos, sobre los dos carros.** Es el sistema real. Primera esquina navegada en hardware, si la ruta la tiene | **C-2, vie 9**: G-4, ya alcanzada. Decidir ese día, a más tardar, el repliegue a un solo carro si hiciera falta |
-| **S27 · 12–16 oct** | **G-6 / RF-27: entre 5 y 10 misiones** —según decidan los directores— con registro, y el vídeo de la demostración | **C-3, vie 16**: se cierra la toma de datos, pase lo que pase |
+| **S27 · 12–16 oct** | **G-6 / RF-27:** las misiones que se fijen tras las primeras corridas del sistema completo (acta §6.1), con registro, y el vídeo de la demostración | **C-3, vie 16**: se cierra la toma de datos, pase lo que pase |
 | S28 | Sustentación | — |
 
 ---
@@ -285,8 +264,7 @@ El acta tiene **dos decisiones que no son de los autores** (§6) y la campaña a
 | Riesgo | Señal | Qué se hace |
 |---|---|---|
 | **La partición no funciona en Jazzy** | A1 no da `PASA` | Plan B del diseño (§7): LiDAR y servos fuera de `deepracer-core`. Retrasa C3 y E; G-2 y G-3 no se ven afectadas, que son de un carro |
-| **No hay respuesta sobre la tolerancia** | martes sin respuesta | G-2 se cierra igual; G-3 se analiza cuando llegue, sin mirar antes (§2) |
-| **G-3 no entra en la tolerancia** | el error por cinta pasa del límite | Es un resultado, con mecanismo medido; va a los directores. Si el acta obliga a revertir, se revierte |
+| **G-3 no entra en 0,5 m** | el error por cinta pasa de 0,5 m | Es un resultado, con mecanismo medido; va al director. Si el acta obliga a revertir, se revierte |
 | **La red no llega de un piso a otro** | D2 no da `CUMPLE` | Es lo más grave para S26: sin red entre pisos no hay relevo. Llevarlo a los directores con el sitio (F1) |
 | **Batería o disponibilidad de los carros** | un carro no enciende o cae | Los dos cargados el domingo por la noche; el jueves tiene holgura |
 | **Algo se lanza sin el perfil** | un proceso no ve el láser y no avisa | Los scripts lo cargan solos; a mano, el `export` del recuadro de A2 |

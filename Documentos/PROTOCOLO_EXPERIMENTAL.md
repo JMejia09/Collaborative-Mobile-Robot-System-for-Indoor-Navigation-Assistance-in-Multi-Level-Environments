@@ -217,6 +217,14 @@ Una misión es **exitosa** si y solo si se cumplen las tres:
 2. La misión llegó a `etapa = COMPLETADA` sin pasar por `FALLIDA`.
 3. En una misión entre niveles, hubo relevo: `num_relevos = 1`.
 
+> **Enmienda del 2026-09-28 para las pruebas con los vehículos reales.** El director, Ing. Armando
+> Mateus Rojas, fijó el umbral de la condición 1 en 0,5 m para la etapa física: la compuerta G-3 y
+> la campaña de RF-27. La campaña en simulación conserva los 0,25 m, y sus resultados no cambian. La
+> decisión se tomó después de la navegación del 24 de septiembre, que se detuvo a 0,412 m de la meta,
+> y antes de las corridas que miden G-3; está registrada en el §6.1 de
+> [`ACTA_GO_NOGO.md`](ACTA_GO_NOGO.md). El coordinador y el registrador aplican todavía 0,25 m en el
+> código, así que la condición 2 no refleja la enmienda hasta que se ajusten.
+
 > **Qué comprueba realmente la condición 3, dicho desde el 2026-09-16.** `num_relevos` sale de
 > `res.num_relevos = relevos` en el coordinador, y ése es **lo que devolvió `planificar()`**, no lo
 > que hizo el sistema. Con dos pisos, un par entre niveles siempre planifica exactamente un relevo.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Saca G-2 y G-3 de una sesion de corridas del vehiculo real.
 
-    analizar_campana_nav2.py <campana.csv> [--tolerancia 0.25] [--minimo 5.0]
+    analizar_campana_nav2.py <campana.csv> [--tolerancia 0.5] [--minimo 5.0]
 
 El CSV es el que escribe corrida_nav2.py, una fila por corrida, CON LAS TRES
 COLUMNAS CINTA_* RELLENADAS A MANO con lo medido con flexometro. Corre en el
@@ -25,13 +25,14 @@ RF-27 NO SE CALCULA AQUI. Pide que la demostracion fisica ejecute el protocolo
     corrida de un solo vehiculo en recta no lo es. Una version anterior de esta
     herramienta informaba «N con cinta» como si fuera el N de RF-27; era falso.
 
-LO QUE NO HACE
---------------
-No cambia el criterio. La tolerancia de 0,25 m esta cuestionada -la navegacion
-del 24-sep se paso 0,412 m por la banda muerta, y la campana OE4 se quedo
-corta 0,28-0,35 m-, y decidirla es de los directores, antes de correr y por
-escrito. '--tolerancia' existe para poder mostrar la sensibilidad, no para
-elegir la que salga bien. Si se usa otra, el informe lo dice en la cabecera.
+LA TOLERANCIA
+-------------
+0,5 m en los vehiculos reales, por decision del director Armando Mateus del
+2026-09-28 (ACTA_GO_NOGO.md §6.1 y enmienda del §3.3 de
+PROTOCOLO_EXPERIMENTAL.md), tomada antes de las corridas de G-3. La campana en
+simulacion conserva 0,25 m. '--tolerancia' existe para mostrar la
+sensibilidad, no para elegir la que salga bien. Si se usa otra, el informe lo
+dice en la cabecera.
 """
 import argparse
 import csv
@@ -39,7 +40,7 @@ import math
 import statistics
 import sys
 
-TOLERANCIA_ACTA = 0.25
+TOLERANCIA_ACTA = 0.5    # ACTA_GO_NOGO.md §6.1, 2026-09-28; la simulacion sigue en 0.25
 
 
 def numero(texto):
@@ -51,7 +52,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[1])
     ap.add_argument('csv')
     ap.add_argument('--tolerancia', type=float, default=TOLERANCIA_ACTA,
-                    help='tolerancia de llegada en m (la del acta: 0,25)')
+                    help='tolerancia de llegada en m (la del acta: 0,5)')
     ap.add_argument('--minimo', type=float, default=5.0,
                     help='recorrido minimo para G-2, en m (el del acta: 5,0)')
     a = ap.parse_args()

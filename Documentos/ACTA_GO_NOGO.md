@@ -185,13 +185,35 @@ Dos puntos que exceden esta acta y se llevan a los directores:
 2. **N = 5 o N = 10 en RF-27.** D1 deja el rango abierto. ASTM F3244-21 respalda numéricamente el 10
    —cero fallos en 10 repeticiones dan 80 % de fiabilidad con 85 % de confianza— y no respalda el 5.
 
+### 6.1 Resolución del 28 de septiembre de 2026
+
+Los autores trataron los dos puntos anteriores, y además la tolerancia de llegada, directamente con
+el director, Ing. Armando Mateus Rojas, y acordaron lo siguiente:
+
+1. Sitio de la etapa 3. Se mantiene D3: la etapa 3 se realiza en los pasillos reales del edificio,
+   que son los que están modelados en la simulación. Si aparecen novedades, por ejemplo en la red
+   entre los pisos, se evaluarán con el director los cambios y adaptaciones necesarios. Con esto, el
+   sitio de G-2 es el pasillo real; las corridas de G-2 y G-3 se hacen en un tramo del pasillo del
+   piso 2.
+2. Número de repeticiones de RF-27. No se fija un número por adelantado. Se elegirá según los
+   resultados de las primeras corridas con el sistema completo.
+3. Tolerancia de llegada. Para las pruebas con los vehículos reales, la tolerancia pasa de 0,25 m a
+   0,5 m. El director indicó que los 0,25 m se estimaron en el levantamiento de requisitos y que
+   llevar el sistema a los vehículos reales puede exigir modificaciones. La campaña en simulación
+   conserva los 0,25 m, y sus resultados no cambian.
+
+El punto 3 modifica un criterio del §4 después de conocer un resultado: la navegación del 24 de
+septiembre se detuvo a 0,412 m de la meta. Lo decide el director, no los autores, y queda escrito
+antes de las corridas que miden G-3. El texto del §4 se conserva como se escribió. Cualquier cambio
+posterior de estos valores se registrará en esta sección, con su fecha.
+
 ## 7. Firmas
 
 | | Nombre | Fecha |
 |---|---|---|
 | Autor | Santiago Hernández Ávila | |
 | Autor | Jonny Mejía | |
-| Comunicada a los directores el | | |
+| Comunicada a los directores el | Ing. Armando Mateus Rojas, en conversación directa (§6.1) | 2026-09-28 |
 
 ## 8. Trazabilidad
 
