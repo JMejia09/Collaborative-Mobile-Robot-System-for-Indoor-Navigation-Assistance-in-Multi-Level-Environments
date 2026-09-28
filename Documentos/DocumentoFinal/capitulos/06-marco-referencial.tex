@@ -1,189 +1,178 @@
 % =====================================================================
 %  MARCO REFERENCIAL
 %
-%  Los §2.1 y §2.2 se trasvasan del informe de avance del marco teórico
-%  (Documentos/Entregables/Actualizacion_Marco_Teorico_Conceptual.tex),
-%  adaptados a la jerarquía de capítulo/sección/subsección del documento final.
+%  Los §2.1 y §2.2 vienen del informe de avance del marco teórico
+%  (Documentos/Entregables/Actualizacion_Marco_Teorico_Conceptual.tex).
+%  Los §2.3 y §2.4 son contenido nuevo.
 %
-%  Los §2.3 y §2.4 son contenido nuevo: no existían en ningún documento del
-%  proyecto. Llevan marcados en comentarios los puntos que hay que VERIFICAR
-%  antes de entregar; no se afirma nada normativo que no esté comprobado.
+%  REGISTRO: escrito para lectura de pregrado. Frases cortas, voz activa,
+%  una idea por frase. Al naturalizarlo (2026-09-28) la mediana bajó de 22 a
+%  ~15 palabras. Si se añade texto, mantener ese registro: nada de frases de
+%  40 palabras con tres subordinadas.
 % =====================================================================
 \chapter{Marco referencial}
 
-Este capítulo reúne el vocabulario técnico, los fundamentos teóricos y el
-encuadre normativo y ambiental con que opera el proyecto. Se organiza en cuatro
-marcos. El conceptual fija el significado de los términos que el resto del
-documento usa sin volver a definirlos. El teórico expone las decisiones de
-arquitectura y sus fundamentos, incluidas aquellas que la implementación obligó
-a revisar. El legal sitúa el trabajo frente a la normativa aplicable, y el
-ambiental frente a las consideraciones de consumo y ciclo de vida del hardware
-empleado.
+Este capítulo reúne cuatro marcos. El conceptual fija qué significa cada término
+técnico del documento. El teórico explica las decisiones de arquitectura y por
+qué se tomaron. El legal sitúa el trabajo frente a la normativa que le aplica.
+El ambiental recoge las consideraciones de consumo y de ciclo de vida del
+hardware.
 
 % =====================================================================
 \section{Marco conceptual}
 % =====================================================================
 
-Se definen a continuación los términos técnicos necesarios para la lectura del
-documento, considerando un público con formación en ingeniería electrónica.
-La organización en seis categorías se conserva del anteproyecto; dentro de cada
-una, los términos que la implementación introdujo se añaden a los ya definidos.
+Aquí se definen los términos necesarios para leer el resto del documento. El
+lector supuesto tiene formación en ingeniería electrónica. Las seis categorías
+son las del anteproyecto. Dentro de cada una se añaden los términos que
+aparecieron durante la implementación.
 
 \subsection{Navegación y percepción}
 
 \begin{description}[style=nextline,leftmargin=1.5em]
-  \item[Navegación autónoma] Desplazamiento sin intervención humana que integra
+  \item[Navegación autónoma] Desplazamiento sin intervención humana. Integra
     percepción, localización y control.
-  \item[Odometría] Estimación de posición por integración de mediciones de
-    actuadores o de sensores exteroceptivos.
-  \item[Zona de transición] Punto crítico para el cambio de nivel en
-    edificaciones con múltiples pisos.
-  \item[Mapa de costos (\textit{costmap})] Representación del entorno usada para
-    la planificación, que asigna a cada celda un costo de tránsito en lugar de un
-    simple estado libre u ocupado. Existe una capa global, que cubre el mapa
-    completo, y una local, limitada al entorno inmediato del robot.
+  \item[Odometría] Estimación de la posición a partir de mediciones propias del
+    robot, sean de sus actuadores o de sus sensores.
+  \item[Zona de transición] Punto donde se cambia de nivel en un edificio de
+    varios pisos.
+  \item[Mapa de costos (\textit{costmap})] Representación del entorno que asigna
+    a cada celda un costo de tránsito, en lugar de marcarla solo como libre u
+    ocupada. Hay una capa global, que cubre todo el mapa, y una local, limitada
+    al entorno inmediato del robot.
   \item[AMCL (\textit{Adaptive Monte Carlo Localization})] Algoritmo de
-    localización basado en un filtro de partículas que estima la posición y
-    orientación del robot combinando la odometría con las lecturas del sensor
-    láser contra un mapa conocido.
+    localización por filtro de partículas. Combina la odometría con las lecturas
+    del láser para situar al robot en un mapa conocido.
   \item[Verificador de meta (\textit{goal checker})] Componente que decide si el
-    robot alcanzó su objetivo, comparando posición y, opcionalmente, orientación
+    robot llegó a su destino. Compara la posición, y a veces la orientación,
     contra una tolerancia.
-  \item[Observabilidad de un estado] Propiedad de una variable física de poder
-    estimarse a partir de las mediciones disponibles. Una variable puede ser
-    matemáticamente inobservable en una configuración concreta de entorno y
-    sensor, sin que exista error de calibración que lo corrija.
+  \item[Observabilidad de un estado] Propiedad de una variable física que permite
+    estimarla a partir de las mediciones disponibles. Una variable puede ser
+    inobservable en cierta combinación de entorno y sensor. En ese caso, ningún
+    ajuste de parámetros la recupera.
   \item[Modelo de movimiento Reeds-Shepp] Conjunto de trayectorias óptimas para
-    un vehículo con curvatura acotada que puede moverse hacia adelante y hacia
-    atrás, usado por el planificador híbrido para generar maniobras de inversión
-    de marcha.
-  \item[Cúspide] Punto de una trayectoria planificada en el que el vehículo
-    invierte el sentido de marcha.
+    un vehículo que gira con radio mínimo y puede ir hacia adelante y hacia
+    atrás.
+  \item[Cúspide] Punto de una trayectoria donde el vehículo invierte el sentido
+    de la marcha.
 \end{description}
 
 \subsection{Control y locomoción}
 
 \begin{description}[style=nextline,leftmargin=1.5em]
-  \item[Cinemática de robots móviles] Modelo matemático del movimiento en
-    función de las velocidades de los actuadores.
-  \item[Modelo cinemático tipo automóvil (dirección Ackermann)] Representación
-    geométrica y matemática de un vehículo de cuatro ruedas con dirección en el
-    eje delantero, como la plataforma empleada. Relaciona el ángulo de giro del
-    servomotor con el radio de giro del vehículo, asegurando que las ruedas
-    interior y exterior giren en torno a un mismo centro instantáneo de rotación.
+  \item[Cinemática de robots móviles] Modelo matemático del movimiento en función
+    de las velocidades de los actuadores.
+  \item[Modelo cinemático tipo automóvil (dirección Ackermann)] Modelo de un
+    vehículo de cuatro ruedas que dirige con el eje delantero. Relaciona el
+    ángulo del servomotor con el radio de giro. Las ruedas interior y exterior
+    giran en torno al mismo centro instantáneo de rotación, de modo que no
+    derrapan.
   \item[PWM (\textit{Pulse Width Modulation})] Técnica para controlar motores o
-    servomotores mediante el ciclo de trabajo de una señal.
+    servomotores variando el ciclo de trabajo de una señal.
   \item[Control PID] Algoritmo de control por retroalimentación
     proporcional-integral-derivativo.
   \item[Planificador híbrido A* (\textit{Smac Hybrid-A*})] Algoritmo de búsqueda
-    de rutas que opera sobre el espacio continuo de posición y orientación,
-    respetando las restricciones cinemáticas del vehículo, a diferencia de un
-    planificador de cuadrícula que ignora la orientación.
-  \item[Controlador de seguimiento regulado (\textit{Regulated Pure Pursuit})]
-    Algoritmo de control que persigue un punto móvil sobre la trayectoria
-    planificada, regulando su velocidad según la curvatura y la proximidad a
-    obstáculos.
-  \item[Banda muerta de tracción] Intervalo de velocidades comandadas por debajo
-    del cual el vehículo no llega a moverse, porque la señal resultante no vence
-    el rozamiento estático.
+    de rutas que trabaja sobre posición y orientación a la vez. Respeta las
+    restricciones cinemáticas del vehículo, cosa que un planificador de
+    cuadrícula no hace porque ignora la orientación.
+  \item[Controlador de persecución pura regulada] Algoritmo que persigue un punto
+    móvil sobre la trayectoria planificada. Regula la velocidad según la
+    curvatura y la cercanía de obstáculos.
+  \item[Banda muerta de tracción] Rango de velocidades comandadas en el que el
+    vehículo no llega a moverse. La señal que resulta no vence el rozamiento
+    estático.
 \end{description}
 
 \subsection{Comunicación y sistemas distribuidos}
 
 \begin{description}[style=nextline,leftmargin=1.5em]
-  \item[Middleware robótico] Capa de software para la comunicación entre módulos
-    del sistema.
+  \item[Middleware robótico] Capa de software que comunica los módulos del
+    sistema entre sí.
   \item[ROS (\textit{Robot Operating System})] Middleware con nodos, tópicos de
     publicación y suscripción, servicios de petición y respuesta, y acciones
     \cite{macenski2022ros2}.
-  \item[DDS (\textit{Data Distribution Service})] Protocolo de transporte de
-    publicación y suscripción sobre el que ROS 2 implementa sus tópicos,
-    servicios y acciones, con descubrimiento automático de participantes.
-  \item[Dominio ROS] Identificador numérico que segmenta el descubrimiento DDS.
-    Dos procesos con distinto dominio no se ven entre sí salvo configuración
-    explícita.
-  \item[Espacio de nombres (\textit{namespace})] Prefijo aplicado a los tópicos,
-    servicios y acciones de un nodo, usado en este trabajo para aislar a cada
-    agente dentro de un mismo dominio DDS.
-  \item[Acción ROS] Patrón de comunicación asíncrona para tareas de larga
-    duración, compuesto por un objetivo, retroalimentación periódica y un
-    resultado final, con posibilidad explícita de cancelación.
-  \item[Servidor y cliente de acción] Nodo que ofrece una acción y nodo que la
-    invoca. En este sistema el coordinador es cliente de la acción de navegación
-    ante cada agente y servidor de la acción de guiado ante la interfaz.
+  \item[DDS (\textit{Data Distribution Service})] Protocolo de transporte sobre
+    el que ROS 2 implementa sus tópicos, servicios y acciones. Descubre solo los
+    participantes de la red.
+  \item[Dominio ROS] Número que segmenta el descubrimiento DDS. Dos procesos con
+    dominio distinto no se ven entre sí, salvo que se configure aparte.
+  \item[Espacio de nombres (\textit{namespace})] Prefijo que se antepone a los
+    tópicos, servicios y acciones de un nodo. En este trabajo separa a los dos
+    agentes dentro de un mismo dominio.
+  \item[Acción ROS] Patrón de comunicación para tareas largas. Tiene un objetivo,
+    retroalimentación periódica y un resultado final, y se puede cancelar.
+  \item[Servidor y cliente de acción] El nodo que ofrece la acción y el que la
+    invoca. Aquí el coordinador es cliente ante cada agente y servidor ante la
+    interfaz.
   \item[Callback de cancelación] Función que un servidor de acción debe registrar
-    explícitamente para poder aceptar solicitudes de cancelación; sin ella, el
-    comportamiento por omisión es rechazarlas.
-  \item[Calidad de servicio (QoS)] Conjunto de políticas de entrega de un tópico
-    o servicio, configurable de forma independiente para cada canal.
+    para poder aceptar cancelaciones. Si no la registra, las rechaza todas.
+  \item[Calidad de servicio (QoS)] Políticas de entrega de un tópico o servicio.
+    Se configuran por separado en cada canal.
   \item[Puente \textit{rosbridge}] Servidor que traduce entre el protocolo nativo
-    de ROS 2 y un protocolo JSON sobre WebSocket, permitiendo que un cliente web
-    sin dependencias de ROS publique, se suscriba y opere acciones.
+    de ROS 2 y JSON sobre WebSocket. Permite que una página web opere el sistema
+    sin instalar ROS.
 \end{description}
 
 \subsection{Arquitectura del sistema}
 
 \begin{description}[style=nextline,leftmargin=1.5em]
-  \item[Asignación de tareas] Distribución de actividades entre robots según su
-    disponibilidad y ubicación \cite{gerkey2004taxonomy}.
-  \item[Protocolo de relevo] Transferencia secuencial de responsabilidad entre
-    agentes en puntos definidos.
-  \item[Máquina de estados de misión] Conjunto de valores discretos y ordenados
-    que describen el progreso de una misión, publicados para que tanto la
-    interfaz como el registro de evaluación conozcan el punto de ejecución.
-  \item[Planificador puro] Componente que calcula la secuencia de tramos de una
-    misión a partir del catálogo de puntos y del par origen-destino, sin depender
-    del middleware ni de ningún estado externo, lo que permite verificarlo con
+  \item[Asignación de tareas] Reparto de actividades entre robots según su
+    disponibilidad y su ubicación \cite{gerkey2004taxonomy}.
+  \item[Protocolo de relevo] Traspaso de responsabilidad de un agente a otro en
+    puntos definidos.
+  \item[Máquina de estados de misión] Conjunto de valores ordenados que describen
+    en qué punto va una misión. Se publican para que la interfaz y el registro de
+    evaluación lo sepan.
+  \item[Planificador puro] Componente que calcula los tramos de una misión a
+    partir del catálogo de puntos y del par origen-destino. No depende del
+    middleware ni de ningún estado externo, así que se puede verificar con
     cientos de casos en milisegundos y sin simulador.
-  \item[Punto de transferencia] Punto de interés marcado en el catálogo como el
-    lugar físico, típicamente una escalera, en el que un agente entrega y otro
-    recibe la continuidad del guiado al cambiar de nivel.
-  \item[Registro de misión] Documento estructurado, compuesto a partir de la
-    grabación de la misión y validado contra un esquema formal, que constituye la
-    evidencia primaria de una ejecución para efectos de la evaluación
-    experimental.
+  \item[Punto de transferencia] Lugar físico, normalmente una escalera, donde un
+    agente entrega el guiado y otro lo recibe.
+  \item[Registro de misión] Documento estructurado que se compone a partir de la
+    grabación de una misión y se valida contra un esquema. Es la evidencia
+    primaria de cada ejecución.
 \end{description}
 
 \subsection{Interacción humano-robot}
 
 \begin{description}[style=nextline,leftmargin=1.5em]
-  \item[Interfaz gráfica de usuario (GUI)] Entorno visual para la interacción
-    humano-máquina.
-  \item[HRI (\textit{Human-Robot Interaction})] Diseño y evaluación de sistemas
-    robóticos destinados a interactuar con personas \cite{jimenez2024arquitectura}.
-  \item[Solicitud de servicio] Petición de un usuario para recibir asistencia de
-    guiado.
-  \item[Interfaz responsiva de selección] Componente que permite ubicar un punto
-    de interés por nombre mediante búsqueda incremental, sin perder la capacidad
-    de mostrar el catálogo completo.
-  \item[Retroalimentación literal] Principio de diseño según el cual el texto
-    mostrado al usuario se redacta íntegramente en el componente que conoce el
-    estado del sistema y se presenta sin reinterpretación en la interfaz.
+  \item[Interfaz gráfica de usuario (GUI)] Entorno visual de interacción entre
+    la persona y la máquina.
+  \item[HRI (\textit{Human-Robot Interaction})] Campo que estudia el diseño y la
+    evaluación de sistemas robóticos pensados para interactuar con personas
+    \cite{jimenez2024arquitectura}.
+  \item[Solicitud de servicio] Petición del usuario para recibir guiado.
+  \item[Interfaz responsiva de selección] Componente que permite buscar un
+    destino escribiendo su nombre, sin perder la opción de ver el catálogo
+    completo.
+  \item[Retroalimentación literal] Principio de diseño: el texto que ve el
+    usuario lo redacta el componente que conoce el estado del sistema, y la
+    interfaz lo muestra tal cual.
 \end{description}
 
 \subsection{Métricas de evaluación}
 
 \begin{description}[style=nextline,leftmargin=1.5em]
-  \item[Tiempo de respuesta] Intervalo entre la solicitud del usuario y el inicio
-    de la tarea por el robot.
-  \item[Tiempo de asignación] Intervalo entre la aceptación de la solicitud y la
-    designación del agente que la atenderá.
-  \item[Tasa de éxito] Proporción de solicitudes completadas exitosamente.
-  \item[Continuidad de servicio] Capacidad de mantener la asistencia durante las
-    transiciones entre niveles.
+  \item[Tiempo de respuesta] Lo que pasa entre la solicitud del usuario y el
+    momento en que el robot arranca la tarea.
+  \item[Tiempo de asignación] Lo que pasa entre aceptar la solicitud y designar
+    qué agente la atiende.
+  \item[Tasa de éxito] Proporción de solicitudes que terminan bien.
+  \item[Continuidad de servicio] Capacidad de mantener la asistencia mientras el
+    usuario cambia de nivel.
   \item[Intervalo de confianza de Wilson] Método para estimar el intervalo de
-    confianza de una proporción, más confiable que la aproximación normal cuando
-    el tamaño de muestra es pequeño o la proporción se acerca a 0 o a 1.
-  \item[Falsabilidad de un criterio experimental] Propiedad de un criterio de
-    aceptación de poder, en principio, arrojar un resultado negativo bajo alguna
-    ejecución posible del sistema. Un criterio que no puede fallar no aporta
-    evidencia, sin importar cuántas veces se verifique satisfactoriamente.
-  \item[Invariante estructural] Propiedad que se cumple siempre por el propio
-    diseño del sistema, y que por tanto no debe presentarse como un resultado
-    experimental medido, sino declararse como tal.
+    confianza de una proporción. Es más fiable que la aproximación normal cuando
+    la muestra es pequeña o la proporción se acerca a 0 o a 1.
+  \item[Falsabilidad de un criterio] Propiedad de un criterio de aceptación que
+    permite, al menos en principio, que alguna ejecución del sistema lo
+    incumpla. Un criterio que no puede fallar no aporta evidencia, por muchas
+    veces que se verifique.
+  \item[Invariante estructural] Propiedad que se cumple siempre por el diseño del
+    sistema. No es un resultado experimental y no debe presentarse como tal.
   \item[Cota superior por misión] Forma de reportar una métrica cuando el
-    instrumento de medición no tiene resolución suficiente para dar un valor
-    exacto, reportando el límite superior que sí puede garantizar.
+    instrumento no tiene resolución para dar el valor exacto. Se informa el
+    límite que sí se puede garantizar.
 \end{description}
 
 % =====================================================================
@@ -192,257 +181,240 @@ una, los términos que la implementación introdujo se añaden a los ya definido
 
 \subsection{Robot móvil, sistema multi-robot y navegación}
 
-El sistema es un conjunto de dos robots móviles terrestres que operan como
-agentes colaborativos, cada uno dedicado a un nivel del edificio, y que en
-conjunto conforman un sistema multi-robot \cite{varghese2023multirobot}. La tarea
-que ejecutan, guiar a una persona desde un punto de origen hasta un destino con
-selección de la tarea a través de una interfaz móvil, constituye interacción
-humano-robot \cite{jimenez2024arquitectura}.
+El sistema lo forman dos robots móviles terrestres. Cada uno atiende un nivel del
+edificio y los dos colaboran, de modo que juntos constituyen un sistema
+multi-robot \cite{varghese2023multirobot}. La tarea que ejecutan es guiar a una
+persona desde un origen hasta un destino, y esa persona elige el destino en una
+interfaz móvil. Eso convierte al sistema en un caso de interacción humano-robot
+\cite{jimenez2024arquitectura}.
 
-La navegación de cada agente se apoya en tres pilares: la localización, que
-determina la posición y orientación del robot respecto al entorno; la
-planificación de trayectorias, que calcula una ruta factible respetando las
-restricciones físicas del vehículo; y el control de movimiento, que genera las
-señales necesarias para ejecutar esa ruta. Los tres se alimentan de percepción
-continua del entorno, provista por un sensor láser de barrido plano.
+La navegación de cada agente se apoya en tres pilares. La localización determina
+dónde está el robot y hacia dónde mira. La planificación de trayectorias calcula
+una ruta que el vehículo pueda ejecutar. El control de movimiento genera las
+señales que la recorren. Los tres se alimentan de la percepción del entorno, que
+aquí aporta un sensor láser de barrido plano.
 
 \subsection{ROS 2 como capa de integración, en dos distribuciones}
 
-El sistema usa ROS 2 \cite{macenski2022ros2} como middleware de comunicación
-entre todos sus componentes, en dos distribuciones simultáneas: una en la
-simulación, porque el paquete de integración físico-simulada no está liberado
-sobre distribuciones posteriores, y otra en los vehículos físicos, determinada
-por la versión del sistema operativo que soportan sus tarjetas.
+Todos los componentes se comunican mediante ROS 2 \cite{macenski2022ros2}. El
+sistema usa dos distribuciones a la vez. La simulación corre sobre una porque el
+paquete que integra física y simulación no está liberado para versiones
+posteriores. Los vehículos corren sobre otra, la que soporta el sistema operativo
+de sus tarjetas.
 
-Esto fija una restricción que gobierna buena parte de la arquitectura: el tipo de
-mensaje que constituye la única vía de mando del contrato de interfaces tiene
-definición distinta entre ambas distribuciones, de modo que un coordinador
-compilado en una no puede mandar directamente a un agente compilado en la otra.
-\textbf{La compatibilidad de código fuente entre distribuciones de ROS 2 no
-implica compatibilidad de mensajes en tiempo de ejecución}, y esa distinción no
-aparece enunciada en la documentación de alto nivel del middleware. La mitigación
-adoptada mantiene una variante de configuración por distribución, derivada de una
-base común.
+Esa convivencia impone una restricción que condiciona toda la arquitectura. El
+tipo de mensaje con que el coordinador manda a los agentes está definido de forma
+distinta en cada distribución. Un coordinador compilado en una no puede, por
+tanto, mandar a un agente compilado en la otra. Dicho de otro modo: que el código
+fuente sea portable entre distribuciones no significa que los mensajes sean
+compatibles al ejecutarse. La documentación general del middleware no advierte
+esa diferencia. Para sortearla, el proyecto mantiene una variante de
+configuración por distribución, derivada de una base común.
 
-Sobre esa capa, la arquitectura de coordinación es centralizada: un único nodo
-coordinador actúa como cliente de acción hacia cada agente y como servidor de
-acción hacia la interfaz de usuario. En la taxonomía de asignación de tareas de
-Gerkey y Matarić \cite{gerkey2004taxonomy}, corresponde a una asignación
-centralizada e instantánea: el coordinador determina el agente responsable en el
-momento de aceptar la solicitud, a partir del nivel de los puntos de origen y
-destino, sin negociación entre agentes. Con dos agentes y una asignación
-determinada por el nivel del punto solicitado, un mecanismo de subasta añadiría
-complejidad sin aportar flexibilidad.
+Sobre esa capa, la coordinación es centralizada. Un solo nodo coordinador actúa
+como cliente de acción frente a cada agente y como servidor de acción frente a la
+interfaz. En la taxonomía de Gerkey y Matarić \cite{gerkey2004taxonomy} eso
+corresponde a una asignación centralizada e instantánea. El coordinador elige el
+agente al aceptar la solicitud, según el nivel del origen y del destino, y los
+agentes no negocian entre sí. Con solo dos agentes, y con el nivel decidiendo
+cuál responde, un esquema de subasta añadiría complejidad sin dar flexibilidad.
 
 \subsection{Navegación autónoma sobre cinemática tipo automóvil}
 
-La navegación de cada agente se ejecuta sobre el marco de navegación estándar de
-ROS 2 \cite{sojan2025autonomous}. La plataforma sigue un modelo cinemático tipo
-automóvil: no holonómico, incapaz de girar sobre su propio eje. La configuración
-por omisión de ese marco asume un robot de tracción diferencial, de modo que dos
-de sus tres capas se sustituyen:
+Cada agente navega con el marco de navegación estándar de ROS 2
+\cite{sojan2025autonomous}. La plataforma empleada sigue un modelo cinemático
+tipo automóvil: no es holonómica y no puede girar sobre su propio eje. El
+problema es que la configuración por omisión de ese marco asume tracción
+diferencial, o sea un robot que sí gira en el sitio. Por eso se sustituyen dos de
+sus tres capas:
 
 \begin{itemize}[leftmargin=*]
-  \item \textbf{Planificación global:} un planificador híbrido A* con modelo de
-    movimiento Reeds-Shepp, que admite marcha atrás y genera explícitamente las
-    maniobras de inversión de marcha que un vehículo no holonómico necesita para
-    alcanzar orientaciones que su geometría no permite alcanzar de frente.
-  \item \textbf{Control de seguimiento:} un controlador de persecución pura
-    regulada con marcha atrás habilitada, que ejecuta físicamente las cúspides
-    que el planificador propuso.
+  \item \textbf{Planificación global.} Se usa un planificador híbrido A* con
+    modelo Reeds-Shepp. Admite marcha atrás y genera las maniobras de inversión
+    que el vehículo necesita para alcanzar orientaciones a las que no puede
+    llegar de frente.
+  \item \textbf{Control de seguimiento.} Se usa un controlador de persecución
+    pura regulada, con marcha atrás habilitada, que ejecuta las cúspides que el
+    planificador propuso.
 \end{itemize}
 
-Esta configuración tiene un límite caracterizado con evidencia propia durante el
-desarrollo. El controlador reduce dinámicamente su distancia de anticipación
-cuando el vehículo se aproxima a una cúspide muy cercana al punto objetivo, y por
-debajo de un umbral geométrico concreto una guarda de seguridad del propio
-controlador anula la curvatura calculada: el vehículo sigue invirtiendo el
-sentido de marcha, pero la dirección deja de responder, lo que produce episodios
-de decenas de maniobras en el mismo punto. No es un defecto del planificador ni
-de la coordinación, sino un límite del controlador de referencia operando en el
-borde de su propio dominio de validez.
+Esta configuración tiene un límite que el desarrollo permitió caracterizar. El
+controlador acorta su distancia de anticipación cuando el vehículo se acerca a
+una cúspide muy próxima a la meta. Por debajo de cierto umbral geométrico, una
+guarda de seguridad del propio controlador anula la curvatura calculada. El
+resultado es que el vehículo sigue invirtiendo la marcha pero deja de dirigir, y
+maniobra decenas de veces en el mismo punto. No falla el planificador ni la
+coordinación: falla un controlador de referencia trabajando en el borde de su
+dominio de validez.
 
 \subsection{Localización y mapeo: observabilidad en un corredor uniforme}
 
-La localización se apoya en un filtro de partículas sobre el mapa del entorno, y
-el mapa se construye a partir de odometría láser obtenida por correspondencia de
-barridos sucesivos. En un corredor recto y de sección uniforme, la posición
-\textbf{longitudinal} del robot no es observable a partir de un sensor láser
-plano combinado con ese método: cada barrido sucesivo es indistinguible del
-anterior a lo largo del eje del pasillo, de modo que el estimador devuelve un
-desplazamiento cercano a cero y acierta desde el punto de vista de la información
-disponible. La ausencia de estructura lateral variable elimina la información
-necesaria para estimar el avance; el algoritmo no la pierde por error.
+La localización usa un filtro de partículas sobre el mapa del entorno. El mapa,
+a su vez, se construye con odometría láser, que compara barridos sucesivos para
+deducir cuánto se movió el robot.
 
-Esta propiedad distingue un \textbf{error de calibración}, corregible ajustando
-parámetros, de una \textbf{inobservabilidad estructural}, que ningún ajuste
-corrige porque la información no está en la señal. La condición de aceptación de
-un mapa se define en consecuencia no como un porcentaje fijo de cobertura, sino
-como la exigencia de que el entorno aporte estructura no uniforme dentro del
-alcance del sensor a lo largo de todo el recorrido.
+Ese método tiene un límite en corredores rectos y de sección uniforme: la
+posición \textbf{longitudinal} del robot no es observable. La razón es sencilla.
+Cada barrido es prácticamente idéntico al anterior a lo largo del eje del
+pasillo. El estimador devuelve entonces un desplazamiento cercano a cero, y
+acierta, porque desde el sensor no ha cambiado nada.
+
+Conviene separar dos cosas que se parecen y no lo son. Un \textbf{error de
+calibración} se corrige ajustando parámetros. Una \textbf{inobservabilidad
+estructural} no, porque la información no está en la señal. Por eso el criterio
+para aceptar un mapa no es un porcentaje fijo de cobertura. Lo que se exige es
+que el entorno aporte estructura no uniforme dentro del alcance del sensor
+durante todo el recorrido.
 
 \subsection{Simulación multi-robot: aislamiento por espacio de nombres}
 
-La simulación multi-robot se implementa con un proceso de simulación
-independiente por robot y un único dominio DDS compartido entre ambos; el
-aislamiento entre agentes se logra por espacio de nombres, incluido el marco de
-referencia del mapa de cada robot, y no por segmentación de dominio. Un
-identificador de dominio distinto por robot, que es la alternativa más directa
-para aislar tópicos, bloquea el descubrimiento entre el coordinador y los
-agentes salvo configuración adicional, de modo que la separación por dominios y
-la comunicación entre agentes resultan mutuamente excluyentes bajo la
-configuración por omisión.
+La simulación levanta un proceso de simulación por robot, pero un solo dominio
+DDS para los dos. Los agentes se separan por espacio de nombres, incluido el
+marco de referencia de su mapa.
+
+La alternativa evidente sería dar a cada robot un dominio distinto. No sirve: sin
+configuración adicional, eso corta el descubrimiento entre el coordinador y los
+agentes. Separar por dominios y comunicar a los agentes resultan, con la
+configuración por omisión, mutuamente excluyentes.
 
 \subsection{La interfaz humano-robot como frontera de protocolo}
 
-La interfaz web se comunica con el middleware a través de un puente que expone
-las acciones de ROS 2 como un protocolo JSON sobre WebSocket. Este protocolo es
-distinto del que implementa la librería de cliente más difundida en el ecosistema
-web de ROS, cuyo cliente de acciones corresponde a la generación anterior del
-middleware y es incompatible con las acciones de ROS 2. La interfaz de este
-trabajo es, por esa razón, un cliente propio escrito directamente sobre el
-protocolo del puente, y sin dependencias de red externas, ya que el requisito
-exige que funcione sin salida a internet.
+La interfaz web habla con el middleware a través de un puente que expone las
+acciones de ROS 2 como JSON sobre WebSocket. Ese protocolo no es el que
+implementa la librería de cliente más difundida del ecosistema web de ROS. La de
+esa librería corresponde a la generación anterior del middleware y no es
+compatible con las acciones de ROS 2. Por eso la interfaz de este trabajo es un
+cliente propio, escrito directamente sobre el protocolo del puente. Tampoco usa
+dependencias externas, porque el requisito exige que funcione sin salida a
+internet.
 
 Un segundo principio rige la interfaz: no redacta lógica de negocio. El texto que
-se muestra al usuario en cada estado de misión lo redacta el coordinador y la
-interfaz lo presenta literal. Es una aplicación directa del principio de
-separación de responsabilidades entre lógica de dominio y capa de presentación:
-si el navegador interpretara el estado numérico para decidir qué texto mostrar,
-duplicaría en el cliente una lógica que ya existe en el planificador, con riesgo
-de que las dos copias diverjan.
+lee el usuario en cada estado lo escribe el coordinador, y la interfaz lo muestra
+literal. Es separación de responsabilidades entre el dominio y la presentación.
+Si el navegador interpretara el estado para decidir qué texto mostrar, se
+duplicaría en el cliente una lógica que ya vive en el planificador, y las dos
+copias acabarían divergiendo.
 
 \subsection{Evaluación experimental: métricas, significancia y falsabilidad}
 
-La evaluación se rige por cuatro métricas con definición operativa (tiempo de
-respuesta, tiempo de asignación, tasa de éxito y continuidad de servicio entre
-niveles), medidas sobre una campaña de misiones sorteadas, con el protocolo
-fijado \textit{antes} de instrumentar el sistema. Dos principios rigen su
+La evaluación se apoya en cuatro métricas con definición operativa: tiempo de
+respuesta, tiempo de asignación, tasa de éxito y continuidad del servicio entre
+niveles. Se miden sobre una campaña de misiones sorteadas, con el protocolo
+fijado \textit{antes} de instrumentar el sistema. Dos principios gobiernan su
 tratamiento.
 
-El primero es estadístico: con tamaños de muestra del orden de treinta
-observaciones, el intervalo de confianza apropiado para una proporción binomial
-es el de Wilson, y no la aproximación normal, que subestima el error en ese
-régimen. La diferencia no es cosmética: determina si la afirmación defendible es
-una cota inferior sobre la tasa de éxito o un valor puntual, y solo la primera lo
-es con esa muestra.
+El primero es estadístico. Con muestras del orden de treinta observaciones, el
+intervalo de confianza adecuado para una proporción es el de Wilson, no la
+aproximación normal, que en ese rango subestima el error. La diferencia no es
+cosmética: decide si lo que se puede afirmar es una cota inferior sobre la tasa
+de éxito o un valor puntual. Con esa muestra, solo la cota se sostiene.
 
-El segundo es metodológico: \textbf{un criterio de aceptación experimental solo
-constituye evidencia si puede fallar}. Durante el desarrollo se detectó que el
-criterio asociado a la variable de respuesta principal estaba definido de forma
-que ninguna ejecución posible del sistema podía incumplirlo, porque los dos
-únicos productores de un valor de incumplimiento ocurren, por construcción del
-código, fuera de la ventana temporal en que el criterio se evalúa. Un conjunto de
-verificaciones satisfactorias de un criterio que no puede resultar negativo no es
-evidencia de que el sistema cumpla la propiedad; es evidencia de que el criterio
-está mal planteado. La corrección adoptada no inventa una ruta de fallo
-artificial, lo que equivaldría a instrumentar el experimento para que parezca más
-informativo de lo que es, sino que reformula la afirmación como un invariante
-estructural del diseño, respaldado por una magnitud que sí varía y sí puede
-reportarse.
+El segundo es metodológico, y se enuncia así: \textbf{un criterio de aceptación
+solo es evidencia si puede fallar}. Durante el desarrollo apareció un caso
+concreto. El criterio de la variable de respuesta principal estaba definido de
+forma que ninguna ejecución podía incumplirlo, porque los dos únicos puntos del
+código que producen un valor de incumplimiento ocurren fuera de la ventana en que
+el criterio se evalúa. Treinta verificaciones satisfactorias de un criterio así
+no demuestran que el sistema cumpla la propiedad. Demuestran que el criterio está
+mal planteado.
+
+La corrección no consistió en inventar una ruta de fallo. Eso habría sido
+instrumentar el experimento para que pareciera más informativo de lo que es. Lo
+que se hizo fue reformular la afirmación como un invariante estructural del
+diseño, y respaldarla con una magnitud que sí varía y sí se puede reportar.
 
 % =====================================================================
 \section{Marco legal}
 % =====================================================================
 
-% VERIFICAR ANTES DE ENTREGAR. Las dos políticas CONPES están citadas en el
-% anteproyecto y son las que el proyecto ya invocaba. Lo demás de esta sección
-% se plantea como encuadre y NO afirma obligaciones concretas: para citar
-% legislación de accesibilidad o de datos personales hay que comprobar la norma
-% vigente y su aplicabilidad, y eso no se puede hacer de memoria.
+\begin{notarevisor}
+Esta sección y la siguiente (Marco ambiental) están redactadas solo con lo que
+pudimos verificar: las dos políticas CONPES que ya citaba el anteproyecto y la
+NTC 1486, que la plantilla institucional declara como su base. Faltan tres
+puntos que preferimos no redactar sin la norma delante, porque una cita
+normativa mal hecha es peor que un vacío señalado: accesibilidad en
+edificaciones, tratamiento de datos personales y uso del espectro. Agradecemos
+orientación sobre cuáles de esos tres aplican realmente a un prototipo de este
+alcance, y sobre si estas dos secciones deben desarrollarse por completo o basta
+con el encuadre que aquí se presenta.
+\end{notarevisor}
 
-El proyecto se desarrolla en el marco de la política pública colombiana de
-transformación digital y de ciencia, tecnología e innovación. El Documento CONPES
-3975 \cite{conpes3975}, que fija la Política Nacional para la Transformación
-Digital e Inteligencia Artificial, y el Documento CONPES 4069 \cite{conpes4069},
-que establece la Política Nacional de Ciencia, Tecnología e Innovación, instan a
-la academia a desarrollar prototipos tecnológicos que apropien herramientas de la
-Cuarta Revolución Industrial, entre ellas la robótica autónoma, para generar
-soluciones de diseño local con impacto social. El presente trabajo se inscribe
-en esa línea: un prototipo de asistencia robótica construido sobre plataformas de
-bajo costo y herramientas de software abierto, dentro de las limitantes
-presupuestales de un entorno universitario.
+El proyecto se desarrolla dentro de la política pública colombiana de
+transformación digital y de ciencia, tecnología e innovación. Dos documentos la
+enmarcan. El CONPES 3975 \cite{conpes3975} fija la Política Nacional para la
+Transformación Digital e Inteligencia Artificial. El CONPES 4069
+\cite{conpes4069} establece la Política Nacional de Ciencia, Tecnología e
+Innovación. Ambos piden a la academia que desarrolle prototipos con herramientas
+de la Cuarta Revolución Industrial, entre ellas la robótica autónoma, y que lo
+haga con diseño local e impacto social.
 
-En cuanto a la presentación del propio documento, se sigue la norma NTC 1486 del
-ICONTEC \cite{ntc1486}, que regula la presentación de tesis, trabajos de grado y
-otros trabajos de investigación, y que la plantilla institucional declara como
-su base.
+Este trabajo encaja en esa línea. Es un prototipo de asistencia robótica
+construido sobre plataformas de bajo costo y software abierto, dentro de las
+limitaciones presupuestales de un entorno universitario.
 
-% PENDIENTE DE VERIFICAR Y REDACTAR, con la norma en la mano:
-%  (a) Accesibilidad en edificaciones y derechos de personas con discapacidad.
-%      El proyecto se justifica socialmente por la movilidad inclusiva, así que
-%      corresponde citar el marco de accesibilidad vigente. NO se redacta aquí
-%      sin comprobar la norma aplicable y su versión en vigor.
-%  (b) Tratamiento de datos personales. Hoy la interfaz NO registra identidad
-%      del usuario -solo origen, destino y tiempos-, de modo que puede no haber
-%      tratamiento de datos personales. Conviene decirlo explícitamente y
-%      justificarlo, en vez de omitir el punto.
-%  (c) Uso del espectro para la red inalámbrica del sistema, si aplica.
+La presentación del propio documento sigue la norma NTC 1486 del ICONTEC
+\cite{ntc1486}, que regula cómo se presentan las tesis y los trabajos de grado y
+que la plantilla institucional declara como su base.
 
 \subsection{Alcance de la operación y responsabilidad}
 
-El alcance del proyecto excluye explícitamente la interacción mecánica con la
-infraestructura del edificio: los agentes no accionan puertas ni botones de
-ascensor, no transportan carga y no atraviesan las zonas de transición vertical.
-Esa delimitación, adoptada por razones técnicas y de costo, tiene además una
-consecuencia normativa favorable, pues evita intervenir sistemas sujetos a
-regulación específica de seguridad en edificaciones.
+El alcance del proyecto excluye de forma explícita que los robots interactúen
+mecánicamente con el edificio. No accionan puertas ni botones de ascensor, no
+transportan carga y no cruzan las zonas de transición vertical. Esa delimitación
+se adoptó por razones técnicas y de costo, pero tiene además una consecuencia
+normativa favorable: evita intervenir sistemas sujetos a regulación específica de
+seguridad en edificaciones.
 
 % =====================================================================
 \section{Marco ambiental}
 % =====================================================================
 
-% Esta sección se apoya en hechos del propio proyecto -plataformas, baterías,
-% consumo- y no invoca normativa ambiental concreta, que habría que verificar.
-
-El impacto ambiental del prototipo se concentra en tres frentes: el hardware
-empleado, la energía consumida durante la operación y la evaluación, y el
-tratamiento de los componentes al final de su vida útil.
+El impacto ambiental del prototipo se concentra en tres frentes: el hardware que
+emplea, la energía que consume y el destino de sus componentes al final de la
+vida útil.
 
 \subsection{Reutilización de hardware existente}
 
-Las dos plataformas robóticas empleadas son equipo institucional preexistente,
-no una adquisición generada por el proyecto. El presupuesto del anteproyecto las
-contabiliza como uso y desgaste, no como compra. Esta decisión, tomada
-inicialmente por razones económicas, reduce la huella material del trabajo:
-el proyecto no introduce plataformas nuevas al inventario y extiende la vida útil
-de equipos que de otro modo permanecerían subutilizados.
+Las dos plataformas robóticas son equipo institucional que ya existía. El
+proyecto no las compró, y el presupuesto del anteproyecto las contabiliza como
+uso y desgaste. La decisión se tomó por razones económicas, pero reduce también
+la huella material del trabajo: no entran plataformas nuevas al inventario y se
+alarga la vida útil de equipos que estaban subutilizados.
 
-Del mismo modo, el entorno de evaluación es el propio edificio de la universidad,
-sin construcción de infraestructura dedicada ni modificación de la existente. El
+Lo mismo ocurre con el entorno de evaluación. Es el propio edificio de la
+universidad, sin construir infraestructura dedicada ni modificar la existente. El
 sistema opera sobre la planta tal como está.
 
 \subsection{Consumo energético y autonomía}
 
-Cada vehículo opera con dos fuentes de alimentación independientes, una para
-cómputo y otra para tracción. La duración de una corrida de evaluación es del
-orden de decenas de segundos, y una sesión completa de campo consume una
-fracción de la carga disponible. El consumo agregado del sistema durante toda la
-campaña experimental es, por tanto, marginal frente al de la estación de trabajo
-empleada para la simulación, que ejecuta dos instancias del simulador de forma
-concurrente y sostenida.
+Cada vehículo lleva dos fuentes de alimentación independientes, una para cómputo
+y otra para tracción. Una corrida de evaluación dura decenas de segundos, y una
+sesión de campo completa gasta una fracción de la carga disponible.
 
-Esa asimetría merece señalarse: en un proyecto de robótica de esta escala,
-\textbf{el mayor consumo energético no está en los robots sino en la simulación}.
-Es también un argumento a favor de la estrategia de verificación adoptada, en la
-que la lógica de coordinación se comprueba como función pura, sin simulador, en
-milisegundos y sin coste energético apreciable.
+De ahí sale un dato que conviene señalar porque va contra la intuición. El
+consumo de los vehículos durante toda la campaña es marginal si se compara con el
+de la estación de trabajo que ejecuta la simulación, que corre dos instancias del
+simulador a la vez y de forma sostenida. Es decir: \textbf{en un proyecto de
+robótica de esta escala, el mayor consumo energético no está en los robots sino
+en la simulación}. Ese hecho respalda además la estrategia de verificación que se
+adoptó, en la que la lógica de coordinación se comprueba como función pura, sin
+simulador, en milisegundos y con consumo despreciable.
 
 \subsection{Ciclo de vida de las baterías}
 
-Las baterías de polímero de litio que alimentan la tracción son el componente de
-mayor sensibilidad ambiental del sistema, por su contenido de litio y por su
-degradación con los ciclos de carga. Su gestión adecuada al final de la vida útil
-corresponde a los canales de disposición de residuos electrónicos de la
-institución, y no debe realizarse por vías domésticas.
+Las baterías de polímero de litio que alimentan la tracción son el componente más
+sensible del sistema desde el punto de vista ambiental. Contienen litio y se
+degradan con los ciclos de carga. Al final de su vida útil deben ir a los canales
+de disposición de residuos electrónicos de la institución, nunca a la basura
+doméstica.
 
-% VERIFICAR: si la universidad tiene un programa institucional de gestión de
-% RAEE (residuos de aparatos eléctricos y electrónicos), conviene nombrarlo aquí
-% en concreto. No se afirma que exista sin comprobarlo.
+% VERIFICAR: si la universidad tiene un programa institucional de gestión de RAEE
+% (residuos de aparatos eléctricos y electrónicos), nombrarlo aquí en concreto.
+% No se afirma que exista sin comprobarlo.
 
-Durante el desarrollo se observó además que el nivel de carga afecta de forma
-medible al comportamiento del vehículo: una misma orden de tracción produjo
-velocidades distintas en corridas consecutivas, con la batería como primer
-sospechoso. Esa dependencia obliga a registrar el nivel de carga antes y después
-de cada medición, lo que constituye una buena práctica experimental y, de paso,
-desincentiva el uso de baterías degradadas.
+Durante el desarrollo se observó además que el nivel de carga cambia el
+comportamiento del vehículo de forma medible. Una misma orden de tracción produjo
+velocidades distintas en corridas consecutivas, y la batería fue el primer
+sospechoso. Esa dependencia obliga a anotar el nivel de carga antes y después de
+cada medición. Es buena práctica experimental y, de paso, desincentiva el uso de
+baterías degradadas.

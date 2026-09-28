@@ -224,6 +224,22 @@
   {\centering\bfseries\large\MakeUppercase{#1}\par}
   \vspace{1em}}
 
+% -------------------------------------------------- notas al revisor ---
+% Bloque visible para marcar lo que está pendiente o a discusión en una
+% revisión. NO es texto final: se quita antes de entregar poniendo
+% \ustanotasrevisorfalse en el preámbulo.
+\RequirePackage{mdframed}
+\newif\ifustanotasrevisor
+\ustanotasrevisortrue
+\newenvironment{notarevisor}{%
+  \ifustanotasrevisor
+    \begin{mdframed}[linewidth=0.6pt,linecolor=gray,backgroundcolor=black!4,
+                     innertopmargin=6pt,innerbottommargin=6pt]%
+    \small\textbf{Nota para la revisión.}\par\vspace{-0.4em}%
+  \else \expandafter\comment \fi}%
+ {\ifustanotasrevisor\end{mdframed}\else\expandafter\endcomment\fi}
+\RequirePackage{verbatim}
+
 % ------------------------------------------------ listas sin doble título ---
 % Por omisión \tableofcontents y sus hermanas emiten su propio \chapter*, así
 % que puestas detrás de \ustaseccion saldría el encabezado DOS veces: el de
