@@ -1,0 +1,31 @@
+% =====================================================================
+%  DESARROLLO
+%  La plantilla pide organizarlo por capítulos según la metodología del
+%  proyecto de grado I, partiendo de las etapas o del diagrama de bloques:
+%  selección de topologías, simulaciones, implementación.
+%
+%  ESTRUCTURA PROPUESTA: una sección por objetivo específico, que es como
+%  Documentos/REQUISITOS.md ya rastrea el trabajo (matriz RF <-> OE <-> prueba).
+% =====================================================================
+\chapter{Desarrollo}
+
+\section{Arquitectura funcional del sistema (OE1)}
+% Documentos/CONTRATO_INTERFACES.md, Evidencia/arquitectura.png,
+% REQUISITOS.md (34 requisitos con fuente y prueba), coordinacion_msgs,
+% y el planificador como función pura con sus 992 planes verificados.
+
+\section{Plataforma robótica (OE2)}
+% Simulación Gazebo, URDF, LiDAR, cadena /cmd_vel -> servos, y el despliegue
+% en las dos tarjetas Jazzy. Aquí van también los peldaños de la escalera de
+% Nav2 sobre hardware: Documentos/MAPA_TRABAJO_RESTANTE.md §2.3.
+
+\section{Interfaz humano-robot (OE3)}
+% interfaz_web/, rosbridge sin roslib.js, RF-17 a RF-20 y RF-28
+% (confirmación de cambio de piso), y el botón Cancelar con la etapa
+% CANCELANDO.
+
+\section{Protocolo experimental (OE4)}
+% Documentos/PROTOCOLO_EXPERIMENTAL.md: las cuatro métricas con definición
+% operativa, criterio de éxito contra /odom, N=30 con sorteo por semilla y la
+% lista cerrada de causas de descarte. Escrito ANTES de instrumentar, y eso
+% conviene decirlo.

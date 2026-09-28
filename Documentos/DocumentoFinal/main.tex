@@ -1,0 +1,109 @@
+% =====================================================================
+%  Documento final de proyecto de grado
+%  Sistema colaborativo de robots móviles para asistencia de orientación
+%  en entornos interiores con múltiples pisos
+%
+%  Santiago Hernández Ávila · Jonny Alejandro Mejía León
+%  Universidad Santo Tomás — Facultad de Ingeniería Electrónica
+%
+%  CÓMO SE COMPILA
+%  ---------------
+%  En Overleaf: subir la carpeta entera y compilar con pdfLaTeX. La bibliografía
+%  usa biblatex+biber, que Overleaf ejecuta solo.
+%  En local:  pdflatex main  →  biber main  →  pdflatex main  →  pdflatex main
+%             (es 'biber', NO 'bibtex')
+%
+%  CÓMO SE TRABAJA
+%  ---------------
+%  Cada capítulo es un archivo aparte en capitulos/. Así dos personas pueden
+%  escribir a la vez sin pisarse y cada cambio se ve en el diff de git, que es
+%  justamente lo que el .docx no permitía.
+%
+%  El formato vive en usta-proyecto-grado.sty, con la decisión de norma
+%  explicada en su cabecera. No meter ajustes de formato aquí.
+% =====================================================================
+\documentclass[12pt,letterpaper,oneside]{report}
+\usepackage{usta-proyecto-grado}
+
+% ---------------------------------------------------------- bibliografía ---
+\addbibresource{referencias.bib}
+
+% ------------------------------------------------------ datos del trabajo ---
+\ustatitulo{Sistema colaborativo de robots móviles para asistencia de
+            orientación en entornos interiores con múltiples pisos}
+\ustasubtitulo{}                    % la plantilla pide aquí la relación con el objetivo general
+\ustaautores{Santiago Hernández Ávila\\[0.3cm] Jonny Alejandro Mejía León}
+\ustamodalidad{Proyecto de Investigación}
+\ustagrupo{GED — Grupo de Estudio y Desarrollo en Robótica}
+\ustalinea{Robótica y Sistemas Autónomos}   % CONFIRMAR el nombre exacto de la línea
+\ustadirector{Ing. Armando Mateus Rojas, MSc.}
+\ustacodirector{Ing. Néstor Iván Ospina, MSc.\\ Ing. Óscar Mauricio Gélvez Lizarazo, MSc.}
+\ustaasesor{}                        % vacío = no se imprime el bloque
+\ustaanio{2026}
+\ustames{octubre}
+
+\begin{document}
+
+% =====================================================================
+%  PRELIMINARES
+% =====================================================================
+\pagenumbering{roman}
+
+\ustaportada
+\ustacontraportada
+\input{capitulos/00-autoridades}
+\ustanotaaceptacion
+\ustaadvertencia
+\input{capitulos/01-dedicatoria-agradecimientos}
+\input{capitulos/02-resumen-abstract}
+\input{capitulos/03-glosario-abreviaturas}
+
+% ------------------------------------------------------------- índices ---
+\ustaseccion{Contenido}
+\vspace{-2em}
+\renewcommand{\contentsname}{}
+\tableofcontents
+
+\ustaseccion{Lista de figuras}
+\vspace{-2em}
+\renewcommand{\listfigurename}{}
+\listoffigures
+
+% Gráficas: tipo flotante propio, definido en el .sty. La plantilla las
+% distingue de las figuras («una gráfica contiene ejes coordenados»).
+\ustaseccion{Lista de gráficas}
+\vspace{-2em}
+\listofgraficas
+
+\ustaseccion{Lista de tablas}
+\vspace{-2em}
+\renewcommand{\listtablename}{}
+\listoftables
+
+\ustaseccion{Lista de códigos}
+\vspace{-2em}
+\lstlistoflistings
+
+% =====================================================================
+%  CUERPO
+% =====================================================================
+\clearpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\input{capitulos/04-introduccion}
+\input{capitulos/05-contextualizacion}
+\input{capitulos/06-marco-referencial}
+\input{capitulos/07-desarrollo}
+\input{capitulos/08-resultados}
+\input{capitulos/09-conclusiones}
+\input{capitulos/10-trabajos-futuros}
+
+% =====================================================================
+%  REFERENCIAS
+% =====================================================================
+\ustaseccion{Referencias bibliográficas}
+\vspace{-1em}
+\printbibliography[heading=none]
+
+\end{document}

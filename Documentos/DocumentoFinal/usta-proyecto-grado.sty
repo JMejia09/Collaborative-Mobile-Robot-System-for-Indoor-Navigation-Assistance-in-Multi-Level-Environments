@@ -1,0 +1,214 @@
+% =====================================================================
+%  usta-proyecto-grado.sty
+%  Formato del documento final de proyecto de grado, Universidad Santo Tomás,
+%  Facultad de Ingeniería Electrónica.
+%
+%  Derivado de PlantillaProyectoGrado.docx (recibida el 2026-09-28).
+%
+%  QUÉ NORMA SE SIGUE, Y POR QUÉ HUBO QUE ELEGIR
+%  ---------------------------------------------
+%  La plantilla .docx se contradice a sí misma. Su propio texto, en la sección
+%  DESARROLLO, declara:
+%
+%     «construida a partir de la NTC 1486 de ICONTEC con vigencia 2022 [...]
+%      Tipo de letra (Arial o Times New Roman, 12 pts), márgenes (3 cm superior
+%      e izquierdo, 2 cm inferior y derecho), interlineado (1.5)»
+%
+%  pero el archivo venía configurado con márgenes 3/3/4/2 cm, letra de 11 pt e
+%  interlineado 1,08 — que son, literalmente, los valores por omisión de Word.
+%
+%  SE SIGUE EL TEXTO NORMATIVO, no la configuración del archivo, porque es el
+%  que cita la norma y el que un jurado puede verificar. La decisión se deja
+%  escrita aquí para que sea visible y revisable, no enterrada en un valor.
+%
+%  Si la facultad exige los 4 cm de margen izquierdo para encuadernación,
+%  cambiar 'left=3cm' por 'left=4cm' abajo y anotarlo.
+% =====================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{usta-proyecto-grado}[2026/09/28 Formato NTC 1486 USTA]
+
+% ------------------------------------------------------- idioma y fuentes ---
+\RequirePackage[T1]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[spanish,es-tabla,es-nodecimaldot]{babel}
+\RequirePackage{mathptmx}          % Times New Roman, una de las dos que admite la norma
+\RequirePackage{microtype}
+
+% ------------------------------------------------------------- geometría ---
+% NTC 1486: 3 cm superior e izquierdo, 2 cm inferior y derecho. Papel carta.
+\RequirePackage[letterpaper,top=3cm,left=3cm,bottom=2cm,right=2cm]{geometry}
+
+% --------------------------------------------------------- interlineado ---
+\RequirePackage{setspace}
+\onehalfspacing                     % 1,5 según la norma
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.8em}
+
+% ------------------------------------------------------------- utilidades ---
+\RequirePackage{graphicx}
+\RequirePackage{float}
+\RequirePackage{booktabs}
+\RequirePackage{longtable}
+\RequirePackage{array}
+\RequirePackage{enumitem}
+\RequirePackage{xcolor}
+\RequirePackage{amsmath,amssymb}
+\RequirePackage{siunitx}
+\sisetup{output-decimal-marker={,}} % coma decimal, como el resto del proyecto
+
+% ------------------------------------------------------------- títulos ---
+% La plantilla usa mayúsculas sostenidas en los títulos de primer nivel.
+\RequirePackage{titlesec}
+\titleformat{\chapter}[hang]
+  {\normalfont\bfseries\Large\MakeUppercase}{\thechapter.}{1em}{}
+\titlespacing*{\chapter}{0pt}{0pt}{1.5em}
+\titleformat{\section}[hang]
+  {\normalfont\bfseries\large}{\thesection}{1em}{}
+\titleformat{\subsection}[hang]
+  {\normalfont\bfseries\normalsize}{\thesubsection}{1em}{}
+
+% --------------------------------------------- figuras, tablas y leyendas ---
+\RequirePackage[font=small,labelfont=bf,labelsep=period]{caption}
+
+% La plantilla distingue FIGURAS de GRÁFICAS y pide una lista para cada una.
+% Su nota aclaratoria: «una gráfica contiene ejes coordenados para expresar
+% comportamiento de datos»; la figura representa objetos o conceptos.
+\newfloat{grafica}{htbp}{lodg}[chapter]
+\floatname{grafica}{Gráfica}
+\newcommand{\listofgraficas}{\listof{grafica}{LISTA DE GRÁFICAS}}
+
+% ------------------------------------------------------------- códigos ---
+% La plantilla pide además una LISTA DE CÓDIGOS.
+\RequirePackage{listings}
+\renewcommand{\lstlistingname}{Código}
+\renewcommand{\lstlistlistingname}{LISTA DE CÓDIGOS}
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  captionpos=b,
+  showstringspaces=false,
+  numbers=left,
+  numberstyle=\tiny,
+  inputencoding=utf8,
+  extendedchars=true,
+  literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+           {ñ}{{\~n}}1 {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1
+           {Ú}{{\'U}}1 {Ñ}{{\~N}}1 {¿}{{?`}}1 {¡}{{!`}}1
+}
+
+% ------------------------------------------------------------ referencias ---
+% La plantilla pide formato IEEE. Se usa biblatex+biber con estilo ieee.
+% Overleaf lo trae; si se compila en local hace falta 'biber', no 'bibtex'.
+\RequirePackage[backend=biber,style=ieee,sorting=none]{biblatex}
+
+% ------------------------------------------------------------- hipervínculos ---
+\RequirePackage[hidelinks]{hyperref}
+\hypersetup{pdfencoding=auto}
+
+% =====================================================================
+%  Datos del trabajo. Se rellenan una vez en main.tex.
+% =====================================================================
+\newcommand{\ustatitulo}[1]{\def\@ustatitulo{#1}}
+\newcommand{\ustasubtitulo}[1]{\def\@ustasubtitulo{#1}}
+\newcommand{\ustaautores}[1]{\def\@ustaautores{#1}}
+\newcommand{\ustamodalidad}[1]{\def\@ustamodalidad{#1}}
+\newcommand{\ustagrupo}[1]{\def\@ustagrupo{#1}}
+\newcommand{\ustalinea}[1]{\def\@ustalinea{#1}}
+\newcommand{\ustadirector}[1]{\def\@ustadirector{#1}}
+\newcommand{\ustacodirector}[1]{\def\@ustacodirector{#1}}
+\newcommand{\ustaasesor}[1]{\def\@ustaasesor{#1}}
+\newcommand{\ustaanio}[1]{\def\@ustaanio{#1}}
+\newcommand{\ustames}[1]{\def\@ustames{#1}}
+
+\def\@ustasubtitulo{}
+\def\@ustacodirector{}
+\def\@ustaasesor{}
+
+% ------------------------------------------------ portada (primera hoja) ---
+\newcommand{\ustaportada}{%
+  \begin{titlepage}\centering
+    \vspace*{1cm}
+    {\large\bfseries\MakeUppercase{\@ustatitulo}}\\[0.3cm]
+    \ifx\@ustasubtitulo\empty\else{\large (\@ustasubtitulo)}\\[1.5cm]\fi
+    {\large \@ustaautores}\\[1.5cm]
+    {\large Modalidad de Proyecto de Grado}\\
+    {\large (\@ustamodalidad)}\\[1.5cm]
+    {\large \@ustagrupo}\\
+    {\large (\@ustalinea)}\\[1cm]
+    \includegraphics[width=0.45\textwidth]{imagenes/logo_usta.png}\\[1cm]
+    \vfill
+    {\large UNIVERSIDAD SANTO TOMÁS}\\
+    {\large FACULTAD DE INGENIERÍA ELECTRÓNICA}\\
+    {\large PROGRAMA DE INGENIERÍA ELECTRÓNICA}\\
+    {\large Bogotá D.C.}\\
+    {\large \@ustaanio}
+  \end{titlepage}}
+
+% --------------------------------------- contraportada (segunda hoja) ---
+\newcommand{\ustacontraportada}{%
+  \begin{titlepage}\centering
+    \vspace*{1cm}
+    {\large\bfseries\MakeUppercase{\@ustatitulo}}\\[0.3cm]
+    \ifx\@ustasubtitulo\empty\else{\large (\@ustasubtitulo)}\\[1.5cm]\fi
+    {\large \@ustaautores}\\[1.5cm]
+    {\large Proyecto de grado presentado como requisito para optar al título de:}\\
+    {\large\bfseries Ingeniero Electrónico}\\[1.5cm]
+    {\large DIRECTOR DEL PROYECTO}\\
+    {\large \@ustadirector}\\[0.8cm]
+    \ifx\@ustacodirector\empty\else
+      {\large CODIRECTOR DEL PROYECTO}\\
+      {\large \@ustacodirector}\\[0.8cm]\fi
+    \ifx\@ustaasesor\empty\else
+      {\large ASESOR DEL PROYECTO}\\
+      {\large \@ustaasesor}\\[0.8cm]\fi
+    \vfill
+    {\large UNIVERSIDAD SANTO TOMÁS}\\
+    {\large FACULTAD DE INGENIERÍA ELECTRÓNICA}\\
+    {\large PROGRAMA DE INGENIERÍA ELECTRÓNICA}\\
+    {\large Bogotá D.C.}\\
+    {\large \@ustaanio}
+  \end{titlepage}}
+
+% --------------------------------------------------- nota de aceptación ---
+\newcommand{\ustanotaaceptacion}{%
+  \clearpage
+  {\centering\bfseries\large Nota de aceptación:\par}
+  \vspace{1cm}
+  \begin{flushright}\begin{minipage}{0.62\textwidth}
+    \rule{\linewidth}{0.4pt}\\[0.9cm]
+    \rule{\linewidth}{0.4pt}\\[0.9cm]
+    \rule{\linewidth}{0.4pt}\\[0.9cm]
+    \rule{\linewidth}{0.4pt}\\[2cm]
+    \rule{\linewidth}{0.4pt}\\ \centering Firma del Director\\[1.2cm]
+    \rule{\linewidth}{0.4pt}\\ \centering Firma del Co-Director\\[1.2cm]
+    \rule{\linewidth}{0.4pt}\\ \centering Firma del Jurado 1\\[1.2cm]
+    \rule{\linewidth}{0.4pt}\\ \centering Firma del Jurado 2
+  \end{minipage}\end{flushright}
+  \vfill
+  {\centering Bogotá D.C., Colombia\\ \@ustames\ de \@ustaanio\par}
+  \clearpage}
+
+% ------------------------------------------------------------ advertencia ---
+% Texto obligatorio, se transcribe literal de la plantilla.
+\newcommand{\ustaadvertencia}{%
+  \clearpage
+  {\centering\bfseries\large ADVERTENCIA\par}
+  \vspace{1cm}
+  La Universidad Santo Tomás no se hace responsable de las opiniones y conceptos
+  expresados en el trabajo de grado, solo velará por qué no se publique nada
+  contrario al dogma ni a la moral católica y porque el trabajo no tenga ataques
+  personales y únicamente se vea el anhelo de buscar la verdad científica.
+  \clearpage}
+
+% -------------------------------------------- sección de preliminares ---
+% Título de primer nivel SIN numerar y que sí entra en el índice.
+\newcommand{\ustaseccion}[1]{%
+  \clearpage
+  \phantomsection
+  \addcontentsline{toc}{chapter}{#1}%
+  {\centering\bfseries\large\MakeUppercase{#1}\par}
+  \vspace{1em}}
+
+\endinput

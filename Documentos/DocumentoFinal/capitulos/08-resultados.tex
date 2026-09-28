@@ -1,0 +1,28 @@
+% =====================================================================
+%  RESULTADOS
+%  DE DÓNDE SALE:
+%    Documentos/RESULTADOS_OE4_SIMULACION.md   (campaña N=30)
+%    Documentos/Evidencia/S24_peldano2_odometria_hardware.md
+%    Documentos/Evidencia/S24_nav2_navegacion_mapa_guardado.md
+%    Documentos/Evidencia/S24_mapeo_6m_hardware.md
+%
+%  TRES COSAS QUE HAY QUE ESCRIBIR CON CUIDADO, y están documentadas:
+%   1. R14: la continuidad entre niveles es un INVARIANTE ESTRUCTURAL, no un
+%      resultado experimental. Presentar sus 30 verificaciones en verde como
+%      evidencia sería presentar el diseño como medida.
+%   2. El intervalo de Wilson: con 26/30 lo defendible es «supera el 70 %»,
+%      no «es del 86,7 %».
+%   3. R15: la campaña corrió con un mapa cuyas celdas desconocidas se leían
+%      como libres. Hay que comprobarlo sobre los bags o declararlo aquí.
+% =====================================================================
+\chapter{Resultados}
+
+\section{Evaluación en simulación}
+% Las cuatro métricas con número propio, y el veredicto VALIDA con 0 descartes.
+
+\section{Evaluación sobre hardware}
+% Odometría del vehículo (3/3 dentro del ±10 % sobre 3 m) y navegación de Nav2
+% sobre mapa guardado (4,837 m recorridos, error de llegada 0,412 m).
+
+\section{Limitaciones de la medición}
+% Los tres puntos de la cabecera de este archivo.
