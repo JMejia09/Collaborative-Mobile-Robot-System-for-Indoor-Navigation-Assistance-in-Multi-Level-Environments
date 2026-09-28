@@ -1,7 +1,8 @@
 # Diseño — los dos vehículos encendidos a la vez sin pisarse
 
-**Redactado:** 2026-09-25 (S24). **Estado:** mecanismo probado en el portátil; **pendiente de
-confirmar en los vehículos**, que es la primera tarea de [`PLAN_S25.md`](PLAN_S25.md).
+**Redactado:** 2026-09-25 (S24). **Estado:** instalado y comprobado en los dos vehículos el
+2026-09-28, pruebas A1 a A5 del bloque A de [`PLAN_S25.md`](PLAN_S25.md), registradas en
+[`S25_aislamiento_dos_carros.md`](Evidencia/S25_aislamiento_dos_carros.md).
 
 **Por qué es lo primero.** El sistema real —dos vehículos, coordinador y relevo entre pisos, que
 es lo que piden G-5 y RF-27— exige los dos carros encendidos y moviéndose a la vez. Hoy eso **no se

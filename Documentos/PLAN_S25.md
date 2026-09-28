@@ -19,7 +19,7 @@ lleva más riesgo.
 | Día | Bloque | Qué | Quién (propuesta) | ¿Carros? |
 |---|---|---|---|---|
 | Lun 28 | F | Hecho: las tres decisiones, acordadas con el director Armando Mateus (acta §6.1) | Santiago | no |
-| **Lun 28** | **A** | Aislar los dos carros: partición DDS en cada uno | Santiago y Jonny | **los dos** |
+| Lun 28 | A | Hecho: los dos carros aislados, A1 a A5 en verde ([registro](Evidencia/S25_aislamiento_dos_carros.md)) | Santiago y Jonny | los dos |
 | Lun 28 – mar 29 | **C** | La pila con espacio de nombres, en el escritorio | Santiago | no |
 | Lun 28 – mié 30 | **D** | Validar el modelo del edificio con cinta; red entre pisos | Jonny | uno, para la red |
 | **Mar 29** | **B** | **Sesión de compuertas G-2 y G-3** (miércoles de reserva) | Santiago | uno |
@@ -37,9 +37,18 @@ lleva más riesgo.
 | El guion de mapeo de 6 m de piso 2 | Innecesario: el mapa existe y admite corridas de 5 m |
 | Ver los carros en vivo | No hace falta para nada de esto; RViz sobre el bag basta |
 
+> **Direcciones de los carros.** Las asigna el DHCP y cambian: el 28-sep `amss-ez9n` estaba en la
+> 192.168.0.102 y `amss-jgm9` en la 192.168.0.104 (hasta el viernes, la .101). Antes de cada sesión,
+> buscarlos por su MAC:
+> `for i in $(seq 1 254); do (ping -c1 -W1 192.168.0.$i >/dev/null 2>&1 &); done; sleep 3; ip neigh | grep -iE '80:91:33:ed:8c:f3|80:91:33:f3:e6:ab'`
+> (`ed:8c:f3` es `amss-ez9n` y `f3:e6:ab` es `amss-jgm9`). Los comandos de este plan usan las del 28-sep.
+
 ---
 
-## 1. Bloque A — aislar los dos carros (lunes)
+## 1. Bloque A — aislar los dos carros (lunes; cerrado el 28-sep)
+
+**Cerrado el lunes 28:** A1 a A5 en verde en los dos carros. Registro en
+[`S25_aislamiento_dos_carros.md`](Evidencia/S25_aislamiento_dos_carros.md).
 
 **Por qué primero:** con los dos carros encendidos, una orden mueve los dos y la odometría de cada uno
 recibe el láser del otro. Sin esto no hay sistema real. El diseño y su justificación están en
@@ -58,7 +67,7 @@ puede desplazar el carro.
 | **Comando** | `scp herramientas/prueba_particion_carros.sh Robot/aws-deepracer/deepracer_bringup/config/particion_amss-ez9n.xml Robot/aws-deepracer/deepracer_bringup/config/particion_amss-jgm9.xml deepracer@192.168.0.102:~/tesis/` y después `ssh deepracer@192.168.0.102 "bash ~/tesis/prueba_particion_carros.sh"` |
 | **Esperado** | `ROS jazzy` en la primera línea, **9 filas `ok`** y `PASA`. Corre en el dominio 87, así que no toca nada del carro. |
 | **Si falla** | **Parar el bloque.** El mecanismo no vale en Jazzy tal cual: pasar al plan B del §7 del diseño y avisar, porque cambia el calendario. |
-| **Cierre** | `PASA` en **los dos** vehículos (repetir con `192.168.0.101`). |
+| **Cierre** | `PASA` en **los dos** vehículos (repetir con `192.168.0.104`). |
 
 ### A2 · Instalar la partición en cada vehículo (15 min por carro)
 
@@ -90,7 +99,7 @@ puede desplazar el carro.
 
 | | |
 |---|---|
-| **Comando, desde `amss-jgm9`** | `ssh deepracer@192.168.0.101 "sudo -n bash -c 'source /opt/ros/jazzy/setup.bash && source /opt/aws/deepracer/lib/setup.bash && export FASTRTPS_DEFAULT_PROFILES_FILE=/etc/deepracer-tesis/particion.xml && timeout 5 ros2 topic pub -r 10 /ctrl_pkg/servo_msg deepracer_interfaces_pkg/msg/ServoCtrlMsg \"{angle: 0.6, throttle: 0.0}\"; timeout 4 ros2 topic pub -r 10 /ctrl_pkg/servo_msg deepracer_interfaces_pkg/msg/ServoCtrlMsg \"{angle: 0.0, throttle: 0.0}\"'"` |
+| **Comando, desde `amss-jgm9`** | `scp herramientas/sonda_direccion.py deepracer@192.168.0.104:~/tesis/` y `ssh deepracer@192.168.0.104 "sudo -n bash -c 'source /opt/ros/jazzy/setup.bash && source /opt/aws/deepracer/lib/setup.bash && export FASTRTPS_DEFAULT_PROFILES_FILE=/etc/deepracer-tesis/particion.xml && python3 ~deepracer/tesis/sonda_direccion.py'"`. La sonda publica sin parar a 20 Hz y dice cuántos suscriptores encontró; `ros2 topic pub` lanzado por posiciones no sirve (tarda 2 o 3 s en emparejarse). |
 | **Esperado** | **Giran las ruedas delanteras de `amss-jgm9` y vuelven; las de `amss-ez9n` no se mueven.** |
 | **Después** | La misma orden desde `amss-ez9n` (`192.168.0.102`): solo se mueve ese. Y la misma orden desde cualquiera **sin** el `export`: **no se mueve ninguno**. Esa última es la propiedad de seguridad que importa. |
 | **Si falla** | Si se mueven los dos, la partición no está en el servicio de AWS: volver a A2. |
@@ -146,7 +155,7 @@ resultado.
 | **Objetivo** | La razón odometría ÷ cinta de cada carro en el tramo liso del pasillo, con su grabación. |
 | **Sitio** | Tramo liso, a más de 6 m del hall y lejos de puertas abiertas, con **11 m libres** por delante y la salida marcada con cinta. Cada carro en el pasillo del piso donde va a operar: `amss-jgm9` (robot1) en el piso 1 y `amss-ez9n` (robot2) en el piso 2. |
 | **Copia** | La del §2 de [`GUION_CAMPO_PISO2.md`](GUION_CAMPO_PISO2.md) (`mapear_conduciendo.sh`, `avanzar_y_detener.py`, `lanzar_bag.inc`, `slam_toolbox_carro.yaml`), **en los dos carros**. |
-| **Comando** | `ssh deepracer@192.168.0.101 "sudo -n bash ~/tesis/mapear_conduciendo.sh 5.0 0.5 40"`, y lo mismo con `192.168.0.102`. **Si el bloque A no está cerrado, un carro apagado mientras corre el otro.** |
+| **Comando** | `ssh deepracer@192.168.0.104 "sudo -n bash ~/tesis/mapear_conduciendo.sh 5.0 0.5 40"`, y lo mismo con `192.168.0.102`. **Si el bloque A no está cerrado, un carro apagado mientras corre el otro.** |
 | **Esperado** | Si rf2o ve el avance: `motivo de parada : DISTANCIA ALCANZADA`, con la cinta cerca de 5 m. Si no lo ve: `tope de tiempo`, con más metros por cinta que por rf2o. Las dos salidas son resultado. |
 | **Seguridad** | El tope de 40 s limita el recorrido a unos 10 m (0,26 m/s es la velocidad máxima medida). Una persona camina al lado, lista para levantar el carro. |
 | **Después** | Cinta desde la raya de salida hasta el eje delantero, **antes de tocar el carro**. La grabación queda en `~deepracer/mapeo_<hora>/`: copiarla al portátil y medir su información de avance con `python3 herramientas/medir_informacion_avance.py <carpeta del bag> /rplidar_ros/scan`. |
@@ -231,9 +240,9 @@ teléfono llega a él por `rosbridge`.
 
 | Paso | Qué | Cierre |
 |---|---|---|
-| E0 | Llevar a los dos carros el coordinador con la tolerancia por condición (2026-09-28). Antes, `ssh deepracer@192.168.0.101 "ls ~/coordinacion_ws/src"` debe listar `coordinacion`; si no, parar y avisar. Luego `scp -r Robot/aws-deepracer/coordinacion deepracer@192.168.0.101:~/coordinacion_ws/src/` y `ssh deepracer@192.168.0.101 "source /opt/ros/jazzy/setup.bash && cd ~/coordinacion_ws && colcon build --packages-select coordinacion"`; lo mismo con `192.168.0.102` | `md5sum` de `coordinador.py` y `registrador.py` igual en el repositorio y en los dos carros |
-| E1 | ¿Está `rosbridge` en los carros? `ssh deepracer@192.168.0.101 "source /opt/ros/jazzy/setup.bash; ros2 pkg list \| grep rosbridge_server"`. Si no, `sudo -n apt-get update && sudo -n apt-get install -y ros-jazzy-rosbridge-suite` **en los dos** | el paquete en los dos |
-| E2 | Coordinador y `rosbridge` en `amss-jgm9`, agentes en los dos, la interfaz desde un teléfono conectado a la red de los carros. El coordinador, **con `condicion:=hardware`**: `ssh -t deepracer@192.168.0.101 "sudo -n bash -c 'cd ~deepracer/coordinacion_ws && source /opt/ros/jazzy/setup.bash && source install/setup.bash && ros2 run coordinacion coordinador --ros-args -p condicion:=hardware -p ruta_puntos:=src/deepracer_bringup/config/puntos_interes.yaml'"`. Si la ruta del catálogo no existe, buscarla con `ssh deepracer@192.168.0.101 "find ~ -name puntos_interes.yaml"` | la interfaz muestra los dos robots, y el coordinador escribe al arrancar `condicion 'hardware': la llegada se acepta a 0.5 m o menos` |
+| E0 | Llevar a los dos carros el coordinador con la tolerancia por condición (2026-09-28). Antes, `ssh deepracer@192.168.0.104 "ls ~/coordinacion_ws/src"` debe listar `coordinacion`; si no, parar y avisar. Luego `scp -r Robot/aws-deepracer/coordinacion deepracer@192.168.0.104:~/coordinacion_ws/src/` y `ssh deepracer@192.168.0.104 "source /opt/ros/jazzy/setup.bash && cd ~/coordinacion_ws && colcon build --packages-select coordinacion"`; lo mismo con `192.168.0.102` | `md5sum` de `coordinador.py` y `registrador.py` igual en el repositorio y en los dos carros |
+| E1 | ¿Está `rosbridge` en los carros? `ssh deepracer@192.168.0.104 "source /opt/ros/jazzy/setup.bash; ros2 pkg list \| grep rosbridge_server"`. Si no, `sudo -n apt-get update && sudo -n apt-get install -y ros-jazzy-rosbridge-suite` **en los dos** | el paquete en los dos |
+| E2 | Coordinador y `rosbridge` en `amss-jgm9`, agentes en los dos, la interfaz desde un teléfono conectado a la red de los carros. El coordinador, **con `condicion:=hardware`**: `ssh -t deepracer@192.168.0.104 "sudo -n bash -c 'cd ~deepracer/coordinacion_ws && source /opt/ros/jazzy/setup.bash && source install/setup.bash && ros2 run coordinacion coordinador --ros-args -p condicion:=hardware -p ruta_puntos:=src/deepracer_bringup/config/puntos_interes.yaml'"`. Si la ruta del catálogo no existe, buscarla con `ssh deepracer@192.168.0.104 "find ~ -name puntos_interes.yaml"` | la interfaz muestra los dos robots, y el coordinador escribe al arrancar `condicion 'hardware': la llegada se acepta a 0.5 m o menos` |
 | E3 | **Una misión dentro de un mismo piso, pedida desde el teléfono**, con un solo carro moviéndose | el registro de la misión, compuesto con `componer_registro.py` |
 
 E3 es el **ensayo general de G-5 sin el relevo**. Depende de C2: si el miércoles no se cerró, E pasa
