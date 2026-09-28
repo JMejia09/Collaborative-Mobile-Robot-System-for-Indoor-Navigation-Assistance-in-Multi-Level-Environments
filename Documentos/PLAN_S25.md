@@ -22,6 +22,7 @@ lleva más riesgo.
 | Lun 28 | A | Hecho: los dos carros aislados, A1 a A5 en verde ([registro](Evidencia/S25_aislamiento_dos_carros.md)) | Santiago y Jonny | los dos |
 | Lun 28 – mar 29 | **C** | La pila con espacio de nombres, en el escritorio | Santiago | no |
 | Lun 28 – mié 30 | **D** | Red entre pisos, con un carro en cada piso | Jonny | los dos |
+| Mar 29, mañana | **B0** | Ensayo en el laboratorio: interferencia de la pila, mapeo con el otro carro encendido y Nav2 | Santiago y Jonny | los dos, uno cada vez |
 | **Mar 29** | **B** | **Sesión de compuertas G-2 y G-3** (miércoles de reserva) | Santiago | uno |
 | Mar 29 – mié 30 | **B2** | Pasillo liso con los dos carros: odometría contra cinta, como caracterización | Santiago y Jonny | **los dos** |
 | Mié 30 | **C** | Un carro navega con espacio de nombres | Santiago | uno |
@@ -116,6 +117,43 @@ puede desplazar el carro.
 ---
 
 ## 2. Bloque B — la sesión de compuertas G-2 y G-3 (martes; miércoles de reserva)
+
+### B0 · Ensayo en el laboratorio, antes del pasillo (martes por la mañana, 1 h)
+
+**Por qué:** en el pasillo, Nav2 correría por primera vez con la partición instalada y con el script de
+arranque. Si algo falla, mejor verlo aquí. Hace falta un tramo recto de unos 4 m. La pila del proyecto
+corre en un carro cada vez; el otro puede quedar encendido.
+
+**L1 · La interferencia de la pila, medida (10 min, ruedas en el aire)**
+
+| | |
+|---|---|
+| **Objetivo** | Medir que hoy la pila de un carro llega al otro: sin espacios de nombres, `/cmd_vel` es común a los dos. |
+| **Preparación** | Los dos sobre cajas, con las ruedas en el aire y una persona mirando cada uno. |
+| **Comando** | El puente en los dos, `.102` y `.104`: `ssh deepracer@192.168.0.102 "sudo -n bash -c 'export FASTRTPS_DEFAULT_PROFILES_FILE=/etc/deepracer-tesis/particion.xml; source /opt/ros/jazzy/setup.bash && source ~deepracer/coordinacion_ws/install/setup.bash && timeout 60 ros2 run cmdvel_to_servo_pkg cmdvel_to_servo_node'"`. Después, solo en `amss-jgm9`: `ssh deepracer@192.168.0.104 "sudo -n bash -c 'source /opt/ros/jazzy/setup.bash && timeout 12 ros2 topic pub -r 10 /cmd_vel geometry_msgs/msg/Twist \"{linear: {x: 0.2}, angular: {z: 1.0}}\"'"` y la misma orden en cero. |
+| **Esperado** | A 0,2 m/s la tracción da cero por la banda muerta y la dirección va al tope. **Hoy deben girar las ruedas de los dos carros.** |
+| **Cierre** | Anotado qué carros giraron. Es la prueba de control del bloque C: con espacios de nombres, la misma orden debe mover solo a `amss-jgm9`. |
+
+**L2 · Mapeo de cada carro con el otro encendido (15 min por carro)**
+
+| | |
+|---|---|
+| **Objetivo** | Que el mapeo de un carro no se mezcle con el otro encendido y sin pila. |
+| **Comando** | `ssh deepracer@192.168.0.102 "sudo -n bash ~/tesis/mapear_conduciendo.sh 3.0 0.5 30"`, con `amss-jgm9` encendido y sin pila; después al revés, con `192.168.0.104`. |
+| **Esperado** | `motivo de parada : DISTANCIA ALCANZADA`. En la grabación, el LiDAR a unos 7 Hz y no a 14, y la odometría con una sola trayectoria, sin saltos. El mapa, con paredes únicas. |
+| **Si falla** | LiDAR a 14 Hz o dos trayectorias mezcladas: la pila del otro carro sigue viva. Pararla y repetir. |
+| **Cierre** | Las dos grabaciones revisadas y los dos mapas guardados en `~deepracer/mapeo_<hora>/`. |
+
+**L3 · Nav2 sobre ese mapa (20 min, `amss-ez9n`)**
+
+| | |
+|---|---|
+| **Objetivo** | La cadena del pasillo, en pequeño: partición, script de arranque y herramienta de corrida. |
+| **Comando** | `CARRO=192.168.0.102 MAPA=<mapa.yaml de L2, con su ruta absoluta en el carro> POSE_X=0.0 bash herramientas/nav2_mapa_guardado.sh`; velocidad a 0,68; comprobación del planificador (§4.3 de la guía); una corrida: `correr_corrida_nav2.sh l3_01 --salida 0.0 0.0 0.0 --avance 2.0` con ese mapa y `--csv ~deepracer/ensayo_l3.csv`. |
+| **Esperado** | `CADENA LISTA`; el planificador llega a la meta; la corrida termina con el carro parado cerca de 2 m y su fila en el CSV; la grabación trae LiDAR y transformadas. |
+| **Si falla** | El script dice en qué paso. Se corrige aquí, antes de ir al pasillo. |
+| **Cierre** | Una corrida completa. Si queda tiempo, lo mismo con `amss-jgm9`. Al terminar, `nav2_mapa_guardado.sh --parar`. |
+
 
 Se hace el martes y no el viernes para que, si algo falla, quede **un día de reserva antes del corte**.
 
