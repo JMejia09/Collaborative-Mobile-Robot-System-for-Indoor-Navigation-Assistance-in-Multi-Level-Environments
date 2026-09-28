@@ -54,8 +54,19 @@
 \RequirePackage{enumitem}
 \RequirePackage{xcolor}
 \RequirePackage{amsmath,amssymb}
-\RequirePackage{siunitx}
-\sisetup{output-decimal-marker={,}} % coma decimal, como el resto del proyecto
+% siunitx da unidades bien compuestas (\SI{0,412}{\meter}) y coma decimal, que
+% es lo que usa el resto del proyecto. Va OPCIONAL a propósito: vive en el
+% paquete texlive-science, y no merece bloquear la compilación de quien no lo
+% tenga. Para instalarlo:
+%     sudo apt install texlive-science
+\IfFileExists{siunitx.sty}{%
+  \RequirePackage{siunitx}
+  \sisetup{output-decimal-marker={,}}
+}{%
+  \PackageWarning{usta-proyecto-grado}{siunitx no esta instalado: las macros
+    \string\SI\space y \string\num\space no estaran disponibles. Instalar con
+    'sudo apt install texlive-science'}%
+}
 
 % ------------------------------------------------------------- títulos ---
 % La plantilla usa mayúsculas sostenidas en los títulos de primer nivel.
@@ -99,6 +110,8 @@
 }
 
 % ------------------------------------------------------------ referencias ---
+\RequirePackage{csquotes}   % lo pide biblatex cuando hay babel; sin el, avisa
+
 % La plantilla pide formato IEEE. Se usa biblatex+biber con estilo ieee.
 % Overleaf lo trae; si se compila en local hace falta 'biber', no 'bibtex'.
 \RequirePackage[backend=biber,style=ieee,sorting=none]{biblatex}
@@ -210,5 +223,27 @@
   \addcontentsline{toc}{chapter}{#1}%
   {\centering\bfseries\large\MakeUppercase{#1}\par}
   \vspace{1em}}
+
+% ------------------------------------------------ listas sin doble título ---
+% Por omisión \tableofcontents y sus hermanas emiten su propio \chapter*, así
+% que puestas detrás de \ustaseccion saldría el encabezado DOS veces: el de
+% \ustaseccion y el de la lista. Se despojan de su título y se quedan solo con
+% las entradas; el encabezado, centrado y en mayúsculas como pide la plantilla,
+% lo pone \ustaseccion.
+%
+% '\@starttoc{xxx}' es el mecanismo interno que lee el .toc/.lof/.lot y lo
+% vuelca. Es lo mismo que hacen las macros originales, menos el título.
+% El \parskip de 0,8em que el cuerpo necesita separa también las entradas del
+% índice, y deja un CONTENIDO con las líneas a media página de distancia. Se
+% anula dentro de las listas, que llevan su propio espaciado.
+\makeatletter
+\newcommand{\usta@lista}[1]{\begingroup
+  \setlength{\parskip}{0pt}\@starttoc{#1}\endgroup}
+\renewcommand{\tableofcontents}{\usta@lista{toc}}
+\renewcommand{\listoffigures}{\usta@lista{lof}}
+\renewcommand{\listoftables}{\usta@lista{lot}}
+\renewcommand{\listofgraficas}{\usta@lista{lodg}}   % el tipo flotante propio
+\renewcommand{\lstlistoflistings}{\usta@lista{lol}}
+\makeatother
 
 \endinput

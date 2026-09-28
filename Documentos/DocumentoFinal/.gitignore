@@ -1,0 +1,16 @@
+# Artefactos de compilación de LaTeX. El PDF tampoco se versiona: se regenera
+# con 'pdflatex main && biber main && pdflatex main && pdflatex main'.
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.lof
+*.log
+*.lot
+*.lodg
+*.lol
+*.out
+*.run.xml
+*.toc
+*.synctex.gz
+main.pdf
