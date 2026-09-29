@@ -5,7 +5,9 @@
 anterior: todo lo que se necesita está aquí o enlazado desde aquí.
 **Vehículo:** `amss-ez9n`, que en las últimas sesiones ha tenido la IP **`192.168.0.102`** por DHCP.
 Si hoy tiene otra, sustitúyela en todas las órdenes; `ssh deepracer@<ip> hostname` debe contestar
-`amss-ez9n`. Con el otro vehículo también vale, copiando antes los ficheros: ver §0.2.
+`amss-ez9n`. Con el otro vehículo también vale, copiando antes los ficheros: ver §0.2. **El 29-sep
+la sesión se hace con `amss-jgm9`, en la `192.168.0.104`** (`amss-ez9n` sin batería de tracción); las
+direcciones están reservadas en el router desde ese día.
 
 **Qué contesta, con tres corridas:**
 
@@ -36,7 +38,7 @@ Esta tabla va primero porque es lo que decide cuánto fiarse de cada paso.
 | Pieza | Estado | Dónde se probó |
 |---|---|---|
 | Nav2 + AMCL sobre mapa guardado, en el vehículo | **funciona, una vez**, arrancado a mano | Jonny, 2026-09-24: [`S24_nav2_navegacion_mapa_guardado.md`](Evidencia/S24_nav2_navegacion_mapa_guardado.md) |
-| [`nav2_mapa_guardado.sh`](../herramientas/nav2_mapa_guardado.sh), de Jonny: arranca toda la pila en el orden correcto | codifica la secuencia **que sí funcionó a mano** el 24-sep; como script, su commit no registra ejecución contra el vehículo | 2026-09-25, lectura del código; §4.1 |
+| [`nav2_mapa_guardado.sh`](../herramientas/nav2_mapa_guardado.sh), de Jonny: arranca toda la pila en el orden correcto | **ejecutado contra `amss-jgm9` el 29-sep**: arranca la pila completa y el planificador responde `SUCCEEDED`; Nav2 tarda de 3 a 5 min en quedar activo | [`S25_ensayo_laboratorio.md`](Evidencia/S25_ensayo_laboratorio.md) §3 |
 | [`corrida_nav2.py`](../herramientas/corrida_nav2.py): pose inicial, meta, espera, registro | **probado contra Nav2 real en Gazebo**: 4 corridas y 3 guardas; **nunca contra el vehículo** | 2026-09-25, §9 de esta guía |
 | [`correr_corrida_nav2.sh`](../herramientas/correr_corrida_nav2.sh): la corrida con su bag | sintaxis comprobada; la pieza que graba ([`lanzar_bag.inc`](../herramientas/lanzar_bag.inc)) **sí**, en el vehículo | 2026-09-24 |
 | [`zona_libre_mapa.py`](../herramientas/zona_libre_mapa.py): dónde se puede pedir una meta | **probado** sobre el mapa real del pasillo | 2026-09-25 |
@@ -230,10 +232,12 @@ velocidad real es `max_speed_pct`, que se cambia en caliente. Para toda orden de
 
 | `max_speed_pct` | `throttle` | Lo que se sabe de él |
 |---|---|---|
-| **0,68** (de fábrica) | **0,4247** | **movió `amss-ez9n` 6 m el 2026-09-24**, tres corridas y 3227 órdenes, a 0,14–0,26 m/s reales ([`S24_mapeo_6m_hardware.md`](Evidencia/S24_mapeo_6m_hardware.md) §3) |
+| **0,68** (de fábrica) | **0,4247** | **movió `amss-ez9n` 6 m el 2026-09-24**, tres corridas y 3227 órdenes, a 0,14–0,26 m/s reales ([`S24_mapeo_6m_hardware.md`](Evidencia/S24_mapeo_6m_hardware.md) §3). **`amss-jgm9` no arrancó** el 2026-09-29 |
+| 0,70 | — | `amss-jgm9` no arrancó (29-sep) |
 | 0,75 | 0,4750 | sin medir |
-| 0,80 | 0,5185 | sin medir |
-| **0,90** (el del script) | **0,6327** | el de la navegación del 24-sep, probablemente; es la que se percibió rápida |
+| 0,80 | 0,5185 | `amss-jgm9` solo sonó (29-sep) |
+| 0,85 | — | `amss-jgm9` avanzó muy lento (29-sep) |
+| **0,90** (el del script) | **0,6327** | el de la navegación del 24-sep, probablemente; es la que se percibió rápida. **`amss-jgm9` avanzó 3,39 m a 0,62 m/s de media** el 29-sep ([`S25_ensayo_laboratorio.md`](Evidencia/S25_ensayo_laboratorio.md) §2) |
 
 Calculado ejecutando la función real del nodo, que reproduce exactamente el 0,4247 medido en el
 servo.
@@ -244,8 +248,9 @@ servo.
 > **anduvo 6 m tres veces**. Las dos cosas son medidas; lo que dicen juntas es que **el umbral de
 > arranque de este carro no es estable**, y la batería es el primer sospechoso.
 
-**Recomendación para la campaña:** después del script, bajar a **0,68**, que es la más lenta que se
-sabe que mueve el carro:
+**Recomendación para la campaña, según el vehículo.** Con **`amss-jgm9`**, dejar la **0,9** que pone el
+script: el 29-sep no arrancó con 0,68, 0,70 ni 0,80, y con 0,85 iba muy lento. Con **`amss-ez9n`**,
+después del script, bajar a **0,68**, que es la más lenta que se sabe que lo mueve:
 
 ```bash
 ssh deepracer@192.168.0.102 "sudo -n bash -c 'source /opt/ros/jazzy/setup.bash && source /opt/aws/deepracer/lib/setup.bash && ros2 service call /set_max_speed deepracer_interfaces_pkg/srv/NavThrottleSrv \"{throttle: 0.68}\"'"
