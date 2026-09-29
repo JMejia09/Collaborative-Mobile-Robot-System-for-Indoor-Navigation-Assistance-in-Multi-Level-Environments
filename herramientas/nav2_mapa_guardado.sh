@@ -131,7 +131,10 @@ arrancar() {
 
   info "1/6 · el laser publica?"
   local scan
-  scan=$(en_carro "$FUENTES && timeout 20 ros2 topic hz /rplidar_ros/scan 2>/dev/null | head -2 | tail -1")
+  # 'average rate' sale en la linea 1 o en la 2, segun 'hz' imprima antes o no el
+  # aviso «does not appear to be published yet». Tomar siempre la linea 2 aborto
+  # con el laser a 9,9 Hz (amss-jgm9, 2026-09-29).
+  scan=$(en_carro "$FUENTES && timeout 20 ros2 topic hz /rplidar_ros/scan 2>/dev/null | head -4 | grep -m1 'average rate'")
   if echo "$scan" | grep -q "average rate"; then verde "   $scan"
   else rojo "   el laser NO publica. sudo systemctl restart deepracer-core, espera 30 s"; exit 1; fi
 

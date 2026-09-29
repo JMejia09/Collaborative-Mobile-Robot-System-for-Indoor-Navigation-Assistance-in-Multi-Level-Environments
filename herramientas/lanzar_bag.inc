@@ -62,6 +62,11 @@ cerrar_bag() {
         # error. Se comprueba aqui porque en campo nadie lo mira.
         grep 'message_count' "$BAG_DESTINO/metadata.yaml" | head -4
     else
-        echo "AVISO: el bag no cerro; queda sin metadata.yaml e ilegible"
+        # Se termina a la fuerza para que no quede grabando: el 2026-09-29, en
+        # amss-jgm9, dos grabadores ignoraron la senal y seguian vivos minutos
+        # despues. 'extraer_mapa.py' recupera el mapa de un .mcap sin cerrar.
+        kill -9 "$BAG_PID" 2>/dev/null
+        pkill -9 -f "[r]os2 bag record -s mcap -o $BAG_DESTINO" 2>/dev/null
+        echo "AVISO: el bag no cerro; queda sin metadata.yaml (extraer_mapa.py lo lee igual)"
     fi
 }

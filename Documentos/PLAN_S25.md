@@ -22,8 +22,8 @@ lleva más riesgo.
 | Lun 28 | A | Hecho: los dos carros aislados, A1 a A5 en verde ([registro](Evidencia/S25_aislamiento_dos_carros.md)) | Santiago y Jonny | los dos |
 | Lun 28 – mar 29 | **C** | La pila con espacio de nombres, en el escritorio | Santiago | no |
 | Lun 28 – mié 30 | **D** | Red entre pisos, con un carro en cada piso | Jonny | los dos |
-| Mar 29, mañana | **B0** | Ensayo en el laboratorio: interferencia de la pila, mapeo con el otro carro encendido y Nav2 | Santiago y Jonny | los dos, uno cada vez |
-| **Mar 29** | **B** | **Sesión de compuertas G-2 y G-3** (miércoles de reserva) | Santiago | uno |
+| Mar 29, mañana | **B0** | Ensayo en el laboratorio. Hecho a medias: L2 y L3 con `amss-jgm9`; L1 y el L2 de `amss-ez9n` pendientes, sin batería de tracción ([registro](Evidencia/S25_ensayo_laboratorio.md)) | Santiago y Jonny | los dos, uno cada vez |
+| **Mar 29, noche** | **B** | **Sesión de compuertas G-2 y G-3** con `amss-jgm9` (miércoles de reserva) | Santiago | uno |
 | Mar 29 – mié 30 | **B2** | Pasillo liso con los dos carros: odometría contra cinta, como caracterización | Santiago y Jonny | **los dos** |
 | Mié 30 | **C** | Un carro navega con espacio de nombres | Santiago | uno |
 | Jue 1 | **C + E** | Los dos carros a la vez; coordinador e interfaz en un carro | los dos | **los dos** |
@@ -124,6 +124,11 @@ puede desplazar el carro.
 arranque. Si algo falla, mejor verlo aquí. Hace falta un tramo recto de unos 4 m. La pila del proyecto
 corre en un carro cada vez; el otro puede quedar encendido.
 
+> **Estado, 29-sep.** L2 y L3 se hicieron con `amss-jgm9`; `amss-ez9n` no tenía batería de tracción.
+> L3 dejó tres arreglos (la banda muerta del puente, el controlador a 10 Hz y el latido del gestor a
+> 20 s) y un límite: con el mapa de una sola pasada, AMCL no se localizó. L1 queda para cuando los dos
+> carros tengan batería. Registro: [`S25_ensayo_laboratorio.md`](Evidencia/S25_ensayo_laboratorio.md).
+
 **L1 · La interferencia de la pila, medida (10 min, ruedas en el aire)**
 
 | | |
@@ -131,7 +136,7 @@ corre en un carro cada vez; el otro puede quedar encendido.
 | **Objetivo** | Medir que hoy la pila de un carro llega al otro: sin espacios de nombres, `/cmd_vel` es común a los dos. |
 | **Preparación** | Los dos sobre cajas, con las ruedas en el aire y una persona mirando cada uno. |
 | **Comando** | El puente en los dos, `.102` y `.104`: `ssh deepracer@192.168.0.102 "sudo -n bash -c 'export FASTRTPS_DEFAULT_PROFILES_FILE=/etc/deepracer-tesis/particion.xml; source /opt/ros/jazzy/setup.bash && source ~deepracer/coordinacion_ws/install/setup.bash && timeout 60 ros2 run cmdvel_to_servo_pkg cmdvel_to_servo_node'"`. Después, solo en `amss-jgm9`: `ssh deepracer@192.168.0.104 "sudo -n bash -c 'source /opt/ros/jazzy/setup.bash && timeout 12 ros2 topic pub -r 10 /cmd_vel geometry_msgs/msg/Twist \"{linear: {x: 0.2}, angular: {z: 1.0}}\"'"` y la misma orden en cero. |
-| **Esperado** | A 0,2 m/s la tracción da cero por la banda muerta y la dirección va al tope. **Hoy deben girar las ruedas de los dos carros.** |
+| **Esperado** | La dirección va al tope y, con el puente del 29-sep, la tracción también gira: 0,2 m/s ya no da cero, sube al escalón más bajo. **Hoy deben girar las ruedas de los dos carros.** |
 | **Cierre** | Anotado qué carros giraron. Es la prueba de control del bloque C: con espacios de nombres, la misma orden debe mover solo a `amss-jgm9`. |
 
 **L2 · Mapeo de cada carro con el otro encendido (15 min por carro)**
@@ -158,10 +163,11 @@ corre en un carro cada vez; el otro puede quedar encendido.
 Se hace el martes y no el viernes para que, si algo falla, quede **un día de reserva antes del corte**.
 
 **El procedimiento es el de [`GUIA_CAMPANA_NAV2_HARDWARE.md`](GUIA_CAMPANA_NAV2_HARDWARE.md)**, en el
-tramo encajonado del piso 2, con `amss-ez9n`. Resumido:
+tramo encajonado del piso 2, con `amss-jgm9` (`amss-ez9n` sin batería de tracción el 29-sep). Resumido:
 
 1. Sitio: cajas y cinta como en el §2 de la guía; **salida y meta separadas 5,00 m, medidos**.
-2. Arranque: `nav2_mapa_guardado.sh` (§4.1 de la guía). Escala en **0,68** (§4.2).
+2. Arranque: `nav2_mapa_guardado.sh` (§4.1 de la guía). Escala en **0,9**, la que fija el script: con
+   0,68 `amss-jgm9` suena y no arranca (29-sep). Nav2 tarda de 3 a 5 min en quedar activo.
 3. Las dos comprobaciones sin mover el carro (§4.3): el planificador llega a la meta, y los costmaps
    escuchan el láser.
 4. **Tres corridas**: `correr_corrida_nav2.sh c1_01 … c1_03` con `--avance 5.0` (§5).
@@ -176,9 +182,9 @@ tramo encajonado del piso 2, con `amss-ez9n`. Resumido:
 > La tolerancia de 0,5 m la fijó el director el 28-sep, antes de estas corridas, y
 > `analizar_campana_nav2.py` ya la usa por defecto. No se cambia viendo los resultados.
 
-> Con la escala en 0,9, la navegación del 24-sep paró a 0,412 m de la meta, dentro de 0,5 m. Con 0,68
-> el error debería bajar, y es lo que se mide. Si alguna corrida pasa de 0,5 m, se reporta con su
-> causa.
+> Con la escala en 0,9, la navegación del 24-sep paró a 0,412 m de la meta, dentro de 0,5 m. La idea
+> de bajar a 0,68 para reducir ese error no se puede aplicar: el 29-sep `amss-jgm9` no arrancó con
+> 0,68 ni con 0,80, así que las corridas van con 0,9. Si alguna pasa de 0,5 m, se reporta con su causa.
 
 ### B2 · El pasillo liso, con los dos carros (martes después de B, o miércoles)
 

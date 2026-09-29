@@ -6,13 +6,18 @@
   vehiculo mediante FASTRTPS_DEFAULT_PROFILES_FILE: el servicio deepracer-core,
   por un drop-in de systemd, y todo lo nuestro (Nav2, rf2o, el puente, el grabador).
 
-  QUE AISLA Y POR QUE. Los cinco topicos de abajo tienen nombre GLOBAL y los dos
+  QUE AISLA Y POR QUE. Los topicos de abajo tienen nombre GLOBAL y los dos
   vehiculos los publican igual, en el mismo dominio 0. Sin esta particion:
     /ctrl_pkg/servo_msg, /ctrl_pkg/raw_pwm   una orden mueve LOS DOS carros (17-sep)
     /rplidar_ros/scan                         la odometria de cada carro recibe
                                               tambien el laser del otro (23-sep)
     /tf, /tf_static                           el marco 'laser' del driver de AWS
                                               tendria dos padres
+    /camera_pkg/display_mjpeg[/compressed]    el sensor_fusion_node de cada carro
+                                              recibe tambien el video del otro:
+                                              ~1 MB/s por sentido, que satura el
+                                              WiFi (29-sep). El proyecto no usa
+                                              la camara
   Con ella, cada carro solo ve los suyos. Todo lo demas -los /robotN/*, el
   coordinador, la interfaz- sigue en la particion por defecto y se ve entre
   vehiculos como antes: G-4 y RF-15 no cambian.
@@ -38,5 +43,9 @@
     <subscriber profile_name="/tf"><qos><partition><names><name>amss-jgm9</name></names></partition></qos></subscriber>
     <publisher profile_name="/tf_static"><qos><partition><names><name>amss-jgm9</name></names></partition></qos></publisher>
     <subscriber profile_name="/tf_static"><qos><partition><names><name>amss-jgm9</name></names></partition></qos></subscriber>
+    <publisher profile_name="/camera_pkg/display_mjpeg"><qos><partition><names><name>amss-jgm9</name></names></partition></qos></publisher>
+    <subscriber profile_name="/camera_pkg/display_mjpeg"><qos><partition><names><name>amss-jgm9</name></names></partition></qos></subscriber>
+    <publisher profile_name="/camera_pkg/display_mjpeg/compressed"><qos><partition><names><name>amss-jgm9</name></names></partition></qos></publisher>
+    <subscriber profile_name="/camera_pkg/display_mjpeg/compressed"><qos><partition><names><name>amss-jgm9</name></names></partition></qos></subscriber>
   </profiles>
 </dds>

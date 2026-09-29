@@ -32,10 +32,12 @@ sin proteccion y aparentar que la tiene.
 
 EL UMBRAL DE 0,40 m/s
 ---------------------
-'cmdvel_to_servo_node' traduce con |v|/4,0 y descarta por debajo de 0,1, asi
-que toda velocidad menor de 0,40 m/s sale como throttle CERO y el carro no se
-mueve. Medido el 2026-09-24. Por eso la velocidad por defecto es 0,50 m/s y el
-guion avisa si se le pide menos.
+'cmdvel_to_servo_node' traduce con |v|/4,0 y descartaba por debajo de 0,1, asi
+que toda velocidad menor de 0,40 m/s salia como throttle CERO y el carro no se
+movia. Medido el 2026-09-24. Desde el 2026-09-29 el puente sube esa franja a su
+escalon mas bajo, el mismo de 0,40 a 1,19 m/s, asi que pedir menos ya no para el
+carro pero tampoco lo hace ir mas despacio. La velocidad por defecto sigue en
+0,50 m/s y el aviso se conserva para los puentes sin actualizar.
 
 POR QUE HAY UNA FASE DE REPOSO ANTES DE ARRANCAR
 ------------------------------------------------

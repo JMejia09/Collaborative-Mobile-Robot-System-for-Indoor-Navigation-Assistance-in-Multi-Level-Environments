@@ -2,7 +2,8 @@
 
 **Redactado:** 2026-09-25 (S24). **Estado:** instalado y comprobado en los dos vehículos el
 2026-09-28, pruebas A1 a A5 del bloque A de [`PLAN_S25.md`](PLAN_S25.md), registradas en
-[`S25_aislamiento_dos_carros.md`](Evidencia/S25_aislamiento_dos_carros.md).
+[`S25_aislamiento_dos_carros.md`](Evidencia/S25_aislamiento_dos_carros.md). El 29-sep se añadieron los dos tópicos de la
+cámara ([`S25_ensayo_laboratorio.md`](Evidencia/S25_ensayo_laboratorio.md) §1).
 
 **Por qué es lo primero.** El sistema real —dos vehículos, coordinador y relevo entre pisos, que
 es lo que piden G-5 y RF-27— exige los dos carros encendidos y moviéndose a la vez. Hoy eso **no se
@@ -24,6 +25,7 @@ espacio de nombres, y los dos vehículos están en el mismo dominio de ROS 2, el
 | `/ctrl_pkg/raw_pwm` | la consola de AWS | `servo_pkg` de cada carro | ídem | — |
 | `/rplidar_ros/scan` | el LiDAR de cada carro | rf2o, AMCL, costmaps | cada carro recibe **los dos** láseres, intercalados | 23-sep |
 | `/tf`, `/tf_static` | rf2o, `robot_state_publisher`, AMCL | todo Nav2 | el marco `laser` del driver de AWS tendría dos padres | por diseño |
+| `/camera_pkg/display_mjpeg` y su `/compressed` | la cámara de cada carro | `sensor_fusion_node` de **cada** carro | cada carro recibe el video del otro, ~1 MB/s por sentido, y el WiFi se satura (pings de 1 a 2 s) | 29-sep |
 
 ## 2. Lo que no se puede cambiar
 
@@ -49,8 +51,8 @@ espacio de nombres, y los dos vehículos están en el mismo dominio de ROS 2, el
 
 ## 4. El diseño
 
-**Dos capas.** La de **hardware** es privada de cada vehículo: los cinco tópicos del §1 van en una
-partición DDS con el nombre del carro. La del **sistema** es común: todo lo nuestro va con espacio
+**Dos capas.** La de **hardware** es privada de cada vehículo: los tópicos del §1 van en una
+partición DDS con el nombre del carro (cinco desde el 28-sep; la cámara se añadió el 29-sep). La del **sistema** es común: todo lo nuestro va con espacio
 de nombres `/robot1` o `/robot2` y marcos con prefijo `robotN/`, exactamente como en simulación, y
 sigue en la partición por defecto.
 

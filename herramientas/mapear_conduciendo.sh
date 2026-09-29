@@ -2,13 +2,17 @@
 # Mapea conduciendo: el vehiculo avanza una distancia y construye el mapa a la vez.
 #
 # USO (en el VEHICULO, y como root — ver abajo por que)
-#     mapear_conduciendo.sh <metros> [m/s] [tope_segundos]
+#     mapear_conduciendo.sh <metros> [m/s] [tope_segundos] [escala]
 #
 #     metros          distancia objetivo, medida contra la odometria de rf2o
-#     m/s             velocidad mandada. Por defecto 0,5. POR DEBAJO DE 0,40 NO
-#                     SE MUEVE: 'cmdvel_to_servo_node' convierte con |v|/4,0 y
-#                     descarta lo que quede por debajo de 0,1, asi que 0,26 m/s
-#                     -lo que pide Nav2- sale como throttle CERO sin dar error
+#     m/s             velocidad mandada. Por defecto 0,5. Hasta el 2026-09-29 lo que
+#                     quedaba por debajo de 0,40 salia como throttle CERO; desde
+#                     entonces el puente lo sube a su escalon mas bajo, el mismo
+#                     que da 0,5. Pedir menos no hace ir mas despacio
+#     escala          max_speed_pct del puente (0,68 de fabrica). El 2026-09-29, en
+#                     amss-jgm9, con 0,80 (throttle 0,5185) solo sono; con 0,90
+#                     (throttle 0,6327) avanzo 2,9 m. Si no se da, se deja la que
+#                     tenga el puente
 #     tope_segundos   corte duro. A la velocidad real medida el 2026-09-24
 #                     (0,15 a 0,26 m/s) seis metros tardan entre 25 y 45 s
 #
@@ -66,6 +70,7 @@ source "$AQUI/lanzar_bag.inc"
 METROS="${1:-6.0}"
 VELOCIDAD="${2:-0.5}"
 TOPE="${3:-90}"
+ESCALA="${4:-}"
 SALIDA=~deepracer/mapeo_$(date +%H%M%S)
 
 mkdir -p "$SALIDA"
@@ -85,8 +90,17 @@ limpiar
 # arrancar. Lo publica 'deepracer-core', pero una corrida anterior pudo
 # dejarlo tocado.
 echo "== comprobando el LiDAR =="
-if ! timeout 15 ros2 topic echo /rplidar_ros/scan --field header.frame_id \
-        --qos-reliability best_effort --once > /tmp/frame.txt 2>&1; then
+# Con el tipo explicito: sin el, 'ros2 topic echo' sale al instante con «Could not
+# determine the type» si el descubrimiento aun no encontro el topico -recien
+# encendidos los carros, con los dos en la red-, sin esperar al 'timeout'. Paso el
+# 2026-09-29 con el LiDAR publicando a 7,6 Hz.
+# Se juzga por la salida y no por el codigo de retorno: con la red cargada el
+# 'echo' recibe el barrido pero tarda en cerrarse, el 'timeout' lo corta y el
+# codigo es 124 aunque el LiDAR este bien. Paso el 2026-09-29 en amss-ez9n. El
+# '---' lo imprime 'ros2 topic echo' al final de cada mensaje recibido.
+timeout 15 ros2 topic echo /rplidar_ros/scan sensor_msgs/msg/LaserScan \
+    --field header.frame_id --qos-reliability best_effort --once > /tmp/frame.txt 2>&1
+if ! grep -q '^---$' /tmp/frame.txt; then
     echo "ABORTA: /rplidar_ros/scan no publica. Revisa deepracer-core."
     cat /tmp/frame.txt
     exit 5
@@ -132,10 +146,20 @@ sleep 8
 # el portatil sin hacer nada de esto. Ya estaba anotado en GUION_NAV2_HARDWARE
 # §3; costo una corrida entera de mapeo el 2026-09-24 por no haberlo leido.
 echo "== activando slam_toolbox (ciclo de vida) =="
-ros2 lifecycle set /slam_toolbox configure > /dev/null 2>&1
-sleep 3
-ros2 lifecycle set /slam_toolbox activate > /dev/null 2>&1
-sleep 3
+# Con reintentos: 'ros2 lifecycle set' falla al instante («Node not found») si el
+# descubrimiento aun no encontro el nodo, y con los dos carros encendidos tarda
+# mas. Paso el 2026-09-29: el nodo vivo y el estado en 'unconfigured'. Hasta 30 s
+# por paso.
+for paso in configure activate; do
+    for intento in 1 2 3 4 5 6 7 8 9 10; do
+        ESTADO_SLAM="$(ros2 lifecycle get /slam_toolbox 2>&1 | head -1)"
+        case "$paso:$ESTADO_SLAM" in
+            configure:inactive*|configure:active*|activate:active*) break ;;
+        esac
+        ros2 lifecycle set /slam_toolbox $paso > /dev/null 2>&1
+        sleep 3
+    done
+done
 ESTADO_SLAM="$(ros2 lifecycle get /slam_toolbox 2>&1 | head -1)"
 echo "   estado: $ESTADO_SLAM"
 case "$ESTADO_SLAM" in
@@ -152,6 +176,43 @@ if ! ps -eo args | grep -q '[c]mdvel_to_servo_pkg/cmdvel_to_servo_node'; then
     nohup ros2 run cmdvel_to_servo_pkg cmdvel_to_servo_node \
         > /tmp/cmdvel.log 2>&1 &
     sleep 6
+fi
+
+if [ -n "$ESCALA" ]; then
+    echo "== escala de velocidad: $ESCALA =="
+    # La peticion puede llegar aunque la respuesta no vuelva: el 2026-09-29, en
+    # amss-ez9n, el puente registro 'Incoming request: max_speed_pct: 0.8' tres veces
+    # y el cliente no recibio ninguna respuesta. Por eso vale como confirmacion la
+    # ultima peticion que el puente escribio en su log. Se compara como numero: el
+    # puente escribe el float32, y 0,90 sale 0.8999...
+    escala_en_log() {
+        local u
+        u="$(grep -o 'Incoming request: max_speed_pct: [0-9.]*' /tmp/cmdvel.log 2>/dev/null | tail -1 | awk '{print $NF}')"
+        [ -n "$u" ] && awk -v u="$u" -v e="$ESCALA" 'BEGIN { exit !((u - e) ^ 2 < 1e-6) }'
+    }
+    # Con reintentos: recien arrancado el puente, con la red cargada, el servicio
+    # tardo mas de 30 s en descubrirse y la llamada murio con «rcl node's context
+    # is invalid» (amss-jgm9, 2026-09-29). El log se mira antes de cada intento
+    # para no agotarlos cuando la escala ya esta puesta.
+    R=""
+    for intento in 1 2 3 4; do
+        if escala_en_log; then
+            R="error=0 (confirmado en /tmp/cmdvel.log)"
+            break
+        fi
+        R="$(timeout 20 ros2 service call /set_max_speed deepracer_interfaces_pkg/srv/NavThrottleSrv "{throttle: $ESCALA}" 2>&1 | tail -1)"
+        case "$R" in *error=0*) break ;; esac
+        echo "   intento $intento: el puente aun no responde"
+    done
+    case "$R" in
+        *error=0*) ;;
+        *) escala_en_log && R="error=0 (confirmado en /tmp/cmdvel.log; la respuesta no llego)" ;;
+    esac
+    echo "   $R"
+    case "$R" in
+        *error=0*) ;;
+        *) echo "ABORTA: no se pudo fijar la escala. El vehiculo no se ha movido."; exit 6 ;;
+    esac
 fi
 
 echo "== grabando bag =="

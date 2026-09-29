@@ -42,8 +42,9 @@ usa el USB, por tres razones:
 1. **No depende del wifi.** Si el `/joy` viaja por red y la red se cae, el hombre muerto salta y
    el carro para — correcto, pero significa que el carro se para solo cada vez que el wifi
    parpadea. Por USB eso no puede pasar.
-2. **No depende de que Humble y Jazzy se hablen.** Nunca se comprobó en este proyecto, y el día
-   de la prueba no es el día de averiguarlo.
+2. **No depende de que Humble y Jazzy se hablen.** Se midió el 29-sep y funciona solo a medias:
+   un `PoseStamped` del portátil llega bien al carro, pero el `LaserScan` del carro llega al portátil
+   y no se decodifica ([`S25_ensayo_laboratorio.md`](Evidencia/S25_ensayo_laboratorio.md) §4).
 3. **`joy_node` en el carro reconoce el Pro Controller por USB sin instalar nada.** Comprobado:
    `sudo apt install ros-jazzy-joy` y el mando aparece como `/dev/input/js0`.
 

@@ -236,7 +236,10 @@ class CmdvelToServoNode(Node):
             return constants.ActionValues.MAX_THROTTLE_OUTPUT
         elif target_linear_pct >= constants.VehicleNav2Dynamics.MID_THROTTLE_RATIO:
             return constants.ActionValues.MID_THROTTLE_OUTPUT
-        elif target_linear_pct >= constants.VehicleNav2Dynamics.MAX_THROTTLE_RATIO:
+        # El escalon mas bajo cubre tambien lo que queda por debajo de
+        # MAX_THROTTLE_RATIO: esa franja daba cero y el carro se paraba cuando Nav2
+        # regulaba o se aproximaba a la meta (amss-jgm9, 2026-09-29).
+        elif abs(target_linear_clamped) >= constants.VehicleNav2Dynamics.MIN_MOVING_SPEED:
             return constants.ActionValues.MIN_THROTTLE_OUTPUT
         else:
             return constants.ActionValues.DEFAULT_OUTPUT

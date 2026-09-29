@@ -51,6 +51,12 @@ class VehicleNav2Dynamics():
     MIN_THROTTLE_RATIO = 0.5
     MID_THROTTLE_RATIO = 0.3
     MAX_THROTTLE_RATIO = 0.1
+    # Por debajo de MAX_THROTTLE_RATIO (0,40 m/s) el escalon era cero, y Nav2 pide
+    # 0,05 a 0,25 m/s al regular y al aproximarse: el carro se paraba, Nav2 lo daba
+    # por atascado y lanzaba recuperaciones que tampoco lo movian. Desde el
+    # 2026-09-29 cualquier orden de al menos MIN_MOVING_SPEED sale con el escalon
+    # mas bajo. Lo que quede por debajo se toma como cero (ruido de redondeo).
+    MIN_MOVING_SPEED = 0.01
     # Ratios for steering angles calculated using abs(given_angle / max_angle)
     MIN_STEERING_RATIO = 0.8
     MID_STEERING_RATIO = 0.4

@@ -55,28 +55,39 @@ Los arboles de `behavior_trees/` se usan los mismos que en simulacion. En Jazzy
 imprimen un aviso por no llevar `BTCPP_format="4"`: es esperado y no impide
 cargarlos (BT.CPP 4.6.2 solo avisa).
 
-Los tres ajustes de hardware, y por que son justo estos tres
------------------------------------------------------------
+Los ajustes de hardware
+-----------------------
 Lo que es propio del vehiculo, y no de la distribucion, no va en el YAML: se
 reescribe aqui con `RewrittenYaml`, sobre el archivo de Jazzy:
 
 1. `min_approach_linear_velocity` 0,05 -> 0,40
 2. `regulated_linear_scaling_min_speed` 0,25 -> 0,40
 
-   Las dos por la **banda muerta del acelerador**, que solo existe en hardware.
-   `get_mapped_throttle` calcula `pct = |v| / MAX_SPEED` con `MAX_SPEED = 4.0` y
-   su umbral mas bajo es 0,1, asi que **todo `linear.x` por debajo de 0,40 m/s
-   sale como throttle 0,0000 exacto**. Con los valores de simulacion, RPP frena
-   a 0,05 en los ultimos 0,6 m antes de la meta y a 0,25 en toda curva de radio
-   menor que 0,9 m: en los dos casos el carro se detiene, el mando publicado es
-   valido, y ningun log dice nada. Subirlos a 0,40 no acelera al vehiculo, solo
-   impide que RPP pida velocidades que fisicamente significan «parado».
+   Las dos por la **banda muerta del acelerador**. `get_mapped_throttle` calcula
+   `pct = |v| / MAX_SPEED` con `MAX_SPEED = 4.0` y su umbral mas bajo es 0,1, asi
+   que hasta el 2026-09-29 todo `linear.x` por debajo de 0,40 m/s salia como
+   throttle 0,0000 exacto y el carro se detenia sin que ningun log lo dijera.
+   Desde ese dia el puente sube esa franja a su escalon mas bajo (el que da
+   0,40), asi que estos dos valores ya no hacen falta para que el carro se
+   mueva; se conservan porque describen lo que el vehiculo hace de verdad: por
+   debajo de 0,40 no va mas despacio.
 
 3. `topic` y `scan_topic` -> `/rplidar_ros/scan`
 
    El driver de fabrica no publica en `/scan`. Se cambia por parametro y no por
    remapeo para que quede una sola forma de decirlo, y porque la capa de
    obstaculos del costmap toma su topico de un parametro, no de un remapeo.
+
+4. `controller_frequency` 20 -> 10
+
+   La tarjeta de 2 nucleos no sostiene 20 Hz: el 2026-09-29, en `amss-jgm9`, el
+   lazo corrio entre 1 y 6 Hz con `Control loop missed its desired rate`.
+
+5. `bond_timeout` del gestor del ciclo de vida, 4 -> 20 s
+
+   No esta en el YAML sino en los parametros del gestor, abajo. Con la tarjeta a
+   carga 18, el latido de `controller_server` no llego en 4 s y el gestor
+   desactivo todo Nav2 35 s despues de activarlo (2026-09-29).
 
 `use_sim_time` pasa a falso en todo el arbol, que es lo que separa esta corrida
 de una de Gazebo.
@@ -93,9 +104,12 @@ from launch_ros.actions import Node
 from nav2_common.launch import RewrittenYaml
 
 
-# Suelo de velocidad que el puente traduce a traccion distinta de cero.
-# Por debajo de esto, 'get_mapped_throttle' devuelve 0,0000 exacto.
+# Inicio del escalon mas bajo del puente. Hasta el 2026-09-29, por debajo de esto
+# 'get_mapped_throttle' devolvia 0,0000 exacto; desde entonces devuelve ese mismo
+# escalon, asi que pedir menos no hace ir mas despacio.
 VELOCIDAD_MINIMA_UTIL = '0.40'
+# Frecuencia del controlador que la tarjeta de 2 nucleos si sostiene (ajuste 4).
+FRECUENCIA_CONTROL = '10.0'
 
 TOPICO_SCAN = '/rplidar_ros/scan'
 
@@ -157,6 +171,10 @@ def _lanzar(context, *args, **kwargs):
             'use_sim_time': 'False',
             'min_approach_linear_velocity': VELOCIDAD_MINIMA_UTIL,
             'regulated_linear_scaling_min_speed': VELOCIDAD_MINIMA_UTIL,
+            # 10 Hz y no los 20 de simulacion: la tarjeta de 2 nucleos no los
+            # sostiene. El 2026-09-29, en amss-jgm9, el lazo corrio entre 1 y 6 Hz
+            # con «Control loop missed its desired rate» en cada meta.
+            'controller_frequency': FRECUENCIA_CONTROL,
             'topic': TOPICO_SCAN,
             # Vacios en el YAML a proposito: sin rellenarlos, `bt_navigator`
             # carga el arbol por defecto de Nav2, que recupera con <Spin> —una
@@ -223,7 +241,11 @@ def _lanzar(context, *args, **kwargs):
     acciones.append(
         Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',
              name='lifecycle_manager_navigation', output='screen',
+             # bond_timeout 20 s y no los 4 de fabrica: con la tarjeta de 2 nucleos a
+             # carga 18, el latido de controller_server no llego en 4 s y el gestor
+             # desactivo todo Nav2 35 s despues de activarlo (amss-jgm9, 2026-09-29).
              parameters=[{'use_sim_time': False, 'autostart': True,
+                          'bond_timeout': 20.0,
                           'node_names': [n for _, n in nodos_nav2]}],
              condition=hay_nav))
 

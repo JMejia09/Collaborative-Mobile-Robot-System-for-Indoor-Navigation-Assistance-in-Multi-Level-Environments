@@ -81,14 +81,17 @@ comprueba("el topico de publicacion es absoluto",
 comprueba("y es el del servo_pkg del vehiculo",
           constants.ACTION_PUBLISH_TOPIC, "/ctrl_pkg/servo_msg")
 
-print("\n5. LO QUE ESTA PRUEBA NO ARREGLA")
-umbral = V.MAX_SPEED * V.MAX_THROTTLE_RATIO
-print(f"  El escalon mas bajo esta en {umbral:.2f} m/s, porque MAX_SPEED vale {V.MAX_SPEED} m/s.")
-print("  Nav2 pide 0.25 m/s en curva y 0.05 en la aproximacion, o sea que SIGUE")
-print("  devolviendo cero ahi. Ordenar las comparaciones arregla el mapeo, no la")
-print("  escala. Eso es calibracion contra el vehiculo y esta sin decidir.")
-comprueba("y queda registrado que 0.25 m/s todavia da cero",
-          throttle(None, 0.25), A.DEFAULT_OUTPUT)
+print("\n5. Sin zona muerta por debajo de 0,40 m/s (desde el 2026-09-29)")
+# Nav2 pide 0,25 m/s al regular y 0,05 al aproximarse. Con cero ahi el carro se
+# paraba, Nav2 lo daba por atascado y las recuperaciones tampoco lo movian.
+comprueba("0.25 m/s (regulacion de Nav2) mueve el carro",
+          throttle(None, 0.25), A.MIN_THROTTLE_OUTPUT)
+comprueba("0.05 m/s (aproximacion a la meta) mueve el carro",
+          throttle(None, 0.05), A.MIN_THROTTLE_OUTPUT)
+comprueba("-0.05 m/s (retroceso de recuperacion) tambien",
+          throttle(None, -0.05), A.MIN_THROTTLE_OUTPUT)
+comprueba("por debajo de MIN_MOVING_SPEED sigue siendo cero",
+          throttle(None, V.MIN_MOVING_SPEED / 2), A.DEFAULT_OUTPUT)
 
 print("\n" + "=" * 62)
 if FALLOS:

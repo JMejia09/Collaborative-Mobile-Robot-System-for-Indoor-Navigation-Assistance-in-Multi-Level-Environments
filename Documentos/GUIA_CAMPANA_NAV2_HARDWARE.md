@@ -488,7 +488,9 @@ bitácora de [`ESTADO.md`](../ESTADO.md); si no, el verificador lo marca como do
 | El carro no se mueve y nada da error | un proceso corre como `deepracer`, no como `root` | todo con `sudo -n`, como en las órdenes de arriba |
 | `Start occupied` en cualquier meta | los costmaps se configuraron antes que el mapa, o la salida cae en celda no libre | el script ya ordena el arranque: `--parar`, y repetir; si persiste, recoloca el carro o corrige `POSE_X` |
 | Nav2 aborta sin decir por qué | la meta cae en celda desconocida del mapa | `zona_libre_mapa.py`; la herramienta ya lo comprueba con `--mapa` |
-| El carro no arranca con órdenes de Nav2 | la banda muerta: por debajo de 0,40 m/s el `throttle` sale 0 | el launch ya sube a 0,40 las dos velocidades mínimas; si aun así, sube `max_speed_pct` (§4.2) |
+| El carro no arranca con órdenes de Nav2 | escala del puente baja: con 0,68, `amss-jgm9` suena y no arranca (29-sep) | `nav2_mapa_guardado.sh` fija 0,9; comprueba que diga `escala 0.9 puesta`. La banda muerta por debajo de 0,40 m/s ya no existe desde el 29-sep: el puente la sube a su escalón más bajo, y eso es lo que permite retroceder en las recuperaciones |
+| Nav2 se apaga solo unos segundos después de activarse | el gestor del ciclo de vida perdió el latido de `controller_server` con la tarjeta saturada | desde el 29-sep el launch espera 20 s el latido y no 4; si pasa, `--parar` y repetir |
+| El planificador rechaza la meta nada más arrancar | Nav2 todavía se está activando: en `amss-jgm9` tarda de 3 a 5 min | espera a `Managed nodes are active` en `/tmp/nav2_campo/launch.log` antes de la comprobación del §4.3 |
 | El carro llega pero se pasa ~0,4 m | aproximación a 0,40 m/s sin régimen de frenado fino | es el hallazgo de G-3, no un fallo del procedimiento: anotarlo |
 | `ABORTA: AMCL no converge` (código 4) | la `--salida` está lejos de donde está el carro | recolocar el carro o corregir `--salida` |
 | `ABORTA: la meta no cae en celda libre` (código 5) | meta fuera del tramo útil | menos avance, o salida más atrás |
@@ -556,6 +558,7 @@ nombre equivocado.
   información ([`S23_informacion_avance_piso2.md`](Evidencia/S23_informacion_avance_piso2.md)).
 - **Los dos vehículos a la vez.** Eso es G-5: el protocolo con relevo y el coordinador, no solo
   dos carros navegando.
-- **La escala de `/cmd_vel`.** El launch esquiva la banda muerta subiendo las velocidades mínimas;
-  no la corrige. Corregirla es calibrar `MAX_SPEED` en el puente, que es RF-14
+- **La escala de `/cmd_vel`.** Desde el 29-sep el puente sube a su escalón más bajo todo lo que
+  queda entre 0,01 y 0,40 m/s, así que la banda muerta ya no para el carro; la escala sigue sin
+  calibrar. Calibrarla es ajustar `MAX_SPEED` en el puente, que es RF-14
   ([`S24_analisis_previo_RF11.md`](Evidencia/S24_analisis_previo_RF11.md) §4).

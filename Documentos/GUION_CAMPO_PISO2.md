@@ -165,7 +165,7 @@ Las tres líneas que hay que mirar sí o sí:
 | `NO ARRANCA: hay algo a X m delante` | pared u obstáculo dentro de los 0,45 m | mueve el vehículo hacia atrás o aparta el obstáculo |
 | `ERROR: nadie escucha /cmd_vel` | `cmdvel_to_servo_node` no arrancó | el guion lo lanza solo; si falla, mira `ssh deepracer@192.168.0.102 "sudo -n tail -20 /tmp/cmdvel.log"` |
 | `AVISO: el bag no cerro` | no debería pasar ya | la corrida **sigue siendo válida para G-2** —la cifra sale por pantalla— pero se pierde el crudo |
-| El vehículo no se mueve y no hay error | velocidad pedida por debajo de 0,40 m/s | **nunca bajes del 0,5** del comando. Por debajo de 0,40 la cadena traduce a tracción cero sin avisar |
+| El vehículo no se mueve y no hay error | escala del puente demasiado baja, o puente sin la versión del 29-sep | con la escala de fábrica (0,68) `amss-jgm9` suena y no arranca: pasa la escala **0,90** como cuarto argumento de `mapear_conduciendo.sh`. Hasta el 29-sep, además, lo pedido por debajo de 0,40 m/s salía como tracción cero; el puente actual lo sube a su escalón más bajo |
 
 ### 3.4 · Repetir, que es lo que da la cifra
 
