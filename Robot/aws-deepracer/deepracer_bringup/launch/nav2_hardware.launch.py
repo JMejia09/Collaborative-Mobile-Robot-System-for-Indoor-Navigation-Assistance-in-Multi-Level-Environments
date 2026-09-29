@@ -91,6 +91,29 @@ reescribe aqui con `RewrittenYaml`, sobre el archivo de Jazzy:
 
 `use_sim_time` pasa a falso en todo el arbol, que es lo que separa esta corrida
 de una de Gazebo.
+
+Espacio de nombres (bloque C de Documentos/PLAN_S25.md)
+-------------------------------------------------------
+El coordinador llama a `/robotN/navigate_to_pose`, lee `/robotN/odom` y manda las
+metas en `robotN/map`. Con `namespace:=robot2`:
+
+- todos los nodos cuelgan de `/robot2`, y el YAML se anida con `root_key`, como
+  en `deepracer_navigation_sim.launch.py`;
+- los marcos propios llevan prefijo (`robot2/map`, `robot2/odom`,
+  `robot2/base_link` y los de la URDF, por `frame_prefix`), y Nav2 los lee de
+  las nueve claves de `marcos_prefijados`;
+- rf2o publica `/robot2/odom`;
+- una TF estatica identidad `robot2/laser -> laser` enlaza el marco `laser`, que
+  pone el driver de AWS en cada barrido y no se puede cambiar. `/tf` va en la
+  particion de cada carro, asi que ese `laser` sin prefijo no choca con el del
+  otro;
+- `/tf` no se remapea: como en la simulacion, lo que separa los arboles es el
+  prefijo.
+
+`map_server`, `amcl` y el puente los arranca `herramientas/nav2_mapa_guardado.sh`
+con `NS=robot2`. Sin `namespace` (el valor por defecto) el lanzamiento es el mismo
+de antes: ni un parametro, nodo o reescritura de mas. Lo comprueba
+`herramientas/prueba_nav2_hardware_ns.py`.
 """
 
 import os
@@ -143,6 +166,43 @@ def _exigir(ruta, que, argumento):
     return ruta
 
 
+def marcos_prefijados(prefijo):
+    """Claves del YAML de Nav2 cuyo valor es un marco del robot, ya prefijadas.
+
+    Rutas completas y no la clave suelta: `global_frame` vale `map` en el costmap
+    global y `odom` en el local, y reescribirla por clave hoja igualaria los dos
+    (la misma razon que en deepracer_navigation_sim.launch.py). Sin prefijo no se
+    reescribe nada. Las de `amcl` y `map_server` no van aqui: esos nodos los
+    arranca nav2_mapa_guardado.sh, no este lanzador.
+    """
+    if not prefijo:
+        return {}
+    base, odom, mapa = (f'{prefijo}base_link', f'{prefijo}odom', f'{prefijo}map')
+    return {
+        'bt_navigator.ros__parameters.global_frame': mapa,
+        'bt_navigator.ros__parameters.robot_base_frame': base,
+        'local_costmap.local_costmap.ros__parameters.global_frame': odom,
+        'local_costmap.local_costmap.ros__parameters.robot_base_frame': base,
+        'global_costmap.global_costmap.ros__parameters.global_frame': mapa,
+        'global_costmap.global_costmap.ros__parameters.robot_base_frame': base,
+        # Jazzy separa el marco local y el global (diferencia 6 del YAML).
+        'behavior_server.ros__parameters.local_frame': odom,
+        'behavior_server.ros__parameters.global_frame': mapa,
+        'behavior_server.ros__parameters.robot_base_frame': base,
+    }
+
+
+def marcos_slam(prefijo):
+    """Los tres marcos de slam_toolbox, prefijados; vacio sin prefijo."""
+    if not prefijo:
+        return {}
+    return {
+        'slam_toolbox.ros__parameters.odom_frame': f'{prefijo}odom',
+        'slam_toolbox.ros__parameters.map_frame': f'{prefijo}map',
+        'slam_toolbox.ros__parameters.base_frame': f'{prefijo}base_link',
+    }
+
+
 def _lanzar(context, *args, **kwargs):
     urdf = _exigir(LaunchConfiguration('urdf').perform(context),
                    'el URDF de hardware', 'urdf')
@@ -165,6 +225,12 @@ def _lanzar(context, *args, **kwargs):
     with open(urdf, 'r') as archivo:
         descripcion = archivo.read()
 
+    ns = LaunchConfiguration('namespace').perform(context).strip('/')
+    # launch_ros distingue None (sin espacio de nombres) de '' (que traduce a
+    # '__ns:=/'). Solo None deja la orden igual que antes del bloque C.
+    ns_nodo = ns if ns else None
+    prefijo = f'{ns}/' if ns else ''
+
     reescritos = RewrittenYaml(
         source_file=nav_params,
         param_rewrites={
@@ -183,12 +249,18 @@ def _lanzar(context, *args, **kwargs):
             # los reintentos.
             'default_nav_to_pose_bt_xml': bt_a_pose,
             'default_nav_through_poses_bt_xml': bt_por_poses,
+            **marcos_prefijados(prefijo),
         },
+        # Con espacio de nombres el YAML se anida bajo el: sus claves sueltas
+        # ('controller_server:') solo casan con el nodo '/controller_server'.
+        root_key=ns_nodo,
         convert_types=True)
 
     slam_reescrito = RewrittenYaml(
         source_file=slam_params,
-        param_rewrites={'use_sim_time': 'False', 'scan_topic': TOPICO_SCAN},
+        param_rewrites={'use_sim_time': 'False', 'scan_topic': TOPICO_SCAN,
+                        **marcos_slam(prefijo)},
+        root_key=ns_nodo,
         convert_types=True)
 
     hay_slam = IfCondition(LaunchConfiguration('slam'))
@@ -204,20 +276,21 @@ def _lanzar(context, *args, **kwargs):
     acciones = [
         # Peldano 1 - TF del vehiculo.
         Node(package='robot_state_publisher', executable='robot_state_publisher',
-             name='robot_state_publisher', output='screen',
+             name='robot_state_publisher', output='screen', namespace=ns_nodo,
              parameters=[{'robot_description': descripcion,
-                          'use_sim_time': False}]),
+                          'use_sim_time': False,
+                          **({'frame_prefix': prefijo} if prefijo else {})}]),
 
         # Peldanos 2-3 - odometria deducida de los propios barridos. El carro no
         # lleva encoders: esta es su unica fuente de 'odom -> base_link', y sin
         # ella ni AMCL ni Nav2 arrancan.
         Node(package='rf2o_laser_odometry', executable='rf2o_laser_odometry_node',
-             name='rf2o_laser_odometry', output='screen',
+             name='rf2o_laser_odometry', output='screen', namespace=ns_nodo,
              parameters=[{'laser_scan_topic': TOPICO_SCAN,
-                          'odom_topic': '/odom',
+                          'odom_topic': f'/{ns}/odom' if ns else '/odom',
                           'publish_tf': True,
-                          'base_frame_id': 'base_link',
-                          'odom_frame_id': 'odom',
+                          'base_frame_id': f'{prefijo}base_link',
+                          'odom_frame_id': f'{prefijo}odom',
                           'init_pose_from_topic': '',
                           'freq': 20.0,
                           'use_sim_time': False}]),
@@ -228,19 +301,31 @@ def _lanzar(context, *args, **kwargs):
         # manifiesta como «Nav2 no planifica», que es indistinguible de media
         # docena de fallos distintos.
         Node(package='slam_toolbox', executable='sync_slam_toolbox_node',
-             name='slam_toolbox', output='screen',
+             name='slam_toolbox', output='screen', namespace=ns_nodo,
              parameters=[slam_reescrito], condition=hay_slam),
     ]
+
+    if prefijo:
+        # El driver de AWS sella cada barrido en 'laser', sin prefijo, y no se
+        # puede cambiar. Esta identidad lo cuelga del arbol del robot.
+        acciones.append(
+            Node(package='tf2_ros', executable='static_transform_publisher',
+                 name='laser_aws', output='screen', namespace=ns_nodo,
+                 arguments=['--x', '0', '--y', '0', '--z', '0',
+                            '--qx', '0', '--qy', '0', '--qz', '0', '--qw', '1',
+                            '--frame-id', f'{prefijo}laser',
+                            '--child-frame-id', 'laser']))
 
     # Peldanos 6-7 - planificador y control.
     for paquete, ejecutable in nodos_nav2:
         acciones.append(Node(package=paquete, executable=ejecutable,
-                             name=ejecutable, output='screen',
+                             name=ejecutable, output='screen', namespace=ns_nodo,
                              parameters=[reescritos], condition=hay_nav))
 
     acciones.append(
         Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',
              name='lifecycle_manager_navigation', output='screen',
+             namespace=ns_nodo,
              # bond_timeout 20 s y no los 4 de fabrica: con la tarjeta de 2 nucleos a
              # carga 18, el latido de controller_server no llego en 4 s y el gestor
              # desactivo todo Nav2 35 s despues de activarlo (amss-jgm9, 2026-09-29).
@@ -279,6 +364,10 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'slam', default_value='false',
             description='Arranca slam_toolbox (peldanos 4-5).'),
+        DeclareLaunchArgument(
+            'namespace', default_value='',
+            description="Espacio de nombres del robot ('robot1' o 'robot2'). "
+                        'Vacio deja el lanzamiento como antes del bloque C.'),
         DeclareLaunchArgument(
             'nav', default_value='false',
             description='Arranca planificador y control (peldanos 6-7). '

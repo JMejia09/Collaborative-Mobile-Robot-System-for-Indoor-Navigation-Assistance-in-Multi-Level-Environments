@@ -20,7 +20,7 @@ lleva más riesgo.
 |---|---|---|---|---|
 | Lun 28 | F | Hecho: las tres decisiones, acordadas con el director Armando Mateus (acta §6.1) | Santiago | no |
 | Lun 28 | A | Hecho: los dos carros aislados, A1 a A5 en verde ([registro](Evidencia/S25_aislamiento_dos_carros.md)) | Santiago y Jonny | los dos |
-| Lun 28 – mar 29 | **C** | La pila con espacio de nombres, en el escritorio | Santiago | no |
+| Lun 28 – mar 29 | **C** | Hecho (C1): la pila con espacio de nombres, en el escritorio, con su prueba | Santiago | no |
 | Lun 28 – mié 30 | **D** | Red entre pisos, con un carro en cada piso | Jonny | los dos |
 | Mar 29, mañana | **B0** | Ensayo en el laboratorio. Hecho a medias: L2 y L3 con `amss-jgm9`; L1 y el L2 de `amss-ez9n` pendientes, sin batería de tracción ([registro](Evidencia/S25_ensayo_laboratorio.md)) | Santiago y Jonny | los dos, uno cada vez |
 | **Mar 29, noche** | **B** | **Sesión de compuertas G-2 y G-3** con `amss-jgm9` (miércoles de reserva) | Santiago | uno |
@@ -215,6 +215,15 @@ marco `robotN/map`. Toda la navegación de esta semana corrió **sin** espacio d
 
 ### C1 · En el escritorio (lunes y martes, Santiago)
 
+> **Estado, 29-sep: hecho.** `nav2_hardware.launch.py` admite `namespace:=robotN`,
+> `nav2_mapa_guardado.sh` admite `NS=robotN` y `correr_corrida_nav2.sh` graba los tópicos del `--ns`
+> que recibe. [`prueba_nav2_hardware_ns.py`](../herramientas/prueba_nav2_hardware_ns.py) lanza el
+> lanzador en el portátil: con `robot2`, todos los nodos bajo `/robot2`, los YAML anidados y los
+> marcos prefijados; sin espacio de nombres, cada nodo y cada parámetro igual que en el commit
+> `6ef1642` (39 comprobaciones; con el lanzador de `6ef1642` fallan 10). El script de arranque, corrido
+> con un `ssh` simulado, manda sin `NS` las mismas 23 órdenes que antes. `amcl` bajo `/robot2` lee el
+> YAML anidado (comprobado en el portátil con un valor centinela). Falta C2 en el vehículo.
+
 Lo que hay que cambiar, en [`nav2_hardware.launch.py`](../Robot/aws-deepracer/deepracer_bringup/launch/nav2_hardware.launch.py)
 y en [`nav2_mapa_guardado.sh`](../herramientas/nav2_mapa_guardado.sh):
 
@@ -238,7 +247,7 @@ parámetros efectivos de cada nodo. **Cierre:** con `namespace:=robot2`, todos l
 | | |
 |---|---|
 | **Objetivo** | Que el carro navegue exactamente como lo va a mandar el coordinador. |
-| **Comando** | Arranque con `NS=robot2`, y una meta con la herramienta de campaña, que ya admite espacio de nombres: `correr_corrida_nav2.sh c2_01 --ns /robot2 --marco robot2/map --salida 0.70 0.0 0.0 --avance 3.0 --mapa …` |
+| **Comando** | Arranque con `NS=robot2` (con `amss-jgm9`, `NS=robot1`), y una meta con la herramienta de campaña, que ya admite espacio de nombres: `correr_corrida_nav2.sh c2_01 --ns /robot2 --marco robot2/map --salida 0.70 0.0 0.0 --avance 3.0 --mapa …` |
 | **Esperado** | La misma navegación de las corridas del martes, con todo bajo `/robot2`. |
 | **Cierre** | Una corrida con plan consumido y llegada, y `tf2_echo robot2/map robot2/base_link` resolviendo **con el perfil cargado**. |
 

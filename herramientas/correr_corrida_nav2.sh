@@ -48,11 +48,26 @@ if [ -e "$DESTINO" ]; then
     exit 2
 fi
 
+# El espacio de nombres de la corrida, si lo hay, sale del mismo '--ns' que recibe
+# corrida_nav2.py (bloque C de Documentos/PLAN_S25.md). Sin el, los topicos de la
+# pila no se graban con '/robot2' y el bag sale sin ellos, sin avisar. Laser y
+# transformadas no llevan prefijo: son del fabricante y van en la particion.
+NS=""
+ARGS=("$@")
+for ((i = 0; i < ${#ARGS[@]}; i++)); do
+    case "${ARGS[i]}" in
+        --ns) NS="${ARGS[i + 1]:-}" ;;
+        --ns=*) NS="${ARGS[i]#--ns=}" ;;
+    esac
+done
+NS="${NS%/}"
+[ -n "$NS" ] && NS="/${NS#/}"
+
 echo "== grabando $DESTINO =="
 # /map se graba para poder dibujar la corrida sobre el mapa sin el vehiculo.
 # /plan y /amcl_pose son los que distinguen una navegacion de un empujon.
-arrancar_bag "$DESTINO" /rplidar_ros/scan /odom /tf /tf_static /cmd_vel \
-    /plan /amcl_pose /initialpose /map
+arrancar_bag "$DESTINO" /rplidar_ros/scan $NS/odom /tf /tf_static $NS/cmd_vel \
+    $NS/plan $NS/amcl_pose $NS/initialpose $NS/map
 
 python3 "$AQUI/corrida_nav2.py" --corrida "$ID" "$@"
 ESTADO=$?
