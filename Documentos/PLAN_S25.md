@@ -23,7 +23,7 @@ lleva más riesgo.
 | Lun 28 – mar 29 | **C** | Hecho (C1): la pila con espacio de nombres, en el escritorio, con su prueba | Santiago | no |
 | Lun 28 – mié 30 | **D** | Red entre pisos, con un carro en cada piso | Jonny | los dos |
 | Mar 29, mañana | **B0** | Ensayo en el laboratorio. Hecho a medias: L2 y L3 con `amss-jgm9`; L1 y el L2 de `amss-ez9n` pendientes, sin batería de tracción ([registro](Evidencia/S25_ensayo_laboratorio.md)) | Santiago y Jonny | los dos, uno cada vez |
-| **Mar 29, noche** | **B** | **Sesión de compuertas G-2 y G-3** con `amss-jgm9` (miércoles de reserva) | Santiago | uno |
+| **Mar 29, noche** | **B** | **Sesión de compuertas G-2 y G-3**: intentada con `amss-ez9n`, sin cerrar ([registro](Evidencia/S25_campana_c1_deepy.md)); se repite el miércoles | Santiago | uno |
 | Mar 29 – mié 30 | **B2** | Pasillo liso con los dos carros: odometría contra cinta, como caracterización | Santiago y Jonny | **los dos** |
 | Mié 30 | **C** | Un carro navega con espacio de nombres | Santiago | uno |
 | Jue 1 | **C + E** | Los dos carros a la vez; coordinador e interfaz en un carro | los dos | **los dos** |
@@ -185,6 +185,12 @@ tramo encajonado del piso 2, con `amss-jgm9` (`amss-ez9n` sin batería de tracci
 > Con la escala en 0,9, la navegación del 24-sep paró a 0,412 m de la meta, dentro de 0,5 m. La idea
 > de bajar a 0,68 para reducir ese error no se puede aplicar: el 29-sep `amss-jgm9` no arrancó con
 > 0,68 ni con 0,80, así que las corridas van con 0,9. Si alguna pasa de 0,5 m, se reporta con su causa.
+
+> **Estado, 29-sep noche.** Cuatro corridas con `amss-ez9n` (`amss-jgm9` se quedó sin batería de
+> la computadora): una llegó pero se pasó 1,134 m según `/odom`, dos abortaron antes de moverse por
+> dos defectos corregidos esa noche (el plazo de `bt_navigator` y la pose inicial de
+> `corrida_nav2.py`), y la cuarta no se detuvo por un salto de la odometría. Ninguna tiene medida de
+> flexómetro. Se repite el miércoles 30. Registro: [`S25_campana_c1_deepy.md`](Evidencia/S25_campana_c1_deepy.md).
 
 ### B2 · El pasillo liso, con los dos carros (martes después de B, o miércoles)
 

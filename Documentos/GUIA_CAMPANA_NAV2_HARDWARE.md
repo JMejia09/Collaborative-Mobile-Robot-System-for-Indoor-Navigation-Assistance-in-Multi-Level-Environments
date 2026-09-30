@@ -5,9 +5,9 @@
 anterior: todo lo que se necesita está aquí o enlazado desde aquí.
 **Vehículo:** `amss-ez9n`, que en las últimas sesiones ha tenido la IP **`192.168.0.102`** por DHCP.
 Si hoy tiene otra, sustitúyela en todas las órdenes; `ssh deepracer@<ip> hostname` debe contestar
-`amss-ez9n`. Con el otro vehículo también vale, copiando antes los ficheros: ver §0.2. **El 29-sep
-la sesión se hace con `amss-jgm9`, en la `192.168.0.104`** (`amss-ez9n` sin batería de tracción); las
-direcciones están reservadas en el router desde ese día.
+`amss-ez9n`. Con el otro vehículo también vale, copiando antes los ficheros: ver §0.2. El 29-sep por la noche
+la sesión se hizo con `amss-ez9n`, porque `amss-jgm9` se quedó sin batería de la computadora; las
+direcciones están reservadas en el router desde ese día (`amss-ez9n` .102, `amss-jgm9` .104).
 
 **Qué contesta, con tres corridas:**
 
@@ -39,8 +39,8 @@ Esta tabla va primero porque es lo que decide cuánto fiarse de cada paso.
 |---|---|---|
 | Nav2 + AMCL sobre mapa guardado, en el vehículo | **funciona, una vez**, arrancado a mano | Jonny, 2026-09-24: [`S24_nav2_navegacion_mapa_guardado.md`](Evidencia/S24_nav2_navegacion_mapa_guardado.md) |
 | [`nav2_mapa_guardado.sh`](../herramientas/nav2_mapa_guardado.sh), de Jonny: arranca toda la pila en el orden correcto | **ejecutado contra `amss-jgm9` el 29-sep**: arranca la pila completa y el planificador responde `SUCCEEDED`; Nav2 tarda de 3 a 5 min en quedar activo | [`S25_ensayo_laboratorio.md`](Evidencia/S25_ensayo_laboratorio.md) §3 |
-| [`corrida_nav2.py`](../herramientas/corrida_nav2.py): pose inicial, meta, espera, registro | **probado contra Nav2 real en Gazebo**: 4 corridas y 3 guardas; **nunca contra el vehículo** | 2026-09-25, §9 de esta guía |
-| [`correr_corrida_nav2.sh`](../herramientas/correr_corrida_nav2.sh): la corrida con su bag | sintaxis comprobada; la pieza que graba ([`lanzar_bag.inc`](../herramientas/lanzar_bag.inc)) **sí**, en el vehículo | 2026-09-24 |
+| [`corrida_nav2.py`](../herramientas/corrida_nav2.py): pose inicial, meta, espera, registro | probado contra Nav2 real en Gazebo (4 corridas y 3 guardas) y **ejecutado contra `amss-ez9n` el 29-sep**: cuatro corridas; esa noche se corrigió que publicaba la pose inicial sin esperar a AMCL | [`S25_campana_c1_deepy.md`](Evidencia/S25_campana_c1_deepy.md) §2 |
+| [`correr_corrida_nav2.sh`](../herramientas/correr_corrida_nav2.sh): la corrida con su bag | **ejecutado contra `amss-ez9n` el 29-sep**: cuatro corridas, cada una con su grabación | [`S25_campana_c1_deepy.md`](Evidencia/S25_campana_c1_deepy.md) §2 |
 | [`zona_libre_mapa.py`](../herramientas/zona_libre_mapa.py): dónde se puede pedir una meta | **probado** sobre el mapa real del pasillo | 2026-09-25 |
 | [`ver_bag_rviz.sh`](../herramientas/ver_bag_rviz.sh): ver la corrida en RViz después | **probado** con un bag real de Jazzy | 2026-09-25 |
 | [`dibujar_corrida_nav2.py`](../herramientas/dibujar_corrida_nav2.py): imagen de la corrida | **probado** con un bag de la campaña OE4; lectura de bags de Jazzy comprobada | 2026-09-25 |
@@ -496,6 +496,9 @@ bitácora de [`ESTADO.md`](../ESTADO.md); si no, el verificador lo marca como do
 | El carro no arranca con órdenes de Nav2 | escala del puente baja: con 0,68, `amss-jgm9` suena y no arranca (29-sep) | `nav2_mapa_guardado.sh` fija 0,9; comprueba que diga `escala 0.9 puesta`. La banda muerta por debajo de 0,40 m/s ya no existe desde el 29-sep: el puente la sube a su escalón más bajo, y eso es lo que permite retroceder en las recuperaciones |
 | Nav2 se apaga solo unos segundos después de activarse | el gestor del ciclo de vida perdió el latido de `controller_server` con la tarjeta saturada | desde el 29-sep el launch espera 20 s el latido y no 4; si pasa, `--parar` y repetir |
 | El planificador rechaza la meta nada más arrancar | Nav2 todavía se está activando: en `amss-jgm9` tarda de 3 a 5 min | espera a `Managed nodes are active` en `/tmp/nav2_campo/launch.log` antes de la comprobación del §4.3 |
+| La corrida aborta en menos de un segundo sin mover el carro, con `Timed out while waiting for action server to acknowledge goal request` | el planificador no confirmó la petición dentro del plazo de `bt_navigator`, 20 ms de fábrica | desde el 29-sep el launch lo pone en 1000 ms (ajuste 6); compruébalo con `ros2 param get /bt_navigator default_server_timeout` |
+| `ABORTA: AMCL no converge` en la primera corrida tras arrancar Nav2 | la pose inicial se publicó antes de que AMCL escuchara | corregido en `corrida_nav2.py` el 29-sep; si pasa, repite con otro id de corrida |
+| El carro deja de responder al llevarlo al sitio | el WiFi no llega del router al tramo | acerca el router al tramo **antes** de arrancar Nav2; el portátil puede ir por cable al router |
 | El carro llega pero se pasa ~0,4 m | aproximación a 0,40 m/s sin régimen de frenado fino | es el hallazgo de G-3, no un fallo del procedimiento: anotarlo |
 | `ABORTA: AMCL no converge` (código 4) | la `--salida` está lejos de donde está el carro | recolocar el carro o corregir `--salida` |
 | `ABORTA: la meta no cae en celda libre` (código 5) | meta fuera del tramo útil | menos avance, o salida más atrás |

@@ -89,6 +89,12 @@ reescribe aqui con `RewrittenYaml`, sobre el archivo de Jazzy:
    carga 18, el latido de `controller_server` no llego en 4 s y el gestor
    desactivo todo Nav2 35 s despues de activarlo (2026-09-29).
 
+6. `default_server_timeout` de `bt_navigator`, 20 ms -> 1000 ms
+
+   Es el plazo para que el planificador o el controlador confirmen una peticion
+   del arbol. Con la tarjeta cargada no llegaban a tiempo: la corrida c1d_02 del
+   2026-09-29 aborto en 0,5 s, con cuatro recuperaciones, sin mover el carro.
+
 `use_sim_time` pasa a falso en todo el arbol, que es lo que separa esta corrida
 de una de Gazebo.
 
@@ -133,6 +139,8 @@ from nav2_common.launch import RewrittenYaml
 VELOCIDAD_MINIMA_UTIL = '0.40'
 # Frecuencia del controlador que la tarjeta de 2 nucleos si sostiene (ajuste 4).
 FRECUENCIA_CONTROL = '10.0'
+# Plazo para que un servidor de Nav2 confirme una peticion del arbol (ajuste 6).
+PLAZO_SERVIDOR_MS = 1000
 
 TOPICO_SCAN = '/rplidar_ros/scan'
 
@@ -318,9 +326,14 @@ def _lanzar(context, *args, **kwargs):
 
     # Peldanos 6-7 - planificador y control.
     for paquete, ejecutable in nodos_nav2:
+        parametros = [reescritos]
+        if ejecutable == 'bt_navigator':
+            # Ajuste 6. Va aparte y no en la reescritura porque la clave no esta
+            # en el YAML, y RewrittenYaml solo cambia claves que ya existen.
+            parametros.append({'default_server_timeout': PLAZO_SERVIDOR_MS})
         acciones.append(Node(package=paquete, executable=ejecutable,
                              name=ejecutable, output='screen', namespace=ns_nodo,
-                             parameters=[reescritos], condition=hay_nav))
+                             parameters=parametros, condition=hay_nav))
 
     acciones.append(
         Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',

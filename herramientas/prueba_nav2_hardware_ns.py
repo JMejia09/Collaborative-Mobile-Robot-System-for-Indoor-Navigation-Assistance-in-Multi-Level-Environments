@@ -62,6 +62,10 @@ MARCOS_NAV2 = {
 }
 MARCOS_SLAM = {'odom_frame': 'odom', 'map_frame': 'map', 'base_frame': 'base_link'}
 NODOS_NAV2 = {'controller_server', 'planner_server', 'behavior_server', 'bt_navigator'}
+# Ajustes de hardware posteriores a REFERENCIA. Cambian el modo sin espacio de
+# nombres a proposito, asi que se comprueban aparte y se quitan antes de comparar.
+# 'default_server_timeout' es el ajuste 6 del lanzador (2026-09-29, noche).
+AJUSTES_POSTERIORES = {'bt_navigator': {'default_server_timeout': 1000}}
 
 
 def cargar(ruta):
@@ -106,6 +110,20 @@ def lanzar(ruta_launch, ns):
     return nodos
 
 
+def quitar_ajustes(nodos, exigir):
+    """Comprueba los ajustes posteriores a REFERENCIA y los quita para comparar."""
+    for nodo in nodos.values():
+        esperado = AJUSTES_POSTERIORES.get(nodo['ejecutable'])
+        if not esperado:
+            continue
+        extra = [f for f in nodo['params']
+                 if len(f) == 1 and list(f.values())[0].get('ros__parameters') == esperado]
+        exigir(len(extra) == 1,
+               f"{nodo['ejecutable']} no recibe su ajuste posterior {esperado}")
+        nodo['params'] = [f for f in nodo['params'] if f not in extra]
+    return nodos
+
+
 def del_nodo(ficheros):
     """Parametros de un nodo lanzado con un diccionario (clave '/ns/nombre')."""
     assert len(ficheros) == 1
@@ -139,7 +157,7 @@ def main():
     else:
         with tempfile.NamedTemporaryFile('w', suffix='.launch.py', delete=False) as f:
             f.write(texto)
-        antes, ahora = lanzar(f.name, ''), lanzar(ruta_launch, '')
+        antes, ahora = lanzar(f.name, ''), quitar_ajustes(lanzar(ruta_launch, ''), exigir)
         exigir(set(antes) == set(ahora),
                f'sin espacio de nombres cambian los nodos: {sorted(set(antes) ^ set(ahora))}')
         for nombre in sorted(set(antes) & set(ahora)):
@@ -152,7 +170,7 @@ def main():
 
     # 2. Con espacio de nombres.
     try:
-        con_ns(lanzar(ruta_launch, NS), exigir)
+        con_ns(quitar_ajustes(lanzar(ruta_launch, NS), exigir), exigir)
     except (KeyError, IndexError, ValueError, TypeError) as error:
         fallos.append(f'con {NS} la estructura no es la esperada ({error!r})')
 

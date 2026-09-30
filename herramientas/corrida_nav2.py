@@ -194,6 +194,13 @@ class Corrida(Node):
         m.pose.covariance[0] = 0.10 ** 2
         m.pose.covariance[7] = 0.10 ** 2
         m.pose.covariance[35] = 0.05 ** 2
+        # Se espera a que AMCL escuche. Publicar sin emparejar pierde la pose en
+        # silencio: el 2026-09-29, en amss-ez9n y recien arrancado Nav2, AMCL se
+        # quedo con la incertidumbre del arranque (0,66 m) y la corrida c1d_03
+        # aborto sin empezar.
+        limite = time.time() + 10.0
+        while self.pub_ini.get_subscription_count() == 0 and time.time() < limite:
+            self.girar(0.2)
         for _ in range(3):
             m.header.stamp = self.get_clock().now().to_msg()
             self.pub_ini.publish(m)

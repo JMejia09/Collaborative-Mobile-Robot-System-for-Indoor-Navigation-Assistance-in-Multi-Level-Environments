@@ -51,6 +51,8 @@ grabadores que habían quedado colgados en `amss-jgm9` (§6); no se midió si es
 
 Los mapas están en `~deepracer/` de `amss-jgm9`, a 0,05 m por celda.
 
+![Mapa del segundo sitio, con la salida y el final de la marcha según rf2o y según el flexómetro](S25_mapa_segundo_sitio_amss-jgm9.png)
+
 - Con la escala de fábrica (0,68) y con 0,80, `amss-jgm9` no rompe la inercia; con 0,90 sí. La
   escala 0,9 es la que ya fija `nav2_mapa_guardado.sh`.
 - En el laboratorio rf2o dio 2,917 m al ordenar la parada y 3,17 m al final de la grabación; los
@@ -119,6 +121,8 @@ del edificio. En simulación, navegar con mapa conocido en esos pasillos dio 86,
 misiones; lo que el pasillo no permite es construir el mapa conduciendo. El mapa ya está en `~/tesis/`
 de los dos vehículos. La salida elegida es (−12,0, −4,5), mirando al este, 2 m al este de la
 apertura al hall.
+
+![Mapa del piso 2 en coordenadas de Nav2, con la salida A y la primera meta](S25_mapa_piso2_salida_A.png)
 
 ## 4. Portátil con Humble y vehículo con Jazzy
 
