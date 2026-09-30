@@ -17,8 +17,9 @@ en la 192.168.0.104 y el portátil en la 192.168.0.103.
 | L3 | Nav2 sobre ese mapa, una corrida de 2 m | Hecho a medias con `amss-jgm9`: la cadena funciona y una meta de ocho llegó; AMCL no se localizó sobre el mapa de una sola pasada |
 
 Del ensayo salieron los cambios de configuración y de código del §5, instalados en los dos
-vehículos, y la decisión de probar Nav2 en el pasillo del piso 2 con el mapa `mundo_definitivo_piso2`,
-que es el de la simulación (§3.3).
+vehículos, y la decisión de probar más adelante Nav2 en el pasillo del piso 2 con el mapa
+`mundo_definitivo_piso2`, que es el de la simulación (§3.3). Esa prueba no se ha hecho: los vehículos
+todavía no han estado en los pasillos del modelo.
 
 ## 1. Tráfico de la cámara entre los vehículos
 
@@ -113,16 +114,20 @@ Es la inobservabilidad longitudinal ya medida en S22 y S23, ahora en el vehícul
 de una sola pasada recta, con mucha zona sin observar, y a lo largo del recorrido el láser ve casi lo
 mismo en todo el tramo.
 
-### 3.3 Decisión: el mapa de la simulación en el pasillo real
+### 3.3 Decisión pendiente de ejecutar: el mapa de la simulación en el pasillo real
+
+Esta sección registra un plan, no una prueba. Todo lo anterior del §3 se hizo en el segundo sitio,
+sobre el mapa que construyó `amss-jgm9`; ese mapa no tiene relación con el de la simulación, y los
+vehículos todavía no han estado en los pasillos del modelo.
 
 Santiago preguntó si se podían usar los mapas de la simulación. Se decidió probar Nav2 en el pasillo
 del piso 2 con `mundo_definitivo_piso2`, generado de la geometría del mundo, que tiene las medidas
 del edificio. En simulación, navegar con mapa conocido en esos pasillos dio 86,7 % de éxito en 30
-misiones; lo que el pasillo no permite es construir el mapa conduciendo. El mapa ya está en `~/tesis/`
-de los dos vehículos. La salida elegida es (−12,0, −4,5), mirando al este, 2 m al este de la
+misiones; lo que el pasillo no permite es construir el mapa conduciendo. El mapa ya está copiado en `~/tesis/`
+de los dos vehículos. La salida propuesta es (−12,0, −4,5), mirando al este, 2 m al este de la
 apertura al hall.
 
-![Mapa del piso 2 en coordenadas de Nav2, con la salida A y la primera meta](S25_mapa_piso2_salida_A.png)
+![Plano del piso 2 del modelo de simulación en coordenadas de Nav2, con la salida A propuesta; todavía sin probar con un vehículo](S25_mapa_piso2_salida_A.png)
 
 ## 4. Portátil con Humble y vehículo con Jazzy
 

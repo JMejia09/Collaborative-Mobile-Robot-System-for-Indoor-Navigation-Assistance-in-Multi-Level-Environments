@@ -1,8 +1,9 @@
 # Sesión de compuertas G-2 y G-3 con `amss-ez9n` (29 de septiembre, noche)
 
 Registro del bloque B de [`PLAN_S25.md`](../PLAN_S25.md), siguiendo
-[`GUIA_CAMPANA_NAV2_HARDWARE.md`](../GUIA_CAMPANA_NAV2_HARDWARE.md), en el tramo del piso 2 con las
-dos cajas y sobre el mapa [`S24_mapa_pasillo6m_HARDWARE`](S24_mapa_pasillo6m_HARDWARE.yaml). La
+[`GUIA_CAMPANA_NAV2_HARDWARE.md`](../GUIA_CAMPANA_NAV2_HARDWARE.md), en el escenario de las dos cajas
+armado según el §2 de la guía y sobre el mapa [`S24_mapa_pasillo6m_HARDWARE`](S24_mapa_pasillo6m_HARDWARE.yaml).
+No fue en los pasillos del modelo de simulación: los vehículos todavía no han estado en ellos. La
 ejecutó Claude por SSH desde el portátil; Santiago y Jonny armaron el sitio y acompañaron el vehículo.
 Las horas del vehículo van en UTC y las del portátil en la hora local, cinco horas menos.
 
