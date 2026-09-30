@@ -7,6 +7,20 @@ No fue en los pasillos del modelo de simulación: los vehículos todavía no han
 ejecutó Claude por SSH desde el portátil; Santiago y Jonny armaron el sitio y acompañaron el vehículo.
 Las horas del vehículo van en UTC y las del portátil en la hora local, cinco horas menos.
 
+## Corrección: el mapa no correspondía al sitio
+
+El escenario de las dos cajas es un pasillo que no tiene relación con el sitio donde se hizo el mapa
+`S24_mapa_pasillo6m_HARDWARE` el 24-sep, ni con los pasillos del modelo de simulación. Aun así, la
+sesión se preparó y se corrió sobre ese mapa. Se pidió armar el sitio con las medidas del §2 de la
+guía y se arrancó Nav2 con el mapa S24, sin confirmar antes que el pasillo fuera el mismo. Fue un
+error de preparación de Claude. AMCL comparó el láser con paredes que no estaban donde el mapa las
+pone.
+
+Por eso las cuatro corridas no valen para G-2 ni G-3, ni para juzgar la navegación: las cifras de
+AMCL y el comportamiento de Nav2 de este registro están afectados por un mapa equivocado. Sí siguen
+valiendo los dos defectos de software del §2.2 y el §2.3, que no dependen del mapa, y queda por
+revisar el salto de rf2o del §2.4, que tampoco depende de él.
+
 ## Resultado
 
 G-2 y G-3 no quedan cerradas. De cuatro corridas, una llegó según Nav2 pero se pasó de la meta, dos
@@ -77,7 +91,10 @@ Arreglo en `corrida_nav2.py`: espera hasta 10 s a emparejarse con AMCL antes de 
 Nav2 abortó a los 26,8 s y los observadores vieron que el vehículo pasó de los 6 m sin detenerse.
 `/odom` dice 10,971 m, que en un tramo de 6 m entre cajas es imposible: la odometría de rf2o saltó. El
 registro de Nav2 de esa corrida tiene 6 `Start occupied`, 3 «colisión por delante», 2 retrocesos (uno
-completado y uno fallido), 2 esperas y el controlador a 4,5 Hz de media.
+completado y uno fallido), 2 esperas y el controlador a 4,5 Hz de media. Con el mapa de otro sitio,
+es lo esperable que AMCL se perdiera y que el planificador situara al vehículo dentro de un
+obstáculo. El salto de `/odom` viene de rf2o, que no usa el mapa, y es lo que hay que revisar en la
+grabación.
 
 La grabación no se pudo leer esa noche: el portátil salió de la red de los vehículos. Queda en
 `~deepracer/campana_c1d_04/` de `amss-ez9n`.
@@ -91,6 +108,9 @@ La grabación no se pudo leer esa noche: el portátil salió de la red de los ve
 
 ## 4. Pendiente para el miércoles 30
 
+0. Antes de nada, fijar el sitio de G-2 y G-3 y confirmar que hay un mapa de ese sitio. Si el sitio
+   es el pasillo de las dos cajas, hay que mapearlo primero con `mapear_conduciendo.sh`, de ida y
+   vuelta, y calcular salida y meta con `zona_libre_mapa.py` sobre el mapa nuevo.
 1. Copiar de `amss-ez9n` al portátil las cuatro grabaciones, sus registros y el CSV, y analizar
    `c1d_04`: dónde saltó `/odom`, qué hizo AMCL y por qué el controlador siguió mandando avance.
 2. Copiar a `amss-jgm9` los dos archivos del §3.

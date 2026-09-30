@@ -125,6 +125,7 @@ avance** —lo que pide G-2— con 0,09 m de holgura por la salida y 0,36 m por 
 
 | | |
 |---|---|
+| **Antes de nada** | **Confirma que el sitio es el mismo pasillo donde se hizo el mapa.** Colocar las cajas con las medidas del mapa en otro pasillo no lo convierte en el sitio del mapa: las paredes no coinciden y AMCL se ubica mal. Pasó el 29-sep ([`S25_campana_c1_deepy.md`](Evidencia/S25_campana_c1_deepy.md)). Si es otro sitio, ve a la fila «Si no se puede reproducir el sitio». |
 | **Objetivo** | Que el pasillo real se parezca al mapa: AMCL localiza emparejando el barrido con el mapa, y si el sitio cambió no empareja. |
 | **Qué hacer** | (1) Si hay cajas, ponlas donde indica el mapa: **caras interiores a unos 5,90 m** una de otra (de `x ≈ 0,26` a `x ≈ 6,16`). La de salida **atraviesa** el eje del recorrido (de `y = −0,50` a `0,25`); la del fondo queda **al norte** de él (de `y = 0,05` a `0,60`). (2) Marca con cinta el **eje del recorrido**: **1,10 m del muro sur**, que es `y = 0` en el mapa. (3) Marca con cinta dos líneas transversales **separadas 5,00 m exactos, medidos con flexómetro**: la de salida y la de meta. |
 | **Dónde van las líneas** | Donde quedará la **defensa delantera**: la salida a 0,84 m del origen del mapa y la meta a 5,84. En la práctica: con el carro en su sitio de salida (§5.1), la línea de salida va bajo la defensa delantera, y la de meta 5,00 m más allá. |
