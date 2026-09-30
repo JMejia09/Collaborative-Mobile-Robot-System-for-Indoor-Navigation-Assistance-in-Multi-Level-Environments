@@ -192,6 +192,34 @@ tramo encajonado del piso 2, con `amss-jgm9` (`amss-ez9n` sin batería de tracci
 > `corrida_nav2.py`), y la cuarta no se detuvo por un salto de la odometría. Ninguna tiene medida de
 > flexómetro. Se repite el miércoles 30. Registro: [`S25_campana_c1_deepy.md`](Evidencia/S25_campana_c1_deepy.md).
 
+### B-bis · G-2 y G-3 en el pasillo real del piso 2, con el mapa del modelo (miércoles 30)
+
+**Por qué cambia el sitio.** La sesión del 29-sep corrió sobre el mapa S24 en un pasillo que no era
+el de ese mapa y no vale ([`S25_campana_c1_deepy.md`](Evidencia/S25_campana_c1_deepy.md)). El 29-sep
+se decidió hacer G-2 y G-3 en los pasillos reales del modelo, que es además el sitio que fijó el
+director (acta §6.1), navegando sobre `mundo_definitivo_piso2`, que tiene las medidas del edificio.
+Los vehículos no han estado todavía en esos pasillos: esta es la primera vez.
+
+**El tramo.** Sobre el eje del pasillo (`y = −4,5`, a 1,30 m de cada pared) el mapa está libre de
+`x = −17,28` a `x = 23,16` en todo el ancho del carro (`zona_libre_mapa.py --y -4.5`). Salida en
+`x = −12,0`, meta en `x = −7,0`: 5 m de avance que empiezan 2 m al este de la apertura al hall
+(`x = −14,1`), donde el láser todavía ve el hall detrás. Figura:
+[`S25_mapa_piso2_salida_A.png`](Evidencia/S25_mapa_piso2_salida_A.png).
+
+| Paso | Qué | Comando o acción | Esperado | Si falla | Cierre |
+|---|---|---|---|---|---|
+| 0 | Confirmar el sitio | Santiago y Jonny confirman que están en el pasillo del piso 2 que modela `mundo_definitivo_piso2` y que reconocen la apertura al hall del extremo oeste | Sitio confirmado de palabra, antes de encender nada | Si no es ese pasillo, no se navega con este mapa: se para y se decide | Confirmación registrada en la evidencia |
+| 1 | Red | El router junto al tramo; el portátil por cable al router | Los dos vehículos responden al ping en menos de 30 ms | Acercar el router; comprobar la batería de la computadora de cada carro | Los dos en la red |
+| 2 | Nivelar `amss-jgm9` | Copiar `nav2_hardware.launch.py` y `corrida_nav2.py` (pendientes del 29-sep) | md5 iguales al repositorio en los dos | Si no responde, queda pendiente y se sigue con `amss-ez9n` | Los dos vehículos con los mismos archivos |
+| 3 | Marcar el tramo | Línea del hall en `x = −14,1`, donde terminan las paredes del pasillo; **línea de salida a 2,24 m de ella** (la defensa delantera va 0,14 m por delante del punto que Nav2 lleva a la meta); **línea de meta a 5,00 m de la salida, medidos con flexómetro**; eje en el centro del pasillo | Tres cintas en el suelo y la separación anotada con la cifra del flexómetro | — | Cintas puestas y cifra anotada |
+| 4 | Arrancar Nav2 en `amss-ez9n` | `CARRO=192.168.0.102 MAPA=/home/deepracer/tesis/mundo_definitivo_piso2.yaml POSE_X=-12.0 POSE_Y=-4.5 bash herramientas/nav2_mapa_guardado.sh` | `Managed nodes are active` en `/tmp/nav2_campo/launch.log`, de 3 a 5 min | El §8 de la guía | Nav2 activo (la ruta del mapa es la ruta fija del vehículo) |
+| 5 | Comprobar sin mover | Pose inicial en (−12,0, −4,5); ruta a (−7,0, −4,5) con `compute_path_to_pose`; `ros2 param get /bt_navigator default_server_timeout` | `SUCCEEDED` y `1000` | `Start occupied`: la pose no coincide con el sitio; recolocar el carro | Las dos comprobaciones |
+| 6 | Tres corridas | `ssh deepracer@192.168.0.102 "sudo -n bash ~deepracer/tesis/correr_corrida_nav2.sh p2d_01 --salida -12.0 -4.5 0.0 --avance 5.0 --mapa /home/deepracer/tesis/mundo_definitivo_piso2.yaml --csv ~deepracer/campana_p2_deepy.csv"`, y `p2d_02`, `p2d_03` | Fila en el CSV por corrida | Una corrida que aborta antes de moverse se repite con otro id | **Flexómetro antes de tocar el carro**: avance real, error longitudinal con signo y desvío lateral (ruta fija del vehículo en `--mapa`) |
+| 7 | El otro carro | `--parar` en `amss-ez9n` y los pasos 4 a 6 en `192.168.0.104`, ids `p2r_01…03` y CSV `campana_p2_racey.csv` | Igual | — | Tres corridas medidas por carro |
+
+La escala es 0,9 en los dos: con menos, `amss-jgm9` no arranca (29-sep). Si una corrida se pasa de
+0,5 m, se reporta con su causa; no se cambia la escala a mitad de serie.
+
 ### B2 · El pasillo liso, con los dos carros (martes después de B, o miércoles)
 
 **Por qué:** las misiones van a recorrer el pasillo abierto, donde la información de avance es 5,1 %
