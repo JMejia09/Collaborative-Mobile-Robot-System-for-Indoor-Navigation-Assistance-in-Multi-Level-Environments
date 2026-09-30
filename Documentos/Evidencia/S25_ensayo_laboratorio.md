@@ -52,6 +52,8 @@ grabadores que habían quedado colgados en `amss-jgm9` (§6); no se midió si es
 
 Los mapas están en `~deepracer/` de `amss-jgm9`, a 0,05 m por celda.
 
+![Mapa del laboratorio, con la salida y el final de la marcha según rf2o](S25_mapa_laboratorio_amss-jgm9.png)
+
 ![Mapa del segundo sitio, con la salida y el final de la marcha según rf2o y según el flexómetro](S25_mapa_segundo_sitio_amss-jgm9.png)
 
 - Con la escala de fábrica (0,68) y con 0,80, `amss-jgm9` no rompe la inercia; con 0,90 sí. La
