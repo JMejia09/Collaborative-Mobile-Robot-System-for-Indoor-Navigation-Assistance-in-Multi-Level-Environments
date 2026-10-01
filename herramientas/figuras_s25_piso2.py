@@ -5,7 +5,10 @@ Dibuja, desde Documentos/Evidencia/registros/S25_p2_amcl_corridas.csv:
 
   - S25_p2_recorridos_hall.png: los recorridos de AMCL de p2r_03, p2r_04 y p2r_05
     sobre el mapa corregido, con la pose final de AMCL y la medida con flexometro;
-  - S25_p2_incertidumbre_amcl.png: la incertidumbre de AMCL de las tres corridas.
+  - S25_p2_incertidumbre_amcl.png: la incertidumbre de AMCL de las tres corridas;
+  - S25_p2r_04_dos_lecturas.png: las dos posiciones finales de p2r_04 que daban las
+    medidas a la pared sur y a la norte sobre el mapa SIN corregir (commit
+    MAPA_ANTES), que es la discrepancia que llevo a medir el ancho del hall.
 
 Las posiciones medidas salen de las distancias del centro del vehiculo a las
 paredes, tomadas con flexometro, y de las caras de las paredes en model.sdf.
@@ -14,11 +17,12 @@ Uso, desde la raiz del repositorio:
 
     python3 herramientas/figuras_s25_piso2.py [directorio_de_salida]
 """
-import csv, math, pathlib, sys
+import csv, io, math, pathlib, subprocess, sys
 import numpy as np, yaml
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib.patches import Rectangle
 from PIL import Image
 
 RAIZ = str(pathlib.Path(__file__).resolve().parents[1]) + '/'
@@ -30,6 +34,8 @@ TINTA, TINTA2, GRIS = '#0b0b0b', '#52514e', '#8a8984'
 X_OESTE, Y_SUR, Y_NORTE, Y_NORTE_ANTES = -22.995, -11.145, -7.747, -6.907
 REAL = {'p2r_04': (X_OESTE + 0.55, ((Y_SUR + 0.61) + (Y_NORTE - 2.77)) / 2),
         'p2r_05': (X_OESTE + 0.25, ((Y_SUR + 1.52) + (Y_NORTE - 1.86)) / 2)}
+# Ultimo commit con el hall de 4,24 m (antes de la correccion del 30-sep).
+MAPA_ANTES = '47b526d'
 INICIO = {'p2r_03': 17.5, 'p2r_04': 17.2, 'p2r_05': 14.8}   # pose inicial publicada
 FIN = {'p2r_03': 99, 'p2r_04': 46.6, 'p2r_05': 99}           # p2r_04: antes del salto
 
@@ -110,3 +116,67 @@ ax.set_xlabel('tiempo desde la pose inicial (s)'); ax.set_ylabel('incertidumbre 
 ax.spines[['top', 'right']].set_visible(False); ax.grid(axis='y', color='#e4e3df', lw=0.6)
 ax.set_title('Incertidumbre de posicion de AMCL en las tres corridas medidas', fontsize=11.5)
 fig.tight_layout(); fig.savefig(SALIDA_DIR + 'S25_p2_incertidumbre_amcl.png', dpi=130)
+
+# ---------- Figura 3: las dos lecturas de p2r_04 sobre el mapa sin corregir ----------
+RUTA_PGM = 'Robot/aws-deepracer/deepracer_bringup/maps/mundo_definitivo_piso2.pgm'
+viejo = np.array(Image.open(io.BytesIO(subprocess.check_output(
+    ['git', 'show', f'{MAPA_ANTES}:{RUTA_PGM}'], cwd=RAIZ))))
+META_ANTES = (-21.50, -9.03)
+A = (X_OESTE + 0.55, Y_SUR + 0.61)            # con la medida a la pared sur
+B = (X_OESTE + 0.55, Y_NORTE_ANTES - 2.77)    # con la medida a la pared norte
+fig, ax = plt.subplots(figsize=(12, 8.6))
+ax.imshow(viejo, cmap='gray', extent=[ox, ox + viejo.shape[1]*res, oy, oy + viejo.shape[0]*res],
+          origin='upper', vmin=0, vmax=255, alpha=0.5)
+ax.set_xlim(-24.0, -13.3); ax.set_ylim(-11.9, -4.6); ax.set_aspect('equal')
+ax.grid(color='#e4e3df', lw=0.6)
+caja = dict(boxstyle='round', fc='white', ec=GRIS)
+ax.text(-20.2, Y_NORTE_ANTES + 0.35, f'pared norte del modelo (y = {Y_NORTE_ANTES:.2f})'.replace('.', ','),
+        ha='center', fontsize=10, fontweight='bold', bbox=caja)
+ax.text(-19.0, Y_SUR - 0.45, f'pared sur, la del IEEE (y = {Y_SUR:.2f})'.replace('.', ','),
+        ha='center', fontsize=10, fontweight='bold', bbox=caja)
+ax.text(X_OESTE - 0.5, -9.0, 'escalera\n(pared oeste)', rotation=90, ha='center', va='center',
+        fontsize=10, fontweight='bold', bbox=caja)
+ax.annotate('', xy=(-13.75, -5.3), xytext=(-13.75, -6.3), arrowprops=dict(arrowstyle='-|>', lw=2.5, color=TINTA))
+ax.text(-13.75, -5.05, 'N', fontsize=15, fontweight='bold', ha='center')
+
+s4 = serie('p2r_04')
+ax.plot([p[1] for p in s4], [p[2] for p in s4], color=COLOR['p2r_04'], lw=2,
+        label='recorrido segun AMCL')
+ax.plot(-21.225, -9.097, 'o', ms=9, mfc='white', mec=COLOR['p2r_04'], mew=2, zorder=6)
+ax.annotate('AMCL cuando Nav2 dio la meta\npor alcanzada (incertidumbre 2,4 m)', (-21.225, -9.097),
+            (-20.3, -7.95), fontsize=9, color=TINTA2, arrowprops=dict(arrowstyle='->', color=GRIS))
+ax.plot(-16.854, -5.567, 'x', ms=11, mew=2.5, color=COLOR['p2r_04'])
+ax.annotate('salto de AMCL tras la llegada\n(no es el vehiculo)', (-16.854, -5.567), (-16.6, -5.0),
+            fontsize=9, color=TINTA2, arrowprops=dict(arrowstyle='->', color=GRIS))
+ax.plot(-14.96, -10.37, 'o', ms=10, color=TINTA, mec='white', zorder=6)
+ax.text(-16.3, -10.05, 'salida IEEE\n(mirando al oeste)', fontsize=9, color=TINTA)
+ax.plot(*META_ANTES, '*', ms=20, color=TINTA, mec='white', zorder=7,
+        label='meta de p2r_04: 1,50 m de la escalera, centrada en el hall del modelo')
+ax.add_patch(plt.Circle(META_ANTES, 0.5, fill=False, ls=(0, (4, 3)), color=TINTA2, lw=1.3,
+                        label='0,5 m alrededor de la meta (tolerancia de G-3)'))
+
+def vehiculo(c, color, rotulo):
+    ax.add_patch(Rectangle((c[0] - 0.1, c[1] - 0.2), 0.2, 0.4, fc=color, ec=TINTA, lw=1.2, zorder=8))
+    ax.annotate('', xy=(c[0], c[1] - 0.45), xytext=c, arrowprops=dict(arrowstyle='-|>', lw=2, color=TINTA), zorder=9)
+    ax.text(c[0] + 0.55, c[1] - 0.05, rotulo, fontsize=9.5, fontweight='bold', color=TINTA, zorder=9)
+vehiculo(A, '#4a3aa7', 'A: con los 0,61 m a la pared sur\n    error %s m' % ('%.2f' % math.dist(A, META_ANTES)).replace('.', ','))
+vehiculo(B, '#e87ba4', 'B: con los 2,77 m a la pared norte\n    error %s m' % ('%.2f' % math.dist(B, META_ANTES)).replace('.', ','))
+
+def cota(p, q, txt, dx, dy):
+    ax.annotate('', xy=q, xytext=p, arrowprops=dict(arrowstyle='<->', color=TINTA2, lw=1.3))
+    ax.text((p[0] + q[0]) / 2 + dx, (p[1] + q[1]) / 2 + dy, txt, fontsize=9, color=TINTA, fontweight='bold')
+cota((X_OESTE, -10.05), (A[0], -10.05), '0,55', -0.2, 0.1)
+cota((A[0] + 0.3, Y_SUR), (A[0] + 0.3, A[1]), '0,61', 0.05, -0.05)
+cota((B[0] + 0.3, Y_NORTE_ANTES), (B[0] + 0.3, B[1]), '2,77', 0.05, 0.3)
+ancho = Y_NORTE_ANTES - Y_SUR
+def coma(v):
+    return ('%.2f' % v).replace('.', ',')
+ax.text(-17.2, -9.6, f'Ancho del hall en el modelo: {coma(ancho)} m\n'
+                     f'Sur + norte medidos: 0,61 + 2,77 = 3,38 m\n'
+                     f'Faltan {coma(ancho - 3.38)} m: por eso A y B no coinciden.', fontsize=9.5, bbox=caja)
+ax.set_title('p2r_04 (IEEE -> Escaleras): las dos lecturas de la posicion final sobre el mapa sin corregir',
+             fontsize=11.5)
+ax.set_xlabel('x del mapa (m)'); ax.set_ylabel('y del mapa (m)')
+ax.legend(loc='upper left', fontsize=9)
+fig.tight_layout(); fig.savefig(SALIDA_DIR + 'S25_p2r_04_dos_lecturas.png', dpi=120)
+print('A', A, round(math.dist(A, META_ANTES), 2), 'B', B, round(math.dist(B, META_ANTES), 2))

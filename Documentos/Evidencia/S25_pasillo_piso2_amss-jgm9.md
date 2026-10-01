@@ -108,8 +108,15 @@ posición final medida con flexómetro contra las paredes.
 ## 5. Corrección del ancho del hall
 
 En p2r_04, las distancias a las paredes sur y norte sumaban 3,38 m, y el modelo daba 4,24 m entre
-las caras de esas paredes. El equipo midió el ancho del hall junto a la escalera: 3,40 m. Se corrigió
-el modelo `mundo_definitivo_piso2/model.sdf`:
+las caras de esas paredes. Sobre el mapa sin corregir, cada medida situaba al vehículo en un punto
+distinto: A, con la medida a la pared sur, a 1,78 m de la meta, y B, con la medida a la pared norte,
+a 1,15 m. En la sesión se dibujó con las caras de pared del mapa, a 6 cm por celda (1,77 m, 1,16 m y
+0,82 m de diferencia); la figura se rehízo con las caras exactas del modelo.
+
+![Las dos lecturas de la posición final de p2r_04 sobre el mapa sin corregir: A con la medida a la pared sur y B con la medida a la pared norte](S25_p2r_04_dos_lecturas.png)
+
+El equipo midió el ancho del hall junto a la escalera: 3,40 m. Se corrigió el modelo
+`mundo_definitivo_piso2/model.sdf`:
 
 - `Wall_88`, la pared norte del hall, bajó 0,84 m (de y = −6,832 a −7,672);
 - `Wall_85`, la pared oeste del pasillo del Lab. 313, se alargó 0,84 m para seguir cerrando la
