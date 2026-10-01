@@ -95,6 +95,23 @@ reescribe aqui con `RewrittenYaml`, sobre el archivo de Jazzy:
    del arbol. Con la tarjeta cargada no llegaban a tiempo: la corrida c1d_02 del
    2026-09-29 aborto en 0,5 s, con cuatro recuperaciones, sin mover el carro.
 
+7. rf2o arranca 8 s despues de `robot_state_publisher`
+
+   rf2o lee `base_link -> laser` una sola vez, con el primer barrido. Si no esta
+   todavia, toma el laser como si no estuviera girado y, montado a 180 grados,
+   mide el movimiento al reves. Paso el 2026-09-29 en los dos carros. El retraso
+   no basta: el 2026-09-30, con la tarjeta cargada, el primer barrido llego 30 s
+   despues y la TF seguia sin estar. El arreglo de fondo es el parche
+   `herramientas/parches/rf2o_esperar_tf_laser.patch`, que hace que rf2o descarte
+   los barridos hasta tener la TF; el retraso se conserva como margen.
+
+8. `xy_goal_tolerance` 0,25 -> 1,0 m
+
+   Distancia a la que Nav2 da la meta por alcanzada. Con 0,25 el Ackermann
+   llegaba cerca de la meta, no podia corregir en tan poco espacio y retrocedia
+   buscando la meta (corrida p2r_01, 2026-09-30). El criterio de G-3 sigue siendo
+   0,5 m (acta 6.1), medido con flexometro.
+
 `use_sim_time` pasa a falso en todo el arbol, que es lo que separa esta corrida
 de una de Gazebo.
 
@@ -126,7 +143,7 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, TimerAction
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -139,6 +156,11 @@ from nav2_common.launch import RewrittenYaml
 VELOCIDAD_MINIMA_UTIL = '0.40'
 # Frecuencia del controlador que la tarjeta de 2 nucleos si sostiene (ajuste 4).
 FRECUENCIA_CONTROL = '10.0'
+# Espera antes de arrancar rf2o, para que robot_state_publisher ya publique
+# base_link -> laser (ajuste 7).
+RETARDO_RF2O_S = 8.0
+# Distancia a la que Nav2 da la meta por alcanzada en el vehiculo (ajuste 8).
+MARGEN_LLEGADA_NAV2_M = '1.0'
 # Plazo para que un servidor de Nav2 confirme una peticion del arbol (ajuste 6).
 PLAZO_SERVIDOR_MS = 1000
 
@@ -249,6 +271,11 @@ def _lanzar(context, *args, **kwargs):
             # sostiene. El 2026-09-29, en amss-jgm9, el lazo corrio entre 1 y 6 Hz
             # con «Control loop missed its desired rate» en cada meta.
             'controller_frequency': FRECUENCIA_CONTROL,
+            # Ajuste 8: Nav2 da la meta por alcanzada a 1 m y no a 0,25. Con 0,25
+            # el Ackermann llegaba cerca de la meta, no podia corregir en tan poco espacio
+            # y retrocedia buscando la meta (corrida p2r_01, 2026-09-30). El criterio
+            # de G-3 sigue siendo 0,5 m (acta 6.1), medido con flexometro.
+            'xy_goal_tolerance': MARGEN_LLEGADA_NAV2_M,
             'topic': TOPICO_SCAN,
             # Vacios en el YAML a proposito: sin rellenarlos, `bt_navigator`
             # carga el arbol por defecto de Nav2, que recupera con <Spin> —una
@@ -292,16 +319,26 @@ def _lanzar(context, *args, **kwargs):
         # Peldanos 2-3 - odometria deducida de los propios barridos. El carro no
         # lleva encoders: esta es su unica fuente de 'odom -> base_link', y sin
         # ella ni AMCL ni Nav2 arrancan.
-        Node(package='rf2o_laser_odometry', executable='rf2o_laser_odometry_node',
-             name='rf2o_laser_odometry', output='screen', namespace=ns_nodo,
-             parameters=[{'laser_scan_topic': TOPICO_SCAN,
-                          'odom_topic': f'/{ns}/odom' if ns else '/odom',
-                          'publish_tf': True,
-                          'base_frame_id': f'{prefijo}base_link',
-                          'odom_frame_id': f'{prefijo}odom',
-                          'init_pose_from_topic': '',
-                          'freq': 20.0,
-                          'use_sim_time': False}]),
+        # Ajuste 7: rf2o arranca RETARDO_RF2O_S despues. Lee base_link -> laser una
+        # sola vez, al arrancar; si robot_state_publisher todavia no lo publica, da
+        # «"base_link" passed to lookupTransform argument target_frame does not
+        # exist», toma el laser como si estuviera sin girar, y como esta montado a
+        # 180 grados mide todo el movimiento al reves. Paso el 29-sep en los dos
+        # carros: Nav2 mandaba avanzar, /odom decia que retrocedia y el carro no se
+        # detuvo en la meta. mapear_conduciendo.sh no lo sufre porque publica la TF
+        # 5 s antes de arrancar rf2o. El retraso solo no basta (30-sep): hace falta
+        # el parche herramientas/parches/rf2o_esperar_tf_laser.patch en el carro.
+        TimerAction(period=RETARDO_RF2O_S, actions=[
+            Node(package='rf2o_laser_odometry', executable='rf2o_laser_odometry_node',
+                 name='rf2o_laser_odometry', output='screen', namespace=ns_nodo,
+                 parameters=[{'laser_scan_topic': TOPICO_SCAN,
+                              'odom_topic': f'/{ns}/odom' if ns else '/odom',
+                              'publish_tf': True,
+                              'base_frame_id': f'{prefijo}base_link',
+                              'odom_frame_id': f'{prefijo}odom',
+                              'init_pose_from_topic': '',
+                              'freq': 20.0,
+                              'use_sim_time': False}])]),
 
         # Peldanos 4-5 - mapa y localizacion en una sola pieza. Se usa SLAM en
         # vivo y no mapa guardado + AMCL porque AMCL exige una pose inicial que

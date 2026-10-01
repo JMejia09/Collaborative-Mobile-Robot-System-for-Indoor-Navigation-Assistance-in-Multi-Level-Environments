@@ -818,7 +818,7 @@
       <collision name='Wall_85_Collision'>
         <geometry>
           <box>
-            <size>4.5 0.15 2.5</size>
+            <size>5.34 0.15 2.5</size>
           </box>
         </geometry>
         <pose>0 0 1.25 0 -0 0</pose>
@@ -827,7 +827,7 @@
         <pose>0 0 1.25 0 -0 0</pose>
         <geometry>
           <box>
-            <size>4.5 0.15 2.5</size>
+            <size>5.34 0.15 2.5</size>
           </box>
         </geometry>
         <material>
@@ -841,7 +841,7 @@
           <layer>0</layer>
         </meta>
       </visual>
-      <pose>-17.4435 -4.65687 0 0 -0 1.5708</pose>
+      <pose>-17.4435 -5.07687 0 0 -0 1.5708</pose>
     </link>
     <link name='Wall_88'>
       <collision name='Wall_88_Collision'>
@@ -870,7 +870,7 @@
           <layer>0</layer>
         </meta>
       </visual>
-      <pose>-20.3685 -6.83187 0 0 -0 3.14159</pose>
+      <pose>-20.3685 -7.67187 0 0 -0 3.14159</pose>
     </link>
     <!-- ================================================================
          Barrera_Escalera - NO ES UNA PARED DEL EDIFICIO
@@ -911,7 +911,7 @@
       <collision name='Barrera_Escalera_Collision'>
         <geometry>
           <box>
-            <size>4.4 0.15 2.5</size>
+            <size>3.56 0.15 2.5</size>
           </box>
         </geometry>
         <pose>0 0 1.25 0 -0 0</pose>
@@ -920,7 +920,7 @@
         <pose>0 0 1.25 0 -0 0</pose>
         <geometry>
           <box>
-            <size>4.4 0.15 2.5</size>
+            <size>3.56 0.15 2.5</size>
           </box>
         </geometry>
         <material>
@@ -934,7 +934,7 @@
           <layer>0</layer>
         </meta>
       </visual>
-      <pose>-23.07 -9.026 0 0 -0 1.5708</pose>
+      <pose>-23.07 -9.446 0 0 -0 1.5708</pose>
     </link>
     <link name='Wall_90'>
       <collision name='Wall_90_Collision'>

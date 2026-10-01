@@ -1,0 +1,17 @@
+diff --git a/src/CLaserOdometry2DNode.cpp b/src/CLaserOdometry2DNode.cpp
+index 2206777..dcc5d03 100644
+--- a/src/CLaserOdometry2DNode.cpp
++++ b/src/CLaserOdometry2DNode.cpp
+@@ -98,7 +98,11 @@ void CLaserOdometry2DNode::LaserCallBack(const sensor_msgs::msg::LaserScan::Shar
+     else
+     {
+       // Initialize module on first scan (from laser params)
+-      setLaserPoseFromTf();
++      // Parche del proyecto (2026-09-30): sin la TF base -> laser no se inicializa;
++      // se ignora este barrido y se reintenta con el siguiente. Antes se seguia con
++      // la TF vacia y, con el laser montado a 180 grados, la odometria salia invertida.
++      if (!setLaserPoseFromTf())
++        return;
+       rf2o_ref.init(last_scan, initial_robot_pose.pose.pose);
+       rf2o_ref.first_laser_scan = false;
+     }

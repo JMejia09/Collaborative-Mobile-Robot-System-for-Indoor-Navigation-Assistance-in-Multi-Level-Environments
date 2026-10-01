@@ -419,6 +419,13 @@ puntos:
   # que quedan a 2.12 m. y = -9.026 es el eje del ala. yaw = pi porque se
   # llega de frente desde el este.
   #
+  # CORRECCION DEL 2026-09-30
+  # -------------------------
+  # En el sitio, el hall mide 3.40 m de pared sur a pared norte, no los 4.24
+  # del modelo. Wall_88 (pared norte) bajo 0.84 m; Wall_85 se alargo y la
+  # barrera se acorto en lo mismo para cerrar las esquinas. El eje del ala
+  # pasa a y = -9.45, y la parada sigue a 1.50 m de la barrera.
+  #
   # POR QUE SIGUE COMO provisional
   # ------------------------------
   # Ya no por la geometria, que quedo resuelta. Quedan dos cosas:
@@ -435,7 +442,7 @@ puntos:
     es_transferencia: true
     provisional: true
     lado_pared: fondo        # se llega de frente contra Barrera_Escalera
-    pose: {x: -21.50, y: -9.03, yaw: 3.1416}
+    pose: {x: -21.50, y: -9.45, yaw: 3.1416}
     holgura_m: 1.50
 
   # --------------------------------------------------- PISO 2 - ALA NOROESTE --

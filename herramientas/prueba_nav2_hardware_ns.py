@@ -64,8 +64,12 @@ MARCOS_SLAM = {'odom_frame': 'odom', 'map_frame': 'map', 'base_frame': 'base_lin
 NODOS_NAV2 = {'controller_server', 'planner_server', 'behavior_server', 'bt_navigator'}
 # Ajustes de hardware posteriores a REFERENCIA. Cambian el modo sin espacio de
 # nombres a proposito, asi que se comprueban aparte y se quitan antes de comparar.
-# 'default_server_timeout' es el ajuste 6 del lanzador (2026-09-29, noche).
+# 'default_server_timeout' es el ajuste 6 del lanzador (2026-09-29, noche); el
+# retraso de rf2o, el 7, y el margen de llegada de Nav2, el 8 (2026-09-30).
 AJUSTES_POSTERIORES = {'bt_navigator': {'default_server_timeout': 1000}}
+EJECUTABLE_RETRASADO = 'rf2o_laser_odometry_node'
+# xy_goal_tolerance: valor del YAML (el de REFERENCIA) y valor del ajuste 8.
+MARGEN_YAML, MARGEN_AJUSTE = 0.25, 1.0
 
 
 def cargar(ruta):
@@ -77,7 +81,7 @@ def cargar(ruta):
 def lanzar(ruta_launch, ns):
     """Devuelve {nombre completo: {ejecutable, ns, args, params}} de cada nodo."""
     from launch import LaunchContext
-    from launch.actions import DeclareLaunchArgument
+    from launch.actions import DeclareLaunchArgument, TimerAction
 
     spec = importlib.util.spec_from_file_location('lanzador', ruta_launch)
     modulo = importlib.util.module_from_spec(spec)
@@ -96,8 +100,15 @@ def lanzar(ruta_launch, ns):
         'nav': 'true',
         'namespace': ns,
     })
-    nodos = {}
+    # Un nodo dentro de un TimerAction (rf2o, ajuste 7) se lanza igual, mas tarde.
+    acciones = []
     for accion in ld.entities[-1].execute(contexto):
+        if isinstance(accion, TimerAction):
+            acciones += [(a, True) for a in accion.actions]
+        else:
+            acciones.append((accion, False))
+    nodos = {}
+    for accion, retrasado in acciones:
         accion._perform_substitutions(contexto)
         ficheros = [cargar(p) for p, es in (accion._Node__expanded_parameter_arguments or [])
                     if es]
@@ -106,13 +117,34 @@ def lanzar(ruta_launch, ns):
             'ns': accion.expanded_node_namespace,
             'args': accion._Node__arguments,
             'params': ficheros,
+            'retrasado': retrasado,
         }
     return nodos
+
+
+def margenes(arbol):
+    """Devuelve las rutas de cada 'xy_goal_tolerance' de un arbol de parametros."""
+    if not isinstance(arbol, dict):
+        return []
+    rutas = [(arbol, 'xy_goal_tolerance')] if 'xy_goal_tolerance' in arbol else []
+    for valor in arbol.values():
+        rutas += margenes(valor)
+    return rutas
 
 
 def quitar_ajustes(nodos, exigir):
     """Comprueba los ajustes posteriores a REFERENCIA y los quita para comparar."""
     for nodo in nodos.values():
+        # Ajuste 7: solo rf2o arranca con retraso.
+        exigir(nodo['retrasado'] == (nodo['ejecutable'] == EJECUTABLE_RETRASADO),
+               f"{nodo['ejecutable']}: retraso de arranque inesperado o ausente")
+        nodo['retrasado'] = False
+        # Ajuste 8: el YAML de Nav2 llega con el margen de llegada a 1 m.
+        for fichero in nodo['params']:
+            for padre, clave in margenes(fichero):
+                exigir(padre[clave] == MARGEN_AJUSTE,
+                       f"{nodo['ejecutable']}: xy_goal_tolerance vale {padre[clave]!r}")
+                padre[clave] = MARGEN_YAML
         esperado = AJUSTES_POSTERIORES.get(nodo['ejecutable'])
         if not esperado:
             continue

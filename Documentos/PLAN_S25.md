@@ -24,6 +24,7 @@ lleva más riesgo.
 | Lun 28 – mié 30 | **D** | Red entre pisos, con un carro en cada piso | Jonny | los dos |
 | Mar 29, mañana | **B0** | Ensayo en el laboratorio. Hecho a medias: L2 y L3 con `amss-jgm9`; L1 y el L2 de `amss-ez9n` pendientes, sin batería de tracción ([registro](Evidencia/S25_ensayo_laboratorio.md)) | Santiago y Jonny | los dos, uno cada vez |
 | **Mar 29, noche** | **B** | **Sesión de compuertas G-2 y G-3**: intentada con `amss-ez9n`, sin cerrar ([registro](Evidencia/S25_campana_c1_deepy.md)); se repite el miércoles | Santiago | uno |
+| Mié 30, noche | **B-bis** | G-2 y G-3 en el hall del extremo oeste del piso 2, con `amss-jgm9`: sin cerrar; dos llegadas medidas a 1,43 y 1,26 m ([registro](Evidencia/S25_pasillo_piso2_amss-jgm9.md)) | Santiago | uno |
 | Mar 29 – mié 30 | **B2** | Pasillo liso con los dos carros: odometría contra cinta, como caracterización | Santiago y Jonny | **los dos** |
 | Mié 30 | **C** | Un carro navega con espacio de nombres | Santiago | uno |
 | Jue 1 | **C + E** | Los dos carros a la vez; coordinador e interfaz en un carro | los dos | **los dos** |
@@ -219,6 +220,16 @@ Los vehículos no han estado todavía en esos pasillos: esta es la primera vez.
 
 La escala es 0,9 en los dos: con menos, `amss-jgm9` no arranca (29-sep). Si una corrida se pasa de
 0,5 m, se reporta con su causa; no se cambia la escala a mitad de serie.
+
+> **Estado, 30-sep noche.** El tramo del pasillo largo no se usó: `amss-jgm9` perdía el WiFi lejos
+> del router, que estaba en el IEEE, y el equipo limitó la prueba a los destinos IEEE, Lab. 313 y
+> Escaleras, en el hall del extremo oeste. Ocho corridas con `amss-jgm9` (p2r_01 a p2r_08);
+> `amss-ez9n` se apagó sin correr. Las dos llegadas medidas con flexómetro, ambas hacia las
+> escaleras, quedaron a 1,43 m y 1,26 m del destino, y rf2o registró el 73 % del avance medido.
+> G-2 y G-3 siguen abiertas. Se corrigieron la odometría invertida de rf2o (parche), el margen de
+> llegada de Nav2 (1,0 m) y el ancho del hall en el modelo (3,40 m). No se navega hacia la escalera
+> hasta resolver el error longitudinal de AMCL en el hall (2,62 m en p2r_05). El sitio de la próxima
+> sesión está por decidir ([registro](Evidencia/S25_pasillo_piso2_amss-jgm9.md)).
 
 ### B2 · El pasillo liso, con los dos carros (martes después de B, o miércoles)
 

@@ -561,16 +561,17 @@ def bag_sintetico(ruta):
     estado(40.0, TRANSFERENCIA, "robot1")
     estado(41.0, TRAMO_2, "robot2")
     # El destino de la mision es 'piso2_escalera', que el catalogo pone en
-    # (-21.5, -9.03). El robot para a 0,19 m de el: es la cifra que la prueba
+    # (-21.5, -9.45) desde la correccion del ancho del hall del 2026-09-30 (antes
+    # -9.03). El robot para a 0,19 m de el: es la cifra que la prueba
     # espera ver calculada sola, sin pasarla por la linea de ordenes.
     for i in range(3):
-        odom("/robot2/odom", 41.5 + i * 0.1, 0.3, -21.31, -9.03)
+        odom("/robot2/odom", 41.5 + i * 0.1, 0.3, -21.31, -9.45)
     estado(95.0, COMPLETADA, "robot2")
     # Una muestra DESPUES de COMPLETADA y lejos del punto. El bag sigue grabando
     # hasta que el operador corta, asi que la ultima muestra no es la llegada: si
     # el error se midiera con ella saldria 5 m y dependeria de cuando se pulso
     # Ctrl-C, que es justo lo que no puede pasar entre las 30 corridas de S24.
-    odom("/robot2/odom", 120.0, 0.0, -16.31, -9.03)
+    odom("/robot2/odom", 120.0, 0.0, -16.31, -9.45)
     # Y robot1 sigue publicando desde el punto de transferencia del piso 1, mas
     # tarde que la ultima muestra buena de robot2. Quien llego es el robot ACTIVO
     # al final, no el que publico el ultimo mensaje del bag.
@@ -872,7 +873,7 @@ def pruebas_de_bag(esquema):
               abs(auto["verdad_de_terreno"]["pose_final"]["x"] + 21.31) < 1e-6,
               f"-> {auto['verdad_de_terreno']['pose_final']}")
         check("y es la del robot ACTIVO al final, no la del que publico ultimo",
-              abs(auto["verdad_de_terreno"]["pose_final"]["y"] + 9.03) < 1e-6,
+              abs(auto["verdad_de_terreno"]["pose_final"]["y"] + 9.45) < 1e-6,
               f"-> {auto['verdad_de_terreno']['pose_final']}")
         check("el registro con el error calculado sigue validando",
               valida(auto, esquema), _por_que(auto, esquema))

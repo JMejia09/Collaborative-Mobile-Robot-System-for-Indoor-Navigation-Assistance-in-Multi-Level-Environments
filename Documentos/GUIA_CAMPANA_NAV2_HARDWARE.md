@@ -171,6 +171,7 @@ ssh deepracer@192.168.0.102 "source /opt/ros/jazzy/setup.bash; source ~/nav_ws/i
 |---|---|
 | **Esperado** | Las cinco líneas. |
 | **Si falta rf2o** | `ssh deepracer@192.168.0.102 "source /opt/ros/jazzy/setup.bash && cd ~/nav_ws && colcon build --symlink-install --packages-select rf2o_laser_odometry"` — el fuente se copia antes desde `~/deepracer_sim_ws/src/rf2o_laser_odometry`, como se hizo el 2026-09-23. Tarda 3 min. |
+| **rf2o tiene que llevar el parche** | `ssh deepracer@192.168.0.102 "md5sum ~/nav_ws/src/rf2o_laser_odometry/src/CLaserOdometry2DNode.cpp"` debe empezar por `06cbdbe6c275`. Si empieza por `83ccf806ee13` es el fuente original: instalar el parche con los pasos de [`herramientas/parches/LEEME.md`](../herramientas/parches/LEEME.md). Sin él, rf2o puede arrancar sin la transformada del láser y dar la odometría invertida (30-sep). |
 | **Si falta Nav2** | `ssh deepracer@192.168.0.102 "sudo -n apt-get update && sudo -n DEBIAN_FRONTEND=noninteractive apt-get install -y ros-jazzy-navigation2 ros-jazzy-nav2-bringup"`. **El `update` primero no es opcional**: sin él el índice del carro pide versiones que ya no existen y todo acaba en `404 Not Found`. Pasó el 2026-09-23. |
 
 ---
@@ -507,6 +508,12 @@ bitácora de [`ESTADO.md`](../ESTADO.md); si no, el verificador lo marca como do
 | `AVISO: /odom se ha movido … con la meta terminada` | el carro sigue rodando, o rf2o deriva | pararlo a mano; esa corrida no vale |
 | `AVISO: el bag no cerro` | no debería pasar ya | la fila del CSV sigue valiendo; se pierde el crudo |
 | El carro desaparece de la red | se reinició o se quedó sin batería de cómputo | encenderlo; **`/tmp` se habrá vaciado** y el puente habrá muerto |
+| Nav2 manda avanzar y `/odom` dice que el carro retrocede; en el registro, `"base_link" passed to lookupTransform` seguido de `Laser odom [x,y,yaw]=[0.000000 0.000000 0.000000]` | rf2o se inicializó sin la transformada del láser (30-sep) | instalar el parche de rf2o (§3.2) y relanzar Nav2 |
+| El carro llega cerca de la meta y retrocede buscándola | con 0,25 m de margen de llegada el Ackermann no puede corregir tan cerca | desde el 30-sep el launch da la meta por alcanzada a 1,0 m (ajuste 8); G-3 se sigue midiendo con flexómetro contra 0,5 m |
+| La corrida no imprime nada y `launch.log` dice `Failed to send goal response (timeout)` | `bt_navigator` no pudo confirmar la meta y `corrida_nav2.py` la espera sin plazo (p2r_06) | `sudo -n kill -INT` al proceso `corrida_nav2.py` (verlo con `ps -eo pid,args`), comprobar que el carro no se movió y repetir con otro id |
+| `ABORTA: no llega /odom` con rf2o vivo, y rf2o solo escribe `Waiting for laser_scans` | el driver del LiDAR dejó de publicar aunque el sensor sigue girando (p2r_07) | llamar a `/rplidar_ros/stop_motor` y, 3 s después, a `/rplidar_ros/start_motor` (`std_srvs/srv/Empty`, como `root` y con la partición); comprobar unos 7 Hz en `/rplidar_ros/scan` |
+| Tras `SUCCEEDED`, el informe da un error de llegada de varios metros | el refresco de AMCL que hace la herramienta tras la meta movió la pose de un AMCL ya perdido (p2r_04) | la llegada se mide con flexómetro; la pose final de AMCL de esa corrida no vale |
+| En el hall del piso 2 el carro sigue de largo hacia la escalera | AMCL acumula un error longitudinal de hasta 2,62 m en el hall y rf2o registra el 73 % del avance (p2r_04, p2r_05) | **no se navega hacia la escalera ni hacia ningún desnivel** hasta resolverlo; siempre una persona entre la meta y el desnivel |
 
 ---
 
@@ -564,7 +571,10 @@ nombre equivocado.
   vehículo, y es lo que falta para que la navegación demostrada sea la del guiado real.
 - **El pasillo abierto.** Este tramo tiene cajas en los dos extremos, que es la geometría que da
   información de avance a rf2o. Los pasillos abiertos del edificio miden 5,1 % y 5,9 % de esa
-  información ([`S23_informacion_avance_piso2.md`](Evidencia/S23_informacion_avance_piso2.md)).
+  información ([`S23_informacion_avance_piso2.md`](Evidencia/S23_informacion_avance_piso2.md)). El
+  30-sep, en el hall del extremo oeste del piso 2, rf2o registró el 73 % del desplazamiento medido
+  con flexómetro en las dos corridas en que se midió
+  ([`S25_pasillo_piso2_amss-jgm9.md`](Evidencia/S25_pasillo_piso2_amss-jgm9.md)).
 - **Los dos vehículos a la vez.** Eso es G-5: el protocolo con relevo y el coordinador, no solo
   dos carros navegando.
 - **La escala de `/cmd_vel`.** Desde el 29-sep el puente sube a su escalón más bajo todo lo que
