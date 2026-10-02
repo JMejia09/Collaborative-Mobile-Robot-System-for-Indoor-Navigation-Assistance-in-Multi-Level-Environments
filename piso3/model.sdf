@@ -450,7 +450,7 @@
           <ambient>1 1 1 1</ambient>
         </material>
       </visual>
-      <pose>10.0400 2.8583 0 0 -0 -1.5708</pose>
+      <pose>10.0400 2.8584 0 0 -0 -1.5708</pose>
     </link>
     <link name='Muro_E09'>
       <collision name='Muro_E09_Collision'>
@@ -486,7 +486,7 @@
           <ambient>1 1 1 1</ambient>
         </material>
       </visual>
-      <pose>15.7300 2.8606 0 0 -0 1.5708</pose>
+      <pose>15.7300 2.8607 0 0 -0 1.5708</pose>
     </link>
     <link name='Muro_E11'>
       <collision name='Muro_E11_Collision'>
@@ -522,7 +522,7 @@
           <ambient>1 1 1 1</ambient>
         </material>
       </visual>
-      <pose>17.2200 3.3714 0 0 -0 0.0039</pose>
+      <pose>17.2200 3.3715 0 0 -0 0.0039</pose>
     </link>
     <link name='Muro_E13'>
       <collision name='Muro_E13_Collision'>
@@ -540,7 +540,7 @@
           <ambient>1 1 1 1</ambient>
         </material>
       </visual>
-      <pose>17.8320 3.3738 0 0 -0 0.0039</pose>
+      <pose>17.8320 3.3739 0 0 -0 0.0039</pose>
     </link>
     <link name='Muro_E14'>
       <collision name='Muro_E14_Collision'>
@@ -558,16 +558,16 @@
           <ambient>1 1 1 1</ambient>
         </material>
       </visual>
-      <pose>17.9490 2.8793 0 0 -0 -1.5708</pose>
+      <pose>17.9490 2.8794 0 0 -0 -1.5708</pose>
     </link>
     <link name='Muro_E15'>
       <collision name='Muro_E15_Collision'>
-        <geometry><box><size>5.7500 0.15 2.5</size></box></geometry>
+        <geometry><box><size>5.7200 0.15 2.5</size></box></geometry>
         <pose>0 0 1.25 0 -0 0</pose>
       </collision>
       <visual name='Muro_E15_Visual'>
         <pose>0 0 1.25 0 -0 0</pose>
-        <geometry><box><size>5.7500 0.15 2.5</size></box></geometry>
+        <geometry><box><size>5.7200 0.15 2.5</size></box></geometry>
         <material>
           <script>
             <uri>file://media/materials/scripts/gazebo.material</uri>
@@ -576,7 +576,7 @@
           <ambient>1 1 1 1</ambient>
         </material>
       </visual>
-      <pose>20.7490 2.3953 0 0 -0 0.0039</pose>
+      <pose>20.7340 2.3953 0 0 -0 0.0039</pose>
     </link>
     <link name='Muro_E16'>
       <collision name='Muro_E16_Collision'>
@@ -594,7 +594,7 @@
           <ambient>1 1 1 1</ambient>
         </material>
       </visual>
-      <pose>24.5415 2.4101 0 0 -0 0.0039</pose>
+      <pose>24.5115 2.4101 0 0 -0 0.0039</pose>
     </link>
     <link name='Lamina_ascensor'>
       <collision name='Lamina_ascensor_Collision'>
@@ -652,12 +652,12 @@
     </link>
     <link name='Muro_Sur'>
       <collision name='Muro_Sur_Collision'>
-        <geometry><box><size>2.9604 0.15 2.5</size></box></geometry>
+        <geometry><box><size>2.9585 0.15 2.5</size></box></geometry>
         <pose>0 0 1.25 0 -0 0</pose>
       </collision>
       <visual name='Muro_Sur_Visual'>
         <pose>0 0 1.25 0 -0 0</pose>
-        <geometry><box><size>2.9604 0.15 2.5</size></box></geometry>
+        <geometry><box><size>2.9585 0.15 2.5</size></box></geometry>
         <material>
           <script>
             <uri>file://media/materials/scripts/gazebo.material</uri>
@@ -666,7 +666,7 @@
           <ambient>1 1 1 1</ambient>
         </material>
       </visual>
-      <pose>25.4395 1.0120 0 0 -0 1.5035</pose>
+      <pose>25.4245 1.0120 0 0 -0 1.5142</pose>
     </link>
   </model>
 </sdf>

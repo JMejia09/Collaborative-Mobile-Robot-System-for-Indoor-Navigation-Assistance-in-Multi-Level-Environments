@@ -123,8 +123,11 @@ PISO3 = {
         (0.39, -0.70,  'saliente'),       # ...a lo largo de 39 cm, y vuelve
         (2.05,  0.00,  'pared sur'),
     ],
-    # Misma geometria que el piso 4, con los salones renumerados a la planta.
-    'este': [(t[0], t[1], '3' + t[2][1:]) if t[0] == 'p' else t
+    # Misma geometria que el piso 4 salvo dos cosas, medidas en este piso:
+    # los salones van renumerados, y el tramo que en el piso 4 mide 5,60 m
+    # aqui mide 5,57 m.
+    'este': [(t[0], t[1], '3' + t[2][1:]) if t[0] == 'p'
+             else (('r', 5.57) if t == ('r', 5.600) else t)
              for t in PISO4['este']],
     'aberturas': {'ascensor': 'llegada', 'escalera': 'transferencia'},
 }
