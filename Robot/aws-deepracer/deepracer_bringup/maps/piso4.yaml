@@ -1,0 +1,11 @@
+# mundo: piso4.world
+# Mapa exacto de ese mundo, generado leyendo su geometria.
+# No editar a mano. Regenerar con esta orden, que es la que lo hizo:
+#   python3 herramientas/generar_mapa_desde_mundo.py piso4.world Robot/aws-deepracer/deepracer_bringup/maps/piso4.yaml --semilla 5.0 1.2
+image: piso4.pgm
+mode: trinary
+resolution: 0.06
+origin: [-1.0758, -1.2622, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.1
