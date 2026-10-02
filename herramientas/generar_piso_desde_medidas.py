@@ -115,12 +115,12 @@ PISO3 = {
         (9.10, -0.39,  'lockers'),
         (0.33,  0.00,  'pared'),
         (1.03,  0.00,  'ascensor'),       # lamina: punto de llegada
-        (2.29,  0.00,  'pared'),
-        (0.695,-1.26,  'papelera'),       # el 1,26 ensancha HACIA FUERA: rellano de escalera
-        (0.39,  0.00,  'entrada'),
+        (2.29,  0.30,  'pared'),
+        (0.695,-0.30,  'papelera'),       # sobresale 30 cm, igual que la del piso 4
+        (1.26, -0.39,  'muro'),           # al acabar, el pasillo se ensancha 39 cm
         (1.61,  0.00,  'escalera'),       # lamina: punto de TRANSFERENCIA
-        (0.70, -0.25,  'pared'),
-        (0.39,  0.25,  'saliente'),
+        (0.00,  0.70,  'entra saliente'), # el saliente entra 70 cm al pasillo...
+        (0.39, -0.70,  'saliente'),       # ...a lo largo de 39 cm, y vuelve
         (2.05,  0.00,  'pared sur'),
     ],
     # Misma geometria que el piso 4, con los salones renumerados a la planta.

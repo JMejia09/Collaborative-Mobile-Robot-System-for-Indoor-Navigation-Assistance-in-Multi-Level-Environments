@@ -5,7 +5,7 @@
 image: piso3.pgm
 mode: trinary
 resolution: 0.06
-origin: [-1.0753, -2.5850, 0.0]
+origin: [-1.0753, -1.4699, 0.0]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.1
