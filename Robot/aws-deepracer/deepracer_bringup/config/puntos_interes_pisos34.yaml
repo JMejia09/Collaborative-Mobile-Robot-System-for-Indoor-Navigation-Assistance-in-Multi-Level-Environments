@@ -1,0 +1,158 @@
+# Localizaciones de interes de los pisos 3 y 4 — el sitio nuevo.
+#
+# POR QUE ESTE CATALOGO VA APARTE Y NO DENTRO DE puntos_interes.yaml
+# ------------------------------------------------------------------
+# Se intento lo segundo y la prueba del planificador lo rechazo en el acto:
+# 710 de 930 combinaciones fallaban con «el destino esta en el nivel 3, y no hay
+# ningun robot asignado a ese nivel». La causa no es este archivo sino que el
+# sistema tiene DOS robots y un catalogo con cuatro niveles pide cuatro. El
+# coordinador declara 'robot_nivel_1' y 'robot_nivel_2', y nada mas.
+#
+# Separar los dos sitios es lo correcto ademas por otra razon: son edificios
+# distintos a efectos del experimento. Mezclar sus destinos en una lista
+# permitiria pedir una mision de un pasillo del piso 1 a un salon del piso 4,
+# que no existe como recorrido.
+#
+# COMO SE USA
+# -----------
+# El coordinador lo carga con su parametro 'ruta_puntos':
+#
+#   ros2 run coordinacion coordinador --ros-args \
+#     -p ruta_puntos:=<ruta>/puntos_interes_pisos34.yaml \
+#     -p robot_nivel_3:=robot1 -p robot_nivel_4:=robot2
+#
+# OJO: esos dos ultimos parametros NO EXISTEN todavia. coordinador.py declara
+# solo los niveles 1 y 2 (lineas 98-99 y 109-112). Para una mision CON RELEVO
+# entre los pisos 3 y 4 hay que anadirlos: son cuatro lineas, pero tocan fichero
+# de Santi y el codigo esta congelado desde el 18-sep, asi que se acuerda antes.
+#
+# PARA LA PRUEBA DE NAVEGACION DE UN SOLO PISO NO HACE FALTA NADA DE ESO: la
+# meta se manda directa a Nav2 con navigate_to_pose, sin coordinador.
+#
+# DE DONDE SALEN LAS COORDENADAS
+# ------------------------------
+# Del levantamiento con flexometro del 2026-10-02, no de una planta dibujada.
+# De el salen TANTO el mundo de Gazebo COMO el mapa, de modo que simulacion y
+# edificio coinciden porque vienen de la misma fuente. Es la respuesta al
+# hallazgo del 30-sep: en el piso 2 se midio el hall y el modelo lo daba 0,84 m
+# mas ancho de lo que es, y esa era la unica medida que alguien habia verificado.
+#
+#   piso4   oeste 25,615 m · este 25,534 m · cierre  8 cm (0,32 %)
+#   piso3   oeste 25,345 m · este 25,504 m · cierre 16 cm (0,62 %)
+#
+# Se regeneran con herramientas/generar_piso_desde_medidas.py, que avisa si las
+# dos paredes no cierran dentro del 2 %. Esa comprobacion encontro cinco errores
+# antes de generar nada, tres de lectura del plano y dos de modelado.
+#
+# Las poses NO salen de la geometria teorica sino del MAPA ya generado: para cada
+# vano se busca el bloque libre contiguo de esa abscisa y la parada se coloca en
+# su centro, desplazada 0,35 m hacia la pared del destino. Las diez se
+# comprobaron contra el mapa: todas en celda libre, con 0,60 a 0,96 m al muro mas
+# cercano, o sea por encima del radio de inflacion (0,55) y del de giro (0,35).
+#
+# MARCO Y ORIENTACION
+# -------------------
+# El eje x corre a lo largo del pasillo, del extremo norte (x = 0) al sur. El
+# eje y cruza el pasillo, con la pared oeste en y = 0 y la este en y = 2,35 a
+# 2,61 segun el tramo. Los salones estan al este; el ascensor y la escalera, al
+# oeste.
+#
+# El yaw va a 0 en todas las poses, alineado con el pasillo, por la misma razon
+# que en el piso 1: el vehiculo no gira sobre su eje -por eso se quito <Spin> del
+# arbol de comportamiento- asi que un destino perpendicular convertiria cada
+# llegada en una maniobra, con su tiempo y su probabilidad de fallo metidos
+# dentro de las metricas.
+#
+# EL ASCENSOR ES DESTINO, NO PUNTO DE TRANSFERENCIA
+# -------------------------------------------------
+# El robot guia HASTA el ascensor, pero el cambio de piso se hace siempre por la
+# escalera. Marcar el ascensor como segundo punto de transferencia haria fallar
+# a _transferencia_de(), que exige exactamente uno por nivel y revienta con un
+# mensaje claro si hay dos. Su propio comentario dice que ahi es donde habria que
+# decidir cual -«presumiblemente la mas cercana al punto anterior»- y eso es
+# cambiar el nucleo del aporte declarado del proyecto. Queda para trabajos
+# futuros.
+
+puntos:
+
+  # ------------------------------------------------------------------ PISO 3 --
+  - id: piso3_salon_301
+    nombre: "Salón 301"
+    nivel: 3
+    es_transferencia: false
+    lado_pared: este
+    pose: {x: 6.20, y: 2.00, yaw: 0.0}
+    holgura_m: 1.56
+
+  - id: piso3_salon_302
+    nombre: "Salón 302"
+    nivel: 3
+    es_transferencia: false
+    lado_pared: este
+    pose: {x: 9.31, y: 2.21, yaw: 0.0}
+    holgura_m: 1.35
+
+  - id: piso3_ascensor
+    nombre: "Ascensor"
+    nivel: 3
+    es_transferencia: false
+    lado_pared: oeste
+    pose: {x: 16.54, y: 1.30, yaw: 0.0}
+    holgura_m: 1.56
+
+  - id: piso3_salon_303
+    nombre: "Salón 303"
+    nivel: 3
+    es_transferencia: false
+    lado_pared: este
+    pose: {x: 17.22, y: 2.00, yaw: 0.0}
+    holgura_m: 1.56
+
+  - id: piso3_escalera
+    nombre: "Escaleras"
+    nivel: 3
+    es_transferencia: true
+    lado_pared: oeste
+    pose: {x: 22.10, y: 0.64, yaw: 0.0}
+    holgura_m: 1.26
+
+  # ------------------------------------------------------------------ PISO 4 --
+  - id: piso4_salon_401
+    nombre: "Salón 401"
+    nivel: 4
+    es_transferencia: false
+    lado_pared: este
+    pose: {x: 6.20, y: 2.03, yaw: 0.0}
+    holgura_m: 1.56
+
+  - id: piso4_salon_402
+    nombre: "Salón 402"
+    nivel: 4
+    es_transferencia: false
+    lado_pared: este
+    pose: {x: 9.31, y: 2.15, yaw: 0.0}
+    holgura_m: 1.50
+
+  - id: piso4_ascensor
+    nombre: "Ascensor"
+    nivel: 4
+    es_transferencia: false
+    lado_pared: oeste
+    pose: {x: 16.39, y: 1.36, yaw: 0.0}
+    holgura_m: 1.59
+
+  - id: piso4_salon_403
+    nombre: "Salón 403"
+    nivel: 4
+    es_transferencia: false
+    lado_pared: este
+    pose: {x: 17.22, y: 2.06, yaw: 0.0}
+    holgura_m: 1.59
+
+  - id: piso4_escalera
+    nombre: "Escaleras"
+    nivel: 4
+    es_transferencia: true
+    lado_pared: oeste
+    pose: {x: 24.39, y: 0.82, yaw: 0.0}
+    holgura_m: 1.23
