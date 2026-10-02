@@ -56,6 +56,18 @@ contra el edificio con flexómetro, y si pasa, **se navega el edificio sin SLAM*
 > *Corregido el 2026-09-25, el mismo día.* Este apartado decía que una corrida de 5 m con cinta
 > «cuenta para RF-27». Es falso: RF-27 pide el protocolo completo sobre los dos carros.
 
+*Añadido el 2026-10-02 — sitio nuevo, pisos 3 y 4.* El equipo levantó con flexómetro dos plantas
+del edificio y de ese levantamiento salen **el mundo de Gazebo y el mapa a la vez**, de modo que
+simulación y edificio coinciden por construcción. Cierran al **0,32 %** (piso 4) y **0,62 %** (piso 3),
+contra el 20 % de error que el modelo del piso 2 tenía en el hall. Hay mapa, catálogo de diez destinos
+comprobados contra el mapa, y guion de campo en [`GUIA_PISOS_3_Y_4.md`](GUIA_PISOS_3_Y_4.md).
+**Lo que falta para el relevo:** `coordinador.py` declara `robot_nivel_1` y `robot_nivel_2` y nada más,
+así que una misión entre los pisos 3 y 4 no planifica. Con la asignación pasada a mano, las 90
+combinaciones funcionan, o sea que el planificador está bien y faltan dos parámetros. Son cuatro
+líneas con el código congelado: **se acuerda entre los dos antes de tocarlo**.
+
+---
+
 ### 0.2 · Lo que decide otro, y va por escrito ANTES de correr
 
 Tres decisiones son **de los directores** —dos las fija el §6 del acta y la tercera la trae la
