@@ -367,6 +367,12 @@ enviar el mensaje escrito. Lo acordado quedó en el §6.1 de [`ACTA_GO_NOGO.md`]
 | 3 | **Decidir si S26 va con dos carros** (bloque A y C3 en verde) **o con el repliegue de uno** | [`MAPA_TRABAJO_RESTANTE.md`](MAPA_TRABAJO_RESTANTE.md) §0 |
 | 4 | Corte semanal: `ESTADO.md`, entregable de S25 en `.tex` y `.md`, commit | `ESTADO.md`, `Documentos/Entregables/` |
 
+> **Estado, 2-oct.** Las pruebas se hicieron ese día en el sitio nuevo, los pisos 3 y 4, que según el
+> equipo aprobaron los directores y los evaluadores. G-2 cumple en las dos corridas medidas del piso
+> 4 (+3,3 % y −4,6 %); G-3 no (0,57 y 0,62 m). La declaración en el acta, el registro del cambio de
+> sitio y el entregable de S25 quedan pendientes
+> ([registro](Evidencia/S25_pisos34_campo.md)).
+
 ---
 
 ## 8. Lo que viene después

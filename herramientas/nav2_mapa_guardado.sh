@@ -36,6 +36,8 @@
 # USO
 #     CARRO=192.168.0.102 MAPA=/home/deepracer/tesis/mapa.yaml bash nav2_mapa_guardado.sh   (ruta fija del vehiculo)
 #     NS=robot2 CARRO=192.168.0.102 MAPA=... bash nav2_mapa_guardado.sh   (bloque C: todo bajo /robot2)
+#     POSE_X=24.45 POSE_Y=1.21 POSE_YAW=3.1416 CARRO=... MAPA=... bash nav2_mapa_guardado.sh
+#         (salida del vehiculo en el mapa; POSE_YAW en radianes, 0 por defecto)
 #     bash nav2_mapa_guardado.sh --estado
 #     bash nav2_mapa_guardado.sh --parar
 #
@@ -51,6 +53,11 @@ D=/home/deepracer/tesis   # ruta fija del vehiculo
 MAPA="${MAPA:-/home/deepracer/mapeo_235028/mapa.yaml}"   # ruta fija del vehiculo
 POSE_X="${POSE_X:-1.0}"
 POSE_Y="${POSE_Y:-0.0}"
+# Rumbo de la salida en radianes (3.1416 = mirando hacia -x). Va en la pose
+# inicial como cuaternion; sin el, AMCL arranca mirando a +x.
+POSE_YAW="${POSE_YAW:-0.0}"
+QZ=$(awk -v a="$POSE_YAW" 'BEGIN{printf "%.6f", sin(a/2)}')
+QW=$(awk -v a="$POSE_YAW" 'BEGIN{printf "%.6f", cos(a/2)}')
 LOGS=/tmp/nav2_campo
 
 # Espacio de nombres (bloque C de Documentos/PLAN_S25.md). Vacio, que es el valor
@@ -178,8 +185,8 @@ arrancar() {
   echo "   esperando 55 s a que configuren los costmaps..."
   sleep 55
 
-  info "6/6 · pose inicial en ($POSE_X, $POSE_Y) y comprobaciones"
-  en_carro "$FUENTES && timeout 15 ros2 topic pub --once $P/initialpose geometry_msgs/msg/PoseWithCovarianceStamped \"{header: {frame_id: ${F}map}, pose: {pose: {position: {x: $POSE_X, y: $POSE_Y, z: 0.0}, orientation: {w: 1.0}}, covariance: [0.25,0,0,0,0,0, 0,0.25,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0.07]}}\"" >/dev/null
+  info "6/6 · pose inicial en ($POSE_X, $POSE_Y, rumbo $POSE_YAW rad) y comprobaciones"
+  en_carro "$FUENTES && timeout 15 ros2 topic pub --once $P/initialpose geometry_msgs/msg/PoseWithCovarianceStamped \"{header: {frame_id: ${F}map}, pose: {pose: {position: {x: $POSE_X, y: $POSE_Y, z: 0.0}, orientation: {z: $QZ, w: $QW}}, covariance: [0.25,0,0,0,0,0, 0,0.25,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0.07]}}\"" >/dev/null
   sleep 4
   for n in map_server amcl planner_server controller_server bt_navigator behavior_server; do
     printf "   %-20s %s\n" "$n" "$(en_carro "$FUENTES && timeout 8 ros2 service call $P/$n/get_state lifecycle_msgs/srv/GetState \"{}\" 2>/dev/null | grep -o \"label='[a-z]*'\" | tail -1")"

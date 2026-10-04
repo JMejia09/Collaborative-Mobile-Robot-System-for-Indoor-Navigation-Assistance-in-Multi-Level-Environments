@@ -103,15 +103,21 @@ scp Robot/aws-deepracer/deepracer_bringup/maps/piso4.pgm \
     Robot/aws-deepracer/deepracer_bringup/maps/piso4.yaml \
     Robot/aws-deepracer/deepracer_bringup/maps/piso3.pgm \
     Robot/aws-deepracer/deepracer_bringup/maps/piso3.yaml \
-    deepracer@<IP>:/home/deepracer/tesis/
+    deepracer@<IP>:~/tesis/
 ```
 
 ### 4.2 · Arrancar la cadena
 
 ```bash
-CARRO=<IP> MAPA=/home/deepracer/tesis/piso4.yaml \
-    bash herramientas/nav2_mapa_guardado.sh
+CARRO=<IP> MAPA=/home/deepracer/tesis/piso4.yaml POSE_X=24.45 POSE_Y=1.21 POSE_YAW=3.1416 bash herramientas/nav2_mapa_guardado.sh   # ruta fija del vehiculo
 ```
+
+`POSE_X`, `POSE_Y` y `POSE_YAW` son la salida del vehículo y hay que pasarlas siempre: sin ellas el
+guion pone (1,0, 0,0), que en los mapas de los pisos 3 y 4 cae sobre la pared oeste. La salida
+usada el 2 de octubre en el piso 4 es la de arriba: frente a las escaleras, con el centro del
+vehículo a 1,00 m de la pared sur y a 1,25 m de la pared este, mirando al norte (yaw π). En el piso
+3 la equivalente es (22,10, 1,06). `POSE_YAW` existe desde el 2 de octubre; sin él, AMCL arranca
+mirando a +x.
 
 Ese guion impone el orden que costó la noche del 24-sep: puente, escala,
 `map_server` **activo**, AMCL, y solo entonces el launch de Nav2. Al revés, la
@@ -126,7 +132,8 @@ controlador no mueve», sin arriesgar el carro:
 
 ```bash
 ssh deepracer@<IP> "sudo -n bash -s" <<'EOF'
-source /opt/ros/jazzy/setup.bash && source /home/deepracer/nav_ws/install/setup.bash
+export FASTRTPS_DEFAULT_PROFILES_FILE=/etc/deepracer-tesis/particion.xml
+source /opt/ros/jazzy/setup.bash && source ~deepracer/nav_ws/install/setup.bash
 ros2 action send_goal /compute_path_to_pose nav2_msgs/action/ComputePathToPose \
   "{goal: {header: {frame_id: map}, pose: {position: {x: 17.22, y: 2.06, z: 0.0}, \
   orientation: {w: 1.0}}}, use_start: false}"
@@ -134,7 +141,8 @@ EOF
 ```
 
 `SUCCEEDED` = el planificador puede. `ABORTED` = mirar el log del
-`planner_server`, que dice por qué.
+`planner_server`, que dice por qué. Sin el perfil de la partición la orden no encuentra el servidor
+de Nav2, y con `use_start: false` parte de la pose de AMCL, así que va después del §4.2.
 
 ### 4.4 · La meta de verdad
 
@@ -157,11 +165,14 @@ anotarlo, porque cambiar la inflación cambia cómo esquiva obstáculos.
 
 ### 5.2 · El error de llegada va a salir alto
 
-No es un defecto por descubrir, está medido y explicado en el §2 de
-[`S24_nav2_navegacion_mapa_guardado.md`](Evidencia/S24_nav2_navegacion_mapa_guardado.md):
-el vehículo no se mueve por debajo de 0,40 m/s, así que **se aproxima a la meta a
-0,40 y no tiene régimen de aproximación fina**. Con `xy_goal_tolerance: 0,25`
-sobrepasa por construcción. El 24-sep fueron 0,412 m.
+El vehículo no se mueve por debajo de 0,40 m/s, así que se aproxima a la meta a 0,40 y no tiene
+régimen de aproximación fina (§2 de
+[`S24_nav2_navegacion_mapa_guardado.md`](Evidencia/S24_nav2_navegacion_mapa_guardado.md)). Desde el
+30 de septiembre el lanzador da la meta por alcanzada a 1,0 m (ajuste 8 de
+`nav2_hardware.launch.py`) para que el vehículo no retroceda buscándola, y el puente sube las órdenes
+por debajo de 0,40 m/s a su escalón más bajo. Con ese margen Nav2 puede parar hasta 1 m antes: el 2
+de octubre las dos llegadas medidas quedaron 0,49 m y 0,57 m cortas
+([`S25_pisos34_campo.md`](Evidencia/S25_pisos34_campo.md)). G-3 se mide con flexómetro contra 0,5 m.
 
 **Anotar el error de cada corrida, no intentar arreglarlo en campo.**
 
