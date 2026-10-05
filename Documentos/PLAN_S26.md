@@ -19,7 +19,7 @@ desde la raíz del repositorio en el portátil.
 |---|---|---|---|---|
 | Lun 5, mañana | Acta: cambio de sitio y corte C-1. Correcciones de las herramientas de campo | Santiago y Claude | no | Acta al día; herramientas corregidas y probadas en simulación |
 | Lun 5, tarde | Desactivar las cámaras, comprobar la IMU, copiar grabaciones, nivelar los dos vehículos | Santiago y Jonny | los dos | Se sabe si hay IMU; vehículos nivelados |
-| Mar 6 | IMU funcionando y combinada con rf2o (si existe). Red entre los pisos 3 y 4 | Santiago y Claude; Jonny la red | los dos | La IMU publica en los dos vehículos; la red llega a los dos pisos |
+| Mar 6 | IMU y EKF en los dos vehículos (el código ya está probado en el portátil). Red entre los pisos 3 y 4 | Santiago y Claude; Jonny la red | los dos | La IMU publica y el EKF gira bien en los dos vehículos; la red llega a los dos pisos |
 | Mié 7 | Radio de giro. Misiones encadenadas en el piso 4 sin tocar el vehículo, con y sin IMU. Media vuelta para ir a recoger a un usuario | Santiago y Jonny | uno cada vez | G-3 evaluada; se sabe si el vehículo da media vuelta solo |
 | Jue 8 | Coordinador en el vehículo, agentes en los dos, interfaz desde el teléfono; una misión en un solo piso | los dos | los dos | Misión en un piso pedida desde el teléfono, con registro |
 | Vie 9 | G-5: misión del piso 3 al piso 4 con relevo, y una segunda misión encadenada sin tocar los vehículos. Corte semanal en la noche | los dos | los dos | G-5 intentada con registro; entregable de S26 |
@@ -139,38 +139,52 @@ Si responde `0xd1`, se comprueba que el sensor mide bien con las siete pruebas d
 
 ## 2. Martes 6
 
-Si el lunes la IMU no respondió, este día se salta la §2.1 a §2.3 y se adelanta el jueves.
+### 2.1 · El controlador de la IMU (hecho en el portátil el 5-oct)
 
-### 2.1 · El controlador de la IMU en los dos vehículos
+Se usa un nodo propio, `imu_bmi160.py`, y no el paquete de la comunidad. Lee el sensor igual que
+`probar_imu.py`, que ya funcionó en los dos vehículos, y no necesita `smbus2` ni `BMI160-i2c`, que
+habría que instalar sin internet. El filtro es el EKF de `robot_localization` 3.8.3, que ya está en
+`amss-jgm9`; en `amss-ez9n` se comprueba en el paso 1 de la §2.3.
 
-| | |
-|---|---|
-| Objetivo | Que cada vehículo publique `sensor_msgs/Imu` con el BMI160 |
-| Pasos | (1) En el portátil, `git clone https://github.com/larsll/larsll-deepracer-imu-pkg` y revisar que el paquete compile en Jazzy (es Python, escrito para Foxy). (2) Copiarlo a `~/nav_ws/src/` de los dos. (3) Instalar `smbus2` y `BMI160-i2c`: si los vehículos no tienen internet, descargarlos en el portátil con `pip download smbus2 BMI160-i2c -d ~/ruedas` y copiarlos. (4) Compilar con `colcon build --packages-select imu_pkg` |
-| Esperado | El nodo publica a 25 Hz o más (`ros2 topic hz` sobre su tópico, con el perfil de la partición) |
-| Si falla | Si el paquete no compila o el sensor no responde en 2 h, la IMU pasa a trabajos futuros |
-| Cierre | Las lecturas llegan en los dos vehículos |
-
-### 2.2 · Orientación de los ejes y calibración
-
-| Prueba | Cómo | Esperado |
+| Pieza | Archivo | Prueba en el portátil |
 |---|---|---|
-| Gravedad | Vehículo quieto en el suelo, 10 s de lecturas | El eje vertical marca unos +9,8 m/s² |
-| Sentido del giro | Girar el vehículo a mano 90° a la izquierda | La velocidad de giro en z sale positiva (convención de ROS) |
-| Sesgo del giroscopio | Vehículo quieto 60 s | Anotar la media de la velocidad de giro en z; es el valor a restar |
+| Nodo de la IMU: publica `imu/data` a 50 Hz con el sesgo medido al arrancar | `deepracer_bringup/scripts/imu_bmi160.py` | [`prueba_imu_bmi160.py`](../herramientas/prueba_imu_bmi160.py), 18 de 18 |
+| Marco `imu_link` con la orientación medida | `deepracer_hardware.urdf` | `prueba_nav2_hardware_ns.py`, parte 3 |
+| `imu:=true` en el lanzador: IMU, EKF, y rf2o en `odom_rf2o` sin TF | `nav2_hardware.launch.py` | `prueba_nav2_hardware_ns.py`, 102 de 102; sin IMU, igual que antes |
+| El EKF toma el avance de rf2o y el rumbo de la IMU | `parametros_ekf` en el lanzador | [`prueba_ekf_imu.py`](../herramientas/prueba_ekf_imu.py), 9 de 9: con rf2o diciendo «recta» y la IMU un giro de 90°, el filtro da 89,4° a 90,0° |
+| `IMU=true` en el arranque, con comprobación de `imu/data` y `odom` | `nav2_mapa_guardado.sh` | — |
+| Cada corrida graba `imu/data` y `odom_rf2o` | `correr_corrida_nav2.sh` | — |
+| Copia del nodo y de `probar_imu.py` | `nivelar_carros.sh` | — |
 
-Con esto se añade a `deepracer_hardware.urdf` el marco `imu_link` con la posición y la orientación
-del sensor, medidas sobre el vehículo.
+`prueba_ekf_imu.py` muestra también por qué el filtro no toma el rumbo de rf2o: rf2o publica
+covarianza cero, y con su rumbo dentro el mismo giro de 90° queda en 71°.
 
-### 2.3 · Combinar la IMU con rf2o (EKF)
+### 2.2 · Orientación de los ejes y calibración (hecho el 5-oct)
 
-| | |
-|---|---|
-| Objetivo | Que la odometría del vehículo use el giroscopio para el rumbo y rf2o para el avance |
-| Cómo | `robot_localization` (paquete `ros-jazzy-robot-localization`) con un filtro EKF: de rf2o toma la posición y el rumbo como diferencias; de la IMU, la velocidad de giro en z. rf2o deja de publicar la transformada `odom → base_link` y la publica el filtro. Va en `nav2_hardware.launch.py` con el argumento `imu:=true`, para poder correr con IMU y sin ella |
-| Esperado | Con el vehículo quieto, `odom → base_link` no deriva más de 1 cm ni 1° en 60 s |
-| Si falla | Se corre sin IMU (`imu:=false`), como hasta ahora |
-| Cierre | Los dos vehículos arrancan Nav2 con `imu:=true` |
+Está en [`S26_pruebas_imu.md`](Evidencia/S26_pruebas_imu.md). Los ejes del sensor son x a la
+izquierda, y hacia adelante y z hacia abajo, igual en los dos vehículos. El sesgo en z es de
+0,65 °/s en `amss-ez9n` y 0,47 °/s en `amss-jgm9`, estable en la sesión. El nodo lo mide en cada arranque.
+
+### 2.3 · La IMU y el EKF en los vehículos
+
+Se hace en los dos, con el vehículo en el suelo y sin Nav2 (sin mapa, en cualquier sitio). Las
+órdenes son para racey; para deepy se cambia `192.168.0.104` por `192.168.0.102`. Santiago las corre y
+Claude revisa las salidas.
+
+| Paso | Qué | Comando | Esperado | Si falla |
+|---|---|---|---|---|
+| 1 | `robot_localization` en deepy | `ssh deepracer@192.168.0.102 "ls -d /opt/ros/jazzy/share/robot_localization"` | La ruta | Parar: sin internet hay que traer el paquete de Ubuntu 24.04, y el `apt` del portátil (22.04) no sirve. Se decide con Claude |
+| 2 | Copiar a los dos | `herramientas/nivelar_carros.sh --copiar` | 23 archivos iguales en los dos | Repetir; si un vehículo no responde, queda pendiente |
+| 3 | El nodo solo, 20 s, vehículo quieto | `ssh deepracer@192.168.0.104 "sudo -n bash -c 'export FASTRTPS_DEFAULT_PROFILES_FILE=/etc/deepracer-tesis/particion.xml; source /opt/ros/jazzy/setup.bash; timeout -s INT 20 python3 /home/deepracer/tesis/imu_bmi160.py & sleep 8; timeout -s INT 8 ros2 topic hz /imu/data'"` (ruta fija del vehículo) | `sesgo del giroscopio ... z=` cerca de 0,47 (racey) o 0,65 (deepy), y `average rate` cerca de 50 | Sin sesgo: el vehículo se movió o el sensor no responde (correr `probar_imu.py identidad`) |
+| 4 | IMU, rf2o y EKF, sin Nav2 | `ssh deepracer@192.168.0.104 "sudo -n bash -c 'export FASTRTPS_DEFAULT_PROFILES_FILE=/etc/deepracer-tesis/particion.xml; source /opt/ros/jazzy/setup.bash; source /home/deepracer/nav_ws/install/setup.bash; setsid nohup ros2 launch /home/deepracer/tesis/nav2_hardware.launch.py imu:=true urdf:=/home/deepracer/tesis/deepracer_hardware.urdf params:=/home/deepracer/tesis/nav2_params_jazzy.yaml slam_params:=/home/deepracer/tesis/slam_toolbox.yaml behavior_trees:=/home/deepracer/tesis/behavior_trees > /tmp/imu_ekf.log 2>&1 &'"` (ruta fija del vehículo), esperar 20 s sin tocar el vehículo | Nada en pantalla; el registro en `/tmp/imu_ekf.log` del vehículo | Leer el registro: `ssh deepracer@192.168.0.104 "sudo -n tail -30 /tmp/imu_ekf.log"` |
+| 5 | Frecuencias | `ssh deepracer@192.168.0.104 "sudo -n bash -c 'export FASTRTPS_DEFAULT_PROFILES_FILE=/etc/deepracer-tesis/particion.xml; source /opt/ros/jazzy/setup.bash; timeout -s INT 8 ros2 topic hz /imu/data; timeout -s INT 8 ros2 topic hz /odom'"` | `imu/data` cerca de 50 Hz y `odom` cerca de 20 Hz | `odom` sin datos: el EKF no arrancó o no recibe; leer el registro |
+| 6 | Deriva en 60 s, quieto | `ssh deepracer@192.168.0.104 "sudo -n bash -c 'export FASTRTPS_DEFAULT_PROFILES_FILE=/etc/deepracer-tesis/particion.xml; source /opt/ros/jazzy/setup.bash; ros2 topic echo --once /odom --field pose.pose; sleep 60; ros2 topic echo --once /odom --field pose.pose'"` | Entre las dos lecturas, x e y cambian menos de 0,01 m y la orientación `z` menos de 0,009 (1°) | Si deriva el rumbo, el sesgo cambió: anotar la temperatura y repetir el paso 3 |
+| 7 | Giro de 90° a la izquierda, a mano | La orden del paso 6, girando el vehículo sobre el suelo durante el `sleep 60` y dejándolo quieto antes de la segunda lectura | La orientación pasa de `z` cerca de 0 a cerca de +0,71 (`w` cerca de 0,71); x e y cambian menos de 0,2 m | `z` negativo: el signo está al revés (revisar `imu_joint` en la URDF) |
+| 8 | Parar | `CARRO=192.168.0.104 bash herramientas/nav2_mapa_guardado.sh --parar` | `listo` | — |
+
+Cierre: los pasos 3 a 7 pasan en los dos vehículos. Si en uno fallan y no se resuelve en 2 h, el
+miércoles se corre sin IMU (`IMU=false`, el valor por defecto) y la IMU queda como trabajo
+futuro.
 
 ### 2.4 · Red entre los pisos 3 y 4 (Jonny)
 
@@ -211,23 +225,25 @@ siguiente.
 | Paso | Qué | Comando o acción | Esperado | Cierre |
 |---|---|---|---|---|
 | 1 | Colocar el vehículo | Centro a 1,00 m de la pared sur y a 1,25 m de la pared este, mirando al norte | — | Vehículo en la salida |
-| 2 | Arrancar Nav2 en racey, con IMU si quedó lista el martes | `CARRO=192.168.0.104 MAPA=/home/deepracer/tesis/piso4.yaml POSE_X=24.45 POSE_Y=1.21 POSE_YAW=3.1416 ESCALA=1.0 bash herramientas/nav2_mapa_guardado.sh   # ruta fija del vehiculo` | `Managed nodes are active` en 3 a 5 min | Nav2 activo |
+| 2 | Arrancar Nav2 en racey. En la cadena con IMU se antepone `IMU=true MARGEN=0.5` | `CARRO=192.168.0.104 MAPA=/home/deepracer/tesis/piso4.yaml POSE_X=24.45 POSE_Y=1.21 POSE_YAW=3.1416 ESCALA=1.0 bash herramientas/nav2_mapa_guardado.sh   # ruta fija del vehiculo` | `Managed nodes are active` en 3 a 5 min | Nav2 activo |
 | 3 | Comprobar las rutas sin mover el vehículo | `compute_path_to_pose` a los tres salones (§4.3 de [`GUIA_PISOS_3_Y_4.md`](GUIA_PISOS_3_Y_4.md)) | `SUCCEEDED` | Tres rutas |
 | 4 | Tramo 1, con la pose inicial | `ssh deepracer@192.168.0.104 "sudo -n bash ~deepracer/tesis/correr_corrida_nav2.sh p4r_04 --salida 24.45 1.21 3.1416 --meta 17.22 2.06 3.1416 --mapa /home/deepracer/tesis/piso4.yaml --csv ~deepracer/campana_s26_racey.csv"` (ruta fija del vehículo) | Fila en el CSV | Marca en el piso junto al centro del vehículo; avance desde la salida y distancia a la pared oeste |
 | 5 | Tramo 2, sin pose inicial | La misma orden con `p4r_05`, `--sin-pose-inicial` en lugar de `--salida` y `--meta 9.31 2.15 3.1416` | Fila en el CSV; AMCL no se reinicia | Marca nueva; avance medido de marca a marca y distancia a la pared oeste |
 | 6 | Tramo 3, sin pose inicial | Igual, `p4r_06` y `--meta 6.20 2.03 3.1416` | Igual | Igual |
 | 7 | La misma cadena con deepy | `CARRO=192.168.0.102`, `ESCALA=0.85`, ids `p4d_03` a `p4d_05` y `campana_s26_deepy.csv` | Igual | Igual |
 
-Si la IMU quedó lista, cada vehículo hace la cadena dos veces: primero sin IMU y con margen de 1,0 m,
-y después con IMU y margen de 0,5 m. El margen se cambia en `nav2_hardware.launch.py` (ajuste 8).
+Si la IMU quedó lista el martes, cada vehículo hace la cadena dos veces. Primero sin IMU y con el
+margen de 1,0 m, con los ids de la tabla. Después con `IMU=true MARGEN=0.5` en el paso 2, con los ids
+`p4r_07` a `p4r_09` (deepy, `p4d_06` a `p4d_08`). Entre las dos cadenas se para Nav2 con `--parar`
+y el vehículo vuelve a la salida. El margen ya no se edita en el lanzador: es el argumento
+`margen_llegada`, y los dos vehículos quedan nivelados.
 
 Odometría: error de 10 % o menos en los tramos de 5 m o más (tramos 1 y 2), medido de marca a
 marca. G-2 ya está alcanzada; esto la confirma en misiones encadenadas. Cierre de G-3: llegada a
-0,5 m o menos. Se anota además si el error de
-llegada crece del tramo 1 al 3.
+0,5 m o menos. Se anota además si el error de llegada crece del tramo 1 al 3.
 
 Punto de decisión a las 12:00. Si la IMU no mejora la llegada en las cadenas de la mañana, se quita
-(`imu:=false`) y se sigue con el margen de 1,0 m. G-3 se reporta con su cifra.
+(`IMU=false`, el valor por defecto) y se sigue con el margen de 1,0 m. G-3 se reporta con su cifra.
 
 ### 3.3 · Media vuelta para ir a recoger a un usuario
 
@@ -238,7 +254,7 @@ recoger a un usuario que está al sur. Para eso da media vuelta en el tramo anch
 
 | Paso | Qué | Comando o acción | Esperado | Cierre |
 |---|---|---|---|---|
-| 1 | Pedir la meta al sur, sin tocar el vehículo | La orden del tramo 2 con `p4r_07`, `--sin-pose-inicial` y `--meta 24.45 1.21 0.0` | Nav2 traza una maniobra con marcha atrás en el tramo ancho y vuelve hacia el sur | Una persona junto al vehículo durante la maniobra |
+| 1 | Pedir la meta al sur, sin tocar el vehículo | La orden del tramo 2 con `p4r_10`, `--sin-pose-inicial` y `--meta 24.45 1.21 0.0` | Nav2 traza una maniobra con marcha atrás en el tramo ancho y vuelve hacia el sur | Una persona junto al vehículo durante la maniobra |
 | 2 | Si no gira | Una meta intermedia en el tramo ancho mirando al sur: `--meta 8.00 1.70 0.0`, y después la de la escalera | El vehículo queda mirando al sur | — |
 | 3 | Medir | Del centro del vehículo a la pared sur y a la pared este | Cerca de 1,00 m y 1,25 m | Número de maniobras, recuperaciones, tiempo y error de llegada anotados |
 
@@ -333,7 +349,7 @@ push.
 
 | Si pasa | Qué se hace |
 |---|---|
-| La IMU no existe o no funciona el martes | Se sigue sin ella y el martes pasa a preparar G-5 |
+| La IMU o el EKF no funcionan en un vehículo el martes | Se sigue sin ella (`IMU=false`) y el martes pasa a preparar G-5 |
 | La red no cubre los dos pisos | Rutas dentro de la cobertura; el coordinador sigue en racey |
 | La media vuelta no sale ni con la meta intermedia | G-5 en la variante B; el regreso automático queda como limitación declarada |
 | G-5 no sale el viernes | Se repite el lunes 12. Si tampoco sale, el cronograma prevé bajar a un vehículo real y uno simulado (sección 9 de [`CRONOGRAMA_S17_S32.md`](CRONOGRAMA_S17_S32.md)) |

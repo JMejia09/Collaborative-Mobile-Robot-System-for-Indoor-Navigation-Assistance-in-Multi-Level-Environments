@@ -129,4 +129,25 @@
     <child link="laser"/>
   </joint>
 
+  <!-- IMU de la tarjeta (Bosch BMI160). `frame_id` de `imu/data`, que publica
+       deepracer_bringup/scripts/imu_bmi160.py con `imu:=true` en el lanzador.
+
+       La orientacion esta medida en los dos vehiculos el 2026-10-05
+       (Documentos/Evidencia/S26_pruebas_imu.md, seccion 2): el eje x del sensor
+       apunta a la izquierda, el y hacia adelante y el z hacia abajo. Eso es un
+       giro de 180 grados en roll y de 90 en yaw respecto a base_link, y por eso
+       un giro del vehiculo a la izquierda, negativo en el z del sensor, sale
+       positivo en el rumbo.
+
+       La posicion no esta medida: la tarjeta va dentro del chasis y se deja en
+       el origen de base_link. Para la velocidad de giro, que es lo unico que
+       toma el filtro, la posicion no influye. -->
+  <link name="imu_link"/>
+
+  <joint name="imu_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="3.1416 0 1.5708"/>
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+  </joint>
+
 </robot>

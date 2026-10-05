@@ -41,6 +41,11 @@
 #     POSE_X=24.45 POSE_Y=1.21 POSE_YAW=3.1416 CARRO=... MAPA=... bash nav2_mapa_guardado.sh
 #         (salida del vehiculo en el mapa; POSE_YAW en radianes, 0 por defecto)
 #     ESCALA=1.0 CARRO=... MAPA=... bash nav2_mapa_guardado.sh   (escala del puente; 0.9 por defecto)
+#     MARGEN=0.5 CARRO=... MAPA=... bash nav2_mapa_guardado.sh   (margen de llegada de Nav2; 1.0 por defecto)
+#     IMU=true CARRO=... MAPA=... bash nav2_mapa_guardado.sh
+#         (IMU de la tarjeta + EKF, imu:=true en el lanzador; false por defecto.
+#          El vehiculo no se toca durante el arranque: el nodo mide el sesgo del
+#          giroscopio. El paso 6 comprueba que imu/data y odom publiquen)
 #
 # Antes de arrancar apaga la camara y la fusion de sensores del fabricante, que
 # el proyecto no usa: con las dos encendidas la tarjeta llego a carga 22 y el
@@ -61,6 +66,8 @@ MAPA="${MAPA:-/home/deepracer/mapeo_235028/mapa.yaml}"   # ruta fija del vehicul
 POSE_X="${POSE_X:-1.0}"
 POSE_Y="${POSE_Y:-0.0}"
 ESCALA="${ESCALA:-0.9}"
+IMU="${IMU:-false}"
+MARGEN="${MARGEN:-1.0}"
 # Rumbo de la salida en radianes (3.1416 = mirando hacia -x). Va en la pose
 # inicial como cuaternion; sin el, AMCL arranca mirando a +x.
 POSE_YAW="${POSE_YAW:-0.0}"
@@ -115,7 +122,7 @@ comprobar_acceso() {
 # ---------------------------------------------------------------- estado ---
 estado() {
   info "procesos en el carro"
-  en_carro "ps -eo user,pid,cmd | grep -E '[c]mdvel_to_servo|[r]f2o|[s]lam_toolbox|[c]ontroller_server|[p]lanner_server|[r]obot_state_publisher' || echo '  (nada vivo)'"
+  en_carro "ps -eo user,pid,cmd | grep -E '[c]mdvel_to_servo|[r]f2o|[s]lam_toolbox|[c]ontroller_server|[p]lanner_server|[r]obot_state_publisher|[e]kf_node|[i]mu_bmi160' || echo '  (nada vivo)'"
   echo
   info "quien escucha $P/cmd_vel"
   en_carro "$FUENTES && timeout 15 ros2 topic info $P/cmd_vel --verbose 2>/dev/null | grep -E 'Publisher count|Subscription count' || echo '  (sin respuesta)'"
@@ -129,7 +136,7 @@ parar() {
   info "matando la cadena"
   # Por nombre de ejecutable, NUNCA con 'pkill -f' sobre el patron completo:
   # el patron coincide tambien con la propia linea de sudo y se mata a si mismo.
-  en_carro "for p in cmdvel_to_serv rf2o_laser_odom sync_slam_toolb robot_state_pub controller_serv planner_server bt_navigator behavior_server waypoint_follow lifecycle_manag map_server amcl; do pkill -9 \$p 2>/dev/null; done; pkill -9 -f nav2_hardware.launch 2>/dev/null; true"
+  en_carro "for p in cmdvel_to_serv rf2o_laser_odom sync_slam_toolb robot_state_pub controller_serv planner_server bt_navigator behavior_server waypoint_follow lifecycle_manag map_server amcl ekf_node; do pkill -9 \$p 2>/dev/null; done; pkill -9 -f nav2_hardware.launch 2>/dev/null; pkill -9 -f imu_bmi160.py 2>/dev/null; true"
   sleep 2
   verde "listo. Comprueba con: bash $0 --estado"
 }
@@ -152,7 +159,7 @@ encender_lifecycle() {
 
 arrancar() {
   info "0/6 · limpiando restos"
-  en_carro "for p in cmdvel_to_serv rf2o_laser_odom sync_slam_toolb robot_state_pub controller_serv planner_server bt_navigator behavior_server waypoint_follow lifecycle_manag map_server amcl; do pkill -9 \$p 2>/dev/null; done; pkill -9 -f nav2_hardware.launch 2>/dev/null; true" >/dev/null
+  en_carro "for p in cmdvel_to_serv rf2o_laser_odom sync_slam_toolb robot_state_pub controller_serv planner_server bt_navigator behavior_server waypoint_follow lifecycle_manag map_server amcl ekf_node; do pkill -9 \$p 2>/dev/null; done; pkill -9 -f nav2_hardware.launch 2>/dev/null; pkill -9 -f imu_bmi160.py 2>/dev/null; true" >/dev/null
   # Camara y fusion fuera: el proyecto no las usa y cargan la tarjeta. Por nombre
   # de proceso (15 caracteres), nunca con 'pkill -f'.
   en_carro "pkill -x camera_node; pkill -x sensor_fusion_n; true" >/dev/null
@@ -191,8 +198,9 @@ arrancar() {
   fi
   encender_lifecycle amcl "$FUENTES && ros2 run nav2_amcl amcl --ros-args${ARGS_NS:+ $ARGS_NS} --params-file $params_amcl -p use_sim_time:=false -p scan_topic:=/rplidar_ros/scan${marcos_amcl:+ $marcos_amcl}" || exit 1
 
-  info "5/6 · el launch, AHORA que /map ya esta activo"
-  lanzar_en_carro launch "$FUENTES && ros2 launch $D/nav2_hardware.launch.py slam:=false nav:=true urdf:=$D/deepracer_hardware.urdf params:=$D/nav2_params_jazzy.yaml slam_params:=$D/slam_toolbox.yaml behavior_trees:=$D/behavior_trees${NS:+ namespace:=$NS}"
+  info "5/6 · el launch, AHORA que /map ya esta activo (imu:=$IMU, margen $MARGEN m)"
+  [ "$IMU" = true ] && echo "   no toque el vehiculo: la IMU mide el sesgo del giroscopio al arrancar"
+  lanzar_en_carro launch "$FUENTES && ros2 launch $D/nav2_hardware.launch.py slam:=false nav:=true urdf:=$D/deepracer_hardware.urdf params:=$D/nav2_params_jazzy.yaml slam_params:=$D/slam_toolbox.yaml behavior_trees:=$D/behavior_trees imu:=$IMU margen_llegada:=$MARGEN${NS:+ namespace:=$NS}"
   echo "   esperando 55 s a que configuren los costmaps..."
   sleep 55
 
@@ -205,6 +213,15 @@ arrancar() {
   local subs
   subs=$(en_carro "$FUENTES && timeout 20 ros2 topic info $P/cmd_vel 2>/dev/null | grep -c 'Subscription count: 1'")
   [ "${subs:-0}" -ge 1 ] && verde "   alguien escucha $P/cmd_vel" || rojo "   NADIE escucha $P/cmd_vel"
+  if [ "$IMU" = true ]; then
+    # Sin imu/data el EKF no gira el rumbo y no da ningun error: se comprueba aqui.
+    local hz
+    for t in imu/data odom; do
+      hz=$(en_carro "$FUENTES && timeout 15 ros2 topic hz $P/$t 2>/dev/null | head -4 | grep -m1 'average rate'")
+      if echo "$hz" | grep -q "average rate"; then verde "   $P/$t: $hz"
+      else rojo "   $P/$t NO publica: mira $LOGS/launch.log (imu_bmi160, ekf_filter_node)"; fi
+    done
+  fi
 
   echo
   verde "=================== CADENA LISTA ==================="

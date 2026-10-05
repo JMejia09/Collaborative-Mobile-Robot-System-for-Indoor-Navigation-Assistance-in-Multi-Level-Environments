@@ -66,8 +66,10 @@ NS="${NS%/}"
 echo "== grabando $DESTINO =="
 # /map se graba para poder dibujar la corrida sobre el mapa sin el vehiculo.
 # /plan y /amcl_pose son los que distinguen una navegacion de un empujon.
+# imu/data y odom_rf2o solo existen con IMU=true: permiten comparar despues el
+# filtro con rf2o solo. Sin IMU no existen, y el grabador graba el resto igual.
 arrancar_bag "$DESTINO" /rplidar_ros/scan $NS/odom /tf /tf_static $NS/cmd_vel \
-    $NS/plan $NS/amcl_pose $NS/initialpose $NS/map
+    $NS/plan $NS/amcl_pose $NS/initialpose $NS/map $NS/imu/data $NS/odom_rf2o
 
 python3 "$AQUI/corrida_nav2.py" --corrida "$ID" "$@"
 ESTADO=$?

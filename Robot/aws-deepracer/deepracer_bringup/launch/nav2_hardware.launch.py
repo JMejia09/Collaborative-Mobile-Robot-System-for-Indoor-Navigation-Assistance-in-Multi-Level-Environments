@@ -110,7 +110,8 @@ reescribe aqui con `RewrittenYaml`, sobre el archivo de Jazzy:
    Distancia a la que Nav2 da la meta por alcanzada. Con 0,25 el Ackermann
    llegaba cerca de la meta, no podia corregir en tan poco espacio y retrocedia
    buscando la meta (corrida p2r_01, 2026-09-30). El criterio de G-3 sigue siendo
-   0,5 m (acta 6.1), medido con flexometro.
+   0,5 m (acta 6.1), medido con flexometro. Se cambia sin editar el archivo con
+   `margen_llegada:=0.5`, para comparar con la IMU sin desnivelar los vehiculos.
 
 `use_sim_time` pasa a falso en todo el arbol, que es lo que separa esta corrida
 de una de Gazebo.
@@ -137,6 +138,24 @@ metas en `robotN/map`. Con `namespace:=robot2`:
 con `NS=robot2`. Sin `namespace` (el valor por defecto) el lanzamiento es el mismo
 de antes: ni un parametro, nodo o reescritura de mas. Lo comprueba
 `herramientas/prueba_nav2_hardware_ns.py`.
+
+Con la IMU de la tarjeta (imu:=true, Documentos/PLAN_S26.md §2.3)
+-----------------------------------------------------------------
+La tarjeta lleva una IMU Bosch BMI160, probada en los dos vehiculos el
+2026-10-05 (Documentos/Evidencia/S26_pruebas_imu.md). Con `imu:=true`:
+
+- `imu_bmi160.py` (`imu_nodo`) publica `imu/data` en `imu_link`, con el sesgo del
+  giroscopio medido al arrancar. El vehiculo tiene que estar quieto los
+  primeros segundos;
+- rf2o publica en `odom_rf2o` y deja de publicar la TF `odom -> base_link`;
+- un EKF de `robot_localization` toma de rf2o el avance y de la IMU el rumbo,
+  publica `odom` y la TF `odom -> base_link`. Que toma de cada uno, y por que,
+  esta en `parametros_ekf`.
+
+El resto del arbol no cambia: AMCL, Nav2 y el coordinador siguen leyendo `odom`.
+Con `imu:=false`, el valor por defecto, el lanzamiento es el de antes. Lo
+comprueba `herramientas/prueba_nav2_hardware_ns.py`, y el filtro con datos
+sinteticos `herramientas/prueba_ekf_imu.py`.
 """
 
 import os
@@ -166,6 +185,12 @@ PLAZO_SERVIDOR_MS = 1000
 
 TOPICO_SCAN = '/rplidar_ros/scan'
 
+# Con imu:=true (ver la cabecera). El EKF corre a 20 Hz: rf2o publica al ritmo
+# del laser, de 7 a 15 Hz, y la IMU a 50.
+TOPICO_ODOM_RF2O = 'odom_rf2o'
+FRECUENCIA_EKF = 20.0
+NODO_IMU = 'imu_bmi160.py'
+
 # Parametros de Nav2 para Jazzy. El de Humble ('nav2_params.yaml') no arranca en
 # el vehiculo; ver la cabecera de este modulo.
 PARAMS_JAZZY = 'nav2_params_jazzy.yaml'
@@ -184,6 +209,19 @@ def _ruta_en_paquete(paquete, *partes):
         return os.path.join(get_package_share_directory(paquete), *partes)
     except Exception:
         return ''
+
+
+def _junto_al_lanzador(nombre):
+    """Ruta de un archivo que viaja con el lanzador, o cadena vacia.
+
+    En la tarjeta los dos van sueltos en ~/tesis; en el repositorio el archivo
+    esta en `scripts/`, al lado de `launch/`.
+    """
+    aqui = os.path.dirname(os.path.realpath(__file__))
+    for ruta in (os.path.join(aqui, nombre), os.path.join(aqui, '..', 'scripts', nombre)):
+        if os.path.isfile(ruta):
+            return os.path.normpath(ruta)
+    return ''
 
 
 def _exigir(ruta, que, argumento):
@@ -233,6 +271,46 @@ def marcos_slam(prefijo):
     }
 
 
+def parametros_ekf(prefijo, ns):
+    """Parametros del EKF de `robot_localization` para imu:=true.
+
+    Toma de cada fuente solo lo que esa fuente mide bien:
+
+    - de rf2o, x e y como diferencias (`odom0_differential`). El filtro convierte
+      cada diferencia en una velocidad en `base_link` y la integra con su propio
+      rumbo. El rumbo de rf2o no se toma: rf2o publica covarianza cero, y el
+      filtro lo tomaria como exacto y la IMU no pesaria nada;
+    - de la IMU, solo la velocidad de giro en z (posicion 11 de `imu0_config`).
+      La aceleracion no se usa: integrada da posicion con un error que crece con
+      el cuadrado del tiempo.
+
+    No se toma la velocidad que publica rf2o: sale con el signo cambiado.
+    """
+    def topico(nombre):
+        return f'/{ns}/{nombre}' if ns else f'/{nombre}'
+
+    odom0 = [False] * 15
+    odom0[0] = odom0[1] = True
+    imu0 = [False] * 15
+    imu0[11] = True
+    return {
+        'use_sim_time': False,
+        'frequency': FRECUENCIA_EKF,
+        'two_d_mode': True,
+        'publish_tf': True,
+        'map_frame': f'{prefijo}map',
+        'odom_frame': f'{prefijo}odom',
+        'base_link_frame': f'{prefijo}base_link',
+        'world_frame': f'{prefijo}odom',
+        'odom0': topico(TOPICO_ODOM_RF2O),
+        'odom0_config': odom0,
+        'odom0_differential': True,
+        'imu0': topico('imu/data'),
+        'imu0_config': imu0,
+        'imu0_differential': False,
+    }
+
+
 def _lanzar(context, *args, **kwargs):
     urdf = _exigir(LaunchConfiguration('urdf').perform(context),
                    'el URDF de hardware', 'urdf')
@@ -260,6 +338,8 @@ def _lanzar(context, *args, **kwargs):
     # '__ns:=/'). Solo None deja la orden igual que antes del bloque C.
     ns_nodo = ns if ns else None
     prefijo = f'{ns}/' if ns else ''
+    con_imu = IfCondition(LaunchConfiguration('imu')).evaluate(context)
+    odom_rf2o = TOPICO_ODOM_RF2O if con_imu else 'odom'
 
     reescritos = RewrittenYaml(
         source_file=nav_params,
@@ -275,7 +355,7 @@ def _lanzar(context, *args, **kwargs):
             # el Ackermann llegaba cerca de la meta, no podia corregir en tan poco espacio
             # y retrocedia buscando la meta (corrida p2r_01, 2026-09-30). El criterio
             # de G-3 sigue siendo 0,5 m (acta 6.1), medido con flexometro.
-            'xy_goal_tolerance': MARGEN_LLEGADA_NAV2_M,
+            'xy_goal_tolerance': LaunchConfiguration('margen_llegada').perform(context),
             'topic': TOPICO_SCAN,
             # Vacios en el YAML a proposito: sin rellenarlos, `bt_navigator`
             # carga el arbol por defecto de Nav2, que recupera con <Spin> —una
@@ -332,8 +412,9 @@ def _lanzar(context, *args, **kwargs):
             Node(package='rf2o_laser_odometry', executable='rf2o_laser_odometry_node',
                  name='rf2o_laser_odometry', output='screen', namespace=ns_nodo,
                  parameters=[{'laser_scan_topic': TOPICO_SCAN,
-                              'odom_topic': f'/{ns}/odom' if ns else '/odom',
-                              'publish_tf': True,
+                              'odom_topic': f'/{ns}/{odom_rf2o}' if ns else f'/{odom_rf2o}',
+                              # Con la IMU la TF la publica el EKF.
+                              'publish_tf': not con_imu,
                               'base_frame_id': f'{prefijo}base_link',
                               'odom_frame_id': f'{prefijo}odom',
                               'init_pose_from_topic': '',
@@ -349,6 +430,19 @@ def _lanzar(context, *args, **kwargs):
              name='slam_toolbox', output='screen', namespace=ns_nodo,
              parameters=[slam_reescrito], condition=hay_slam),
     ]
+
+    if con_imu:
+        nodo_imu = _exigir(LaunchConfiguration('imu_nodo').perform(context),
+                           'el nodo de la IMU', 'imu_nodo')
+        acciones += [
+            Node(executable='python3', arguments=[nodo_imu],
+                 name='imu_bmi160', output='screen', namespace=ns_nodo,
+                 parameters=[{'frame_id': f'{prefijo}imu_link', 'use_sim_time': False}]),
+            Node(package='robot_localization', executable='ekf_node',
+                 name='ekf_filter_node', output='screen', namespace=ns_nodo,
+                 parameters=[parametros_ekf(prefijo, ns)],
+                 remappings=[('odometry/filtered', 'odom')]),
+        ]
 
     if prefijo:
         # El driver de AWS sella cada barrido en 'laser', sin prefijo, y no se
@@ -418,6 +512,17 @@ def generate_launch_description():
             'namespace', default_value='',
             description="Espacio de nombres del robot ('robot1' o 'robot2'). "
                         'Vacio deja el lanzamiento como antes del bloque C.'),
+        DeclareLaunchArgument(
+            'margen_llegada', default_value=MARGEN_LLEGADA_NAV2_M,
+            description='Distancia en m a la que Nav2 da la meta por alcanzada '
+                        '(ajuste 8).'),
+        DeclareLaunchArgument(
+            'imu', default_value='false',
+            description='Arranca la IMU y el EKF que la combina con rf2o. '
+                        'El vehiculo tiene que estar quieto al arrancar.'),
+        DeclareLaunchArgument(
+            'imu_nodo', default_value=_junto_al_lanzador(NODO_IMU),
+            description='Ruta de imu_bmi160.py. Por defecto, junto al lanzador.'),
         DeclareLaunchArgument(
             'nav', default_value='false',
             description='Arranca planificador y control (peldanos 6-7). '

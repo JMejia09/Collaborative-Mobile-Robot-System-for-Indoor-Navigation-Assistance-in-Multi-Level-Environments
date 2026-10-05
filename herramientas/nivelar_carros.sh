@@ -58,6 +58,8 @@ ARCHIVOS=(
   "herramientas/mapear_conduciendo.sh"
   "herramientas/avanzar_y_detener.py"
   "herramientas/extraer_mapa.py"
+  "herramientas/probar_imu.py"
+  "$B/scripts/imu_bmi160.py"
 )
 
 # Ruta dentro de ~/tesis: los arboles van en su carpeta, el resto suelto.

@@ -24,6 +24,14 @@ el contenido de sus ficheros de parametros.
      prefijo, y ningun marco de Nav2 sin el; rf2o en `/robot2/odom` con marcos
      prefijados; `frame_prefix` en robot_state_publisher; la TF identidad
      `robot2/laser -> laser`, y el gestor con nombres relativos.
+  3. CON `imu:=true`, sin espacio de nombres y con `robot2`: el nodo de la IMU
+     publica en `imu_link` (prefijado); rf2o pasa a `odom_rf2o` y deja la TF; el
+     EKF publica `odom` y la TF, toma de rf2o solo x e y como diferencias y de la
+     IMU solo la velocidad de giro en z, con los marcos prefijados. La URDF tiene
+     `imu_link` con la orientacion medida el 2026-10-05: en el sensor, adelante
+     es y, izquierda es x y arriba es -z. Sin la ruta del nodo, el lanzador
+     aborta con un mensaje que se entiende.
+  4. `margen_llegada:=0.5` llega a todos los `xy_goal_tolerance` de Nav2.
 
 Uso, desde la raiz del repositorio y con ROS y el workspace sourceados:
 
@@ -78,7 +86,7 @@ def cargar(ruta):
         return yaml.load(f, Loader=yaml.UnsafeLoader)
 
 
-def lanzar(ruta_launch, ns):
+def lanzar(ruta_launch, ns, extra=None):
     """Devuelve {nombre completo: {ejecutable, ns, args, params}} de cada nodo."""
     from launch import LaunchContext
     from launch.actions import DeclareLaunchArgument, TimerAction
@@ -99,6 +107,7 @@ def lanzar(ruta_launch, ns):
         'slam': 'true',
         'nav': 'true',
         'namespace': ns,
+        **(extra or {}),
     })
     # Un nodo dentro de un TimerAction (rf2o, ajuste 7) se lanza igual, mas tarde.
     acciones = []
@@ -117,6 +126,7 @@ def lanzar(ruta_launch, ns):
             'ns': accion.expanded_node_namespace,
             'args': accion._Node__arguments,
             'params': ficheros,
+            'remap': accion._Node__expanded_remappings or [],
             'retrasado': retrasado,
         }
     return nodos
@@ -206,6 +216,30 @@ def main():
     except (KeyError, IndexError, ValueError, TypeError) as error:
         fallos.append(f'con {NS} la estructura no es la esperada ({error!r})')
 
+    # 3. Con IMU, sin espacio de nombres y con el.
+    for ns in ('', NS):
+        try:
+            con_imu(lanzar(ruta_launch, ns, {'imu': 'true'}), ns, exigir)
+        except (KeyError, IndexError, ValueError, TypeError, AttributeError) as error:
+            fallos.append(f"con imu:=true y ns {ns!r} la estructura no es la esperada ({error!r})")
+    try:
+        lanzar(ruta_launch, '', {'imu': 'true', 'imu_nodo': '/no/existe/imu_bmi160.py'})
+        exigir(False, 'con imu:=true y un nodo que no existe, el lanzador no aborta')
+    except RuntimeError as error:
+        exigir('imu_bmi160.py' in str(error), f'mensaje poco claro sin el nodo: {error}')
+    except Exception as error:  # noqa: BLE001 - la version sin IMU falla de otra forma
+        exigir(False, f'sin el nodo de la IMU el lanzador falla con {error!r}')
+    urdf_imu(exigir)
+
+    # 4. El margen de llegada como argumento.
+    try:
+        vistos = [padre[clave] for n in lanzar(ruta_launch, '', {'margen_llegada': '0.5'}).values()
+                  for f in n['params'] for padre, clave in margenes(f)]
+        exigir(vistos and all(v == 0.5 for v in vistos),
+               f'margen_llegada:=0.5 no llega a Nav2: {vistos}')
+    except Exception as error:  # noqa: BLE001 - la version sin el argumento falla de otra forma
+        exigir(False, f'margen_llegada:=0.5 no se acepta ({error!r})')
+
     print('=' * 62)
     if fallos:
         for f in fallos:
@@ -267,6 +301,75 @@ def con_ns(nodos, exigir):
     exigir(all(not n.startswith('/') for n in gestor['node_names']),
            'el gestor lleva nombres absolutos: no encontraria los nodos del espacio de nombres')
     exigir(gestor['bond_timeout'] == 20.0, 'el latido del gestor no es 20 s')
+
+
+def con_imu(nodos, ns, exigir):
+    """Comprobaciones de la parte 3 sobre los nodos lanzados con imu:=true."""
+    pre = f'{ns}/' if ns else ''
+    topico = (lambda t: f'/{ns}/{t}') if ns else (lambda t: f'/{t}')
+    por_nombre = {n.rsplit('/', 1)[-1]: v for n, v in nodos.items()}
+    exigir('imu_bmi160' in por_nombre and 'ekf_filter_node' in por_nombre,
+           f'con imu:=true faltan nodos: {sorted(por_nombre)}')
+    if ns:
+        exigir(all(n['ns'] == f'/{ns}' for n in nodos.values()),
+               f'con imu:=true hay nodos fuera de /{ns}')
+
+    imu = por_nombre['imu_bmi160']
+    exigir(imu['ejecutable'] == 'python3' and str(imu['args'][0]).endswith('imu_bmi160.py')
+           and pathlib.Path(str(imu['args'][0])).is_file(),
+           f"el nodo de la IMU no arranca imu_bmi160.py: {imu['ejecutable']} {imu['args']}")
+    exigir(del_nodo(imu['params'])['frame_id'] == f'{pre}imu_link',
+           f"la IMU publica en {del_nodo(imu['params'])['frame_id']!r}")
+
+    rf2o = del_nodo(next(n for n in nodos.values()
+                         if n['ejecutable'] == 'rf2o_laser_odometry_node')['params'])
+    exigir(rf2o['odom_topic'] == topico('odom_rf2o'), f"rf2o publica en {rf2o['odom_topic']!r}")
+    exigir(rf2o['publish_tf'] is False, 'con la IMU rf2o sigue publicando la TF')
+
+    ekf = por_nombre['ekf_filter_node']
+    exigir(ekf['ejecutable'] == 'ekf_node', f"el EKF es {ekf['ejecutable']!r}")
+    exigir(('odometry/filtered', 'odom') in ekf['remap'] or
+           ((f'/{ns}/odometry/filtered' if ns else '/odometry/filtered'),
+            (f'/{ns}/odom' if ns else '/odom')) in ekf['remap'],
+           f"el EKF no publica en odom: {ekf['remap']}")
+    p = del_nodo(ekf['params'])
+    for clave, marco in (('map_frame', 'map'), ('odom_frame', 'odom'),
+                         ('base_link_frame', 'base_link'), ('world_frame', 'odom')):
+        exigir(p[clave] == f'{pre}{marco}', f'EKF {clave} vale {p[clave]!r}')
+    exigir(p['two_d_mode'] is True and p['publish_tf'] is True and
+           p['use_sim_time'] is False, 'EKF sin two_d_mode, sin TF o con tiempo simulado')
+    exigir(p['odom0'] == topico('odom_rf2o') and p['imu0'] == topico('imu/data'),
+           f"el EKF lee {p['odom0']!r} y {p['imu0']!r}")
+    exigir([i for i, v in enumerate(p['odom0_config']) if v] == [0, 1] and
+           p['odom0_differential'] is True,
+           f"de rf2o el EKF toma {p['odom0_config']} (differential {p['odom0_differential']})")
+    exigir([i for i, v in enumerate(p['imu0_config']) if v] == [11],
+           f"de la IMU el EKF toma {p['imu0_config']}")
+
+
+def urdf_imu(exigir):
+    """imu_link en la URDF, con la orientacion medida (S26_pruebas_imu.md, seccion 2)."""
+    import math
+    import xml.etree.ElementTree as ET
+    juntas = {j.find('child').get('link'): j for j in ET.parse(URDF).getroot().iter('joint')}
+    junta = juntas.get('imu_link')
+    exigir(junta is not None and junta.find('parent').get('link') == 'base_link',
+           'la URDF no cuelga imu_link de base_link')
+    if junta is None:
+        return
+    r, p, y = (float(v) for v in junta.find('origin').get('rpy').split())
+    cr, sr, cp, sp, cy, sy = (math.cos(r), math.sin(r), math.cos(p), math.sin(p),
+                              math.cos(y), math.sin(y))
+    # Matriz de imu_link en base_link: Rz(y) Ry(p) Rx(r), convencion de URDF.
+    m = [[cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr],
+         [sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr],
+         [-sp, cp * sr, cp * cr]]
+    # Un eje de base_link expresado en el sensor es la fila de m (m traspuesta).
+    for nombre, eje_base, eje_sensor in (('adelante', 0, (0, 1, 0)), ('izquierda', 1, (1, 0, 0)),
+                                         ('arriba', 2, (0, 0, -1))):
+        visto = tuple(round(m[eje_base][j], 3) for j in range(3))
+        exigir(visto == tuple(float(v) for v in eje_sensor),
+               f'{nombre} del vehiculo sale {visto} en el sensor; medido {eje_sensor}')
 
 
 if __name__ == '__main__':
