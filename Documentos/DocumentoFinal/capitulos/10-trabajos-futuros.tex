@@ -4,12 +4,19 @@
 \chapter*{Trabajos futuros}
 \addcontentsline{toc}{chapter}{TRABAJOS FUTUROS}
 
+\begin{notaavance}[lista sujeta a lo que arroje la campaña física]
+Esta lista se cierra cuando cierre la toma de datos, el 16 de octubre de 2026.
+Las cuatro líneas que siguen salen de límites ya medidos y no van a
+desaparecer; lo que puede ocurrir es que las sesiones que faltan añadan alguna
+más.
+\end{notaavance}
+
 Las líneas que siguen salen de límites concretos que el trabajo encontró y
 documentó, no de una lista genérica de mejoras.
 
 \textbf{Resolver la aproximación fina del vehículo.} Es la limitación que impide
-cumplir la tolerancia de llegada, y está localizada: el vehículo no se mueve por
-debajo de 0,40~m/s porque la cadena de tracción traduce esa velocidad a cero. Hay
+cumplir la tolerancia de llegada, y está localizada. El vehículo no se mueve por
+debajo de 0,40~m/s: la cadena de tracción traduce esa velocidad a cero. Hay
 dos vías. Una es de hardware —calibrar los servos o cambiar la relación de
 transmisión— y daría al vehículo un régimen lento del que hoy carece. La otra es
 de criterio: fijar la tolerancia de llegada a un valor compatible con la
@@ -30,9 +37,9 @@ decisión y falla explícitamente cuando encuentra dos, de modo que el punto de
 extensión está identificado.
 
 \textbf{Resolver una esquina.} Todos los recorridos medidos fueron sobre tramos
-rectos. El guiado real tiene esquinas, y aunque el controlador demostró mover la
-dirección, no se ha probado que el vehículo resuelva un cambio de rumbo grande en
-un pasillo estrecho. Un intento de media vuelta en un corredor de 2,3~m no fue
+rectos. El guiado real tiene esquinas. El controlador demostró mover la dirección, pero
+no se ha probado que el vehículo resuelva un cambio de rumbo grande en un pasillo
+estrecho. Un intento de media vuelta en un corredor de 2,3~m no fue
 posible.
 
 \textbf{Ampliar la muestra de la campaña.} Con treinta misiones el intervalo de

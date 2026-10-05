@@ -10,6 +10,26 @@
 % =====================================================================
 \chapter{Resultados}
 
+\begin{notaavance}[la toma de datos cierra el 16 de octubre de 2026]
+Las cifras de este capítulo son las disponibles al \textbf{5 de octubre de
+2026}. Las dos mitades están en situaciones distintas y conviene no leerlas
+igual:
+
+\begin{itemize}[leftmargin=*,nosep]
+  \item El §4.1, \textbf{simulación}, está \textbf{cerrado}. La campaña de
+    treinta misiones corrió el 5 de septiembre, el analizador la dictaminó
+    válida y sus números no van a cambiar.
+  \item El §4.2, \textbf{hardware}, \textbf{sigue abierto}. Las sesiones de
+    campo continúan hasta el corte del \textbf{viernes 16 de octubre}, fijado
+    en el acta de directores, después del cual no se admiten más datos. Lo que
+    aquí se reporta son tres recorridos medidos; se esperan más, y las cifras
+    de llegada y de odometría pueden moverse.
+\end{itemize}
+
+Lo que no va a cambiar con más datos es el \emph{mecanismo} del §4.2.3: la
+banda muerta de tracción está medida y no depende del número de corridas.
+\end{notaavance}
+
 Los resultados llegan de dos campañas distintas. La primera, en simulación, con
 treinta misiones sorteadas. La segunda, sobre los vehículos reales en los
 pasillos del edificio. Se reportan por separado porque miden cosas distintas: la
@@ -25,9 +45,9 @@ válida}, con \textbf{cero descartes} contra un techo admitido del 20~\%.
 
 \subsection{Tasa de éxito (RF-23)}
 
-Una misión es exitosa si la pose final queda a 0,25~m o menos del destino
-—medida contra la odometría, no contra el resultado de Nav2— y la misión llegó a
-completarse sin pasar por fallo.
+Una misión es exitosa si cumple dos cosas. Que la pose final quede a 0,25~m o
+menos del destino, medida contra la odometría y no contra el resultado de Nav2.
+Y que la misión llegue a completarse sin pasar por fallo.
 
 \begin{table}[H]
   \centering\small
@@ -105,6 +125,16 @@ aparte en banco: mediana entre 154 y 175~\textmu s, máximo 306~\textmu s.
 
 \section{Evaluación sobre hardware}
 
+\begin{notaavance}[tres recorridos medidos; la campaña física no ha cerrado]
+Esta sección se escribe con los recorridos medidos hasta el 5 de octubre de
+2026. La campaña física es el requisito RF-27 y es lo único del proyecto que
+sigue tomando datos. Dos compuertas del acta de directores, \textbf{G-2}
+(odometría) y \textbf{G-3} (precisión de llegada), tienen ya medidas que las
+sostienen pero \textbf{no están declaradas formalmente}, y esa declaración
+corresponde al equipo en el corte del 16 de octubre. Las tablas de este apartado
+se ampliarán con las sesiones que falten.
+\end{notaavance}
+
 \subsection{La odometría del vehículo}
 
 El vehículo no tiene encoders, así que su odometría sale de comparar barridos
@@ -169,9 +199,9 @@ ajustes: bajar el umbral de arranque del vehículo —mecánico o de calibració
 servos— o subir la tolerancia con justificación previa.
 
 La figura~\ref{fig:piso4} muestra dos de esas llegadas sobre el mapa del piso 4.
-Conviene mirar la distancia entre el círculo y el cuadrado, que es lo que el
-vehículo cree frente a lo que el flexómetro midió, y la distancia entre el
-cuadrado y la estrella, que es el error de llegada propiamente dicho. La primera
+Conviene mirar dos distancias. La que va del círculo al cuadrado es lo que el
+vehículo cree frente a lo que el flexómetro midió. La que va del cuadrado a la
+estrella es el error de llegada propiamente dicho. La primera
 es pequeña: la localización sabe dónde está. La segunda es la que no cumple, y
 por el motivo que se acaba de explicar.
 
@@ -210,11 +240,11 @@ No existe ejecución posible que lo incumpla: son cero incumplimientos de cero
 posibles.
 
 Un criterio que no puede dar resultado negativo no aporta evidencia, por muchas
-veces que se verifique. La corrección no fue inventar una ruta de fallo —eso
-sería instrumentar el experimento para que pareciera más informativo— sino
+veces que se verifique. La corrección no fue inventar una ruta de fallo. Eso habría sido instrumentar el
+experimento para que pareciera más informativo. Lo que se hizo fue
 \textbf{declarar la continuidad como invariante estructural del diseño} y apoyar
-la afirmación en una magnitud que sí varía: el hueco temporal del relevo, que
-en las quince misiones entre niveles tuvo mediana de 0,1~s y máximo de 0,2~s.
+la afirmación en una magnitud que sí varía: el hueco temporal del relevo. En las
+quince misiones entre niveles tuvo mediana de 0,1~s y máximo de 0,2~s.
 
 \subsection{El intervalo de confianza es ancho por diseño}
 

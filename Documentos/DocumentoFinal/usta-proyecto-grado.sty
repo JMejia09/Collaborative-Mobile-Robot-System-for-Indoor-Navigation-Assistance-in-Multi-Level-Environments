@@ -262,6 +262,28 @@
  {\ifustanotasrevisor\end{mdframed}\else\expandafter\endcomment\fi}
 \RequirePackage{verbatim}
 
+% ------------------------------------------------- notas de estado de avance ---
+% Distinto de \begin{notarevisor}, y conviene no confundirlos:
+%
+%   notarevisor  = algo que el equipo pregunta AL DIRECTOR y se borra al
+%                  resolverse. No es texto del documento.
+%   notaavance   = aviso al LECTOR de que ese apartado esta abierto porque la
+%                  toma de datos no ha cerrado. Si es texto del documento,
+%                  mientras el proyecto siga en curso.
+%
+% Se declara con su propio interruptor para poder quitarlas todas de golpe
+% cuando el proyecto cierre: \ustanotasavancefalse en el preambulo.
+\newif\ifustanotasavance
+\ustanotasavancetrue
+\newenvironment{notaavance}[1][]{%
+  \ifustanotasavance
+    \begin{mdframed}[linewidth=2pt,linecolor=black!45,backgroundcolor=white,
+                     leftline=true,rightline=false,topline=false,bottomline=false,
+                     innerleftmargin=12pt,innertopmargin=4pt,innerbottommargin=4pt]%
+    \small\textbf{Apartado en curso\ifx\relax#1\relax\else: #1\fi.}\par\vspace{-0.4em}%
+  \else \expandafter\comment \fi}%
+ {\ifustanotasavance\end{mdframed}\else\expandafter\endcomment\fi}
+
 % ------------------------------------------------ listas sin doble título ---
 % Por omisión \tableofcontents y sus hermanas emiten su propio \chapter*, así
 % que puestas detrás de \ustaseccion saldría el encabezado DOS veces: el de

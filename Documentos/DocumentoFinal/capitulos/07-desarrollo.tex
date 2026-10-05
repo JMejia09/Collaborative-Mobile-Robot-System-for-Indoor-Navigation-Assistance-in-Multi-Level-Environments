@@ -12,9 +12,9 @@ explica el que quedó.
 % ---------------------------------------------------------------------
 \section{Arquitectura funcional del sistema (OE1)}
 
-La figura~\ref{fig:arquitectura} resume el sistema completo: la interfaz por la
-que entra la solicitud, el coordinador que la reparte, los dos agentes con su
-pila de navegación y la zona de transición donde se produce el relevo. El
+La figura~\ref{fig:arquitectura} resume el sistema completo. Están la interfaz
+por la que entra la solicitud, el coordinador que la reparte, los dos agentes con
+su pila de navegación y la zona de transición donde ocurre el relevo. El
 protocolo de la parte inferior es la secuencia que el §3.1.2 implementa.
 
 \begin{figure}[H]
@@ -30,9 +30,9 @@ protocolo de la parte inferior es la secuencia que el §3.1.2 implementa.
 Dos casillas de la figura se concretaron más tarde, y conviene decirlo para que
 el lector no las lea como definitivas. La de planificación nombra los candidatos
 que se consideraron en el diseño; cuál quedó y por qué está en el §3.2.3. Y los
-niveles aparecen como pisos 1 y 2 porque así se planteó el escenario: al cambiar
-de sitio de pruebas pasaron a ser los pisos 3 y 4 (§3.2.5), sin que la
-arquitectura cambiara, que es justamente lo que se esperaba de ella.
+niveles aparecen como pisos 1 y 2 porque así se planteó el escenario. Al cambiar
+de sitio de pruebas pasaron a ser los pisos 3 y 4 (§3.2.5), y la arquitectura no
+cambió. Que no cambiara es justamente lo que se esperaba de ella.
 
 \subsection{El contrato de interfaces}
 
@@ -128,9 +128,9 @@ eje, porque el vehículo no puede hacerla.
 
 Cada pieza de la cadena de navegación solo se puede diagnosticar si la anterior
 funciona. La guía oficial de puesta en marcha de Nav2 \autocite{nav2setup} lo
-plantea como una escalera de siete peldaños: transformaciones entre marcos,
-odometría, barrido del láser, mapa, localización, mapas de costos y, al final,
-planificador y controlador.
+plantea como una escalera de siete peldaños. De abajo arriba: transformaciones
+entre marcos, odometría, barrido del láser, mapa, localización, mapas de costos
+y, al final, planificador y controlador.
 
 El proyecto la siguió en ese orden, y fue lo que permitió aislar el fallo del
 apartado siguiente. Sin la escalera, una odometría que no mide se confunde con un
@@ -138,9 +138,9 @@ planificador que no planifica, porque los dos se manifiestan igual: el vehículo
 llega. Con ella, el problema queda acotado a un peldaño.
 
 El orden importa además en la ejecución. Los mapas de costos leen el mapa al
-configurarse, así que si el servidor de mapas no está activo en ese instante la
-capa estática queda vacía y el planificador rechaza cualquier meta diciendo que el
-punto de partida está ocupado. El mensaje señala el origen, y la causa está tres
+configurarse. Si el servidor de mapas no está activo en ese instante, la capa
+estática queda vacía. Y entonces el planificador rechaza cualquier meta diciendo
+que el punto de partida está ocupado. El mensaje señala el origen, y la causa está tres
 peldaños más abajo.
 
 \subsection{La odometría, que fue el cuello de botella}
@@ -195,8 +195,8 @@ porque salen de la misma fuente, no porque se parezcan. El proyecto había dado
 esa correspondencia por supuesta, y al verificarla por primera vez resultó falsa:
 el modelo anterior daba un hall 0,84~m más ancho de lo que es, un 20~\% de error.
 
-La herramienta que genera las plantas incluye una comprobación que no se salta:
-un pasillo mide lo mismo por sus dos lados, así que suma las dos paredes y avisa
+La herramienta que genera las plantas incluye una comprobación que no se salta.
+Un pasillo mide lo mismo por sus dos lados, así que suma las dos paredes y avisa
 si no cierran dentro del 2~\%. Esa comprobación encontró cinco errores antes de
 generar nada. Las dos plantas cierran al 0,32~\% y al 0,62~\%.
 
@@ -222,9 +222,9 @@ avance.
 
 El OE3 pide «una interfaz móvil». Lo que se construyó es una página web que se
 abre en el navegador del teléfono. Cumple el objetivo: es móvil porque se usa
-desde el teléfono del usuario, y lo cumple mejor que una aplicación nativa,
-porque un visitante ocasional —que es el usuario que el proyecto declara— no va a
-instalar nada para preguntar por un salón.
+desde el teléfono del usuario. Y lo cumple mejor que una aplicación nativa. Un
+visitante ocasional —que es el usuario que el proyecto declara— no va a instalar
+nada para preguntar por un salón.
 
 El requisito pedía que el usuario no instalara nada. La interfaz es una página
 web que se abre desde el navegador del teléfono. No usa recursos externos,
