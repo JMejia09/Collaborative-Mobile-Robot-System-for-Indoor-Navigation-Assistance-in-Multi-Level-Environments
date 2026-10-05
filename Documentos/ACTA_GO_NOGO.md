@@ -123,8 +123,8 @@ escribieron antes de correr.
 | Hito | Estado | Fecha | Registro |
 |---|---|---|---|
 | **G-1 · Actuación** | **ALCANZADO** | 2026-09-22 | [`S24_sonda_actuacion_amss_ez9n.md`](Evidencia/S24_sonda_actuacion_amss_ez9n.md), §9.3 |
-| **G-2 · Odometría** | Pendiente | — | — |
-| **G-3 · Navegación de uno** | Pendiente | — | — |
+| **G-2 · Odometría** | **ALCANZADO** | 2026-10-02 | [`S25_pisos34_campo.md`](Evidencia/S25_pisos34_campo.md), §6, conclusión 1 |
+| **G-3 · Navegación de uno** | No alcanzado en C-1; sigue abierto (§6.2) | 2026-10-02 | [`S25_pisos34_campo.md`](Evidencia/S25_pisos34_campo.md), §6, conclusión 2 |
 | **G-4 · Dos en el mismo grafo** | **ALCANZADO** | 2026-09-22 | [`S24_compuerta_G4_dos_en_el_grafo.md`](Evidencia/S24_compuerta_G4_dos_en_el_grafo.md) |
 | **G-5 · Protocolo completo** | Pendiente | — | — |
 | **G-6 · RF-27** | Pendiente | — | — |
@@ -141,6 +141,13 @@ tumbar el GO pleno por una razón de arquitectura en vez de por un sensor.
 **Lo que esto no cambia.** Las dos compuertas alcanzadas son las que **no** dependen de la
 odometría. **G-2 sigue siendo la ruta crítica** y su corte, C-1 del viernes 2 de octubre, sigue
 siendo el que decide entre GO pleno y NO-GO. Cerrar dos de seis no adelanta esa decisión.
+
+**Corte C-1, 2 de octubre.** G-2 se midió en el piso 4, el sitio que fija el §6.2. La odometría
+calculada con el LiDAR (rf2o) registró el avance con un error de +3,3 % sobre 14,57 m y de −4,6 %
+sobre 6,68 m, dentro del 10 % del criterio. Las dos llegadas quedaron a 0,57 m y 0,62 m de la meta,
+medidas con flexómetro, fuera de los 0,5 m de G-3 (§6.1, punto 3). Nav2 da la meta por alcanzada a
+1,0 m, y los dos vehículos se detuvieron al cruzar ese margen. Lo que resolvieron los directores
+sobre el corte está en el §6.2.
 
 ## 5. Los puntos de corte, con fecha
 
@@ -207,6 +214,29 @@ septiembre se detuvo a 0,412 m de la meta. Lo decide el director, no los autores
 antes de las corridas que miden G-3. El texto del §4 se conserva como se escribió. Cualquier cambio
 posterior de estos valores se registrará en esta sección, con su fecha.
 
+### 6.2 Resolución del 5 de octubre de 2026
+
+Los autores consultaron a los directores sobre el cambio de sitio, el corte C-1 y el regreso
+automático del vehículo después de una misión. Los directores trataron también el cambio de sitio
+con los evaluadores. Los acuerdos fueron verbales y esta sección es su registro:
+
+1. Sitio de la etapa 3. Se acepta el cambio a los pasillos de los pisos 3 y 4 del edificio, medidos
+   con flexómetro por el equipo el 2 de octubre ([`GUIA_PISOS_3_Y_4.md`](GUIA_PISOS_3_Y_4.md)).
+   Reemplaza el punto 1 del §6.1. El levantamiento del sitio nuevo, con sus mapas y destinos, tomó
+   poco tiempo al equipo.
+2. Corte C-1. La indicación de los directores fue organizar el trabajo para presentar a tiempo, sin
+   fijar una fecha nueva para C-1. Los autores la aplican así: la demostración con los vehículos
+   continúa, G-3 sigue abierto con su tolerancia de 0,5 m, y los cortes C-2 (9 de octubre) y C-3
+   (16 de octubre) se mantienen.
+3. Regreso automático. El vehículo vuelve a su punto de partida, la escalera de su piso, solo cuando
+   el usuario cancela una misión, como lo hace hoy (requisito RF-29). Entre misiones no vuelve: cada
+   misión empieza donde terminó la anterior, y el coordinador envía el vehículo a recoger al usuario
+   desde allí. Las pruebas de G-5 y G-6 se hacen de esa forma, sin reubicar los vehículos a mano
+   entre misiones. El regreso después de una misión completada queda como mejora opcional, sin
+   prioridad, si lo anterior funciona.
+
+Esta resolución no modifica los criterios del §4 ni la tolerancia del §6.1.
+
 ## 7. Firmas
 
 | | Nombre | Fecha |
@@ -214,6 +244,7 @@ posterior de estos valores se registrará en esta sección, con su fecha.
 | Autor | Santiago Hernández Ávila | |
 | Autor | Jonny Mejía | |
 | Comunicada a los directores el | Ing. Armando Mateus Rojas, en conversación directa (§6.1) | 2026-09-28 |
+| Resolución del §6.2 | Los directores, en conversación con los autores; consultada con los evaluadores | 2026-10-05 |
 
 ## 8. Trazabilidad
 
