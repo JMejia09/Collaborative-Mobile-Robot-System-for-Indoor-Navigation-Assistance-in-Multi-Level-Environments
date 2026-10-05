@@ -89,9 +89,9 @@ sensor, que en el BMI160 vale `0xd1`, sin instalar nada en el vehículo.
 
 | | |
 |---|---|
-| Comando | `ssh deepracer@192.168.0.102 "ls /dev/i2c-*; sudo -n python3 -c \"import fcntl,os; f=os.open('/dev/i2c-1',os.O_RDWR); fcntl.ioctl(f,0x0703,0x68); os.write(f,bytes([0])); print(hex(os.read(f,1)[0]))\""` |
-| Esperado | La lista de buses incluye `/dev/i2c-1`, y la segunda línea dice `0xd1` |
-| Si falla | Si dice `Device or resource busy`, otro programa usa el bus: repetir con `0x0706` en lugar de `0x0703`. Probar también la dirección `0x69` y los otros buses de la lista. Si ninguno responde `0xd1`, la tarjeta no tiene ese sensor accesible: la IMU pasa a trabajos futuros y el martes se dedica a G-5 |
+| Comando | `bash herramientas/nivelar_carros.sh --imu` (los dos vehículos; si el bus está ocupado, reintenta solo con `I2C_SLAVE_FORCE`) |
+| Esperado | En cada vehículo, la lista de buses con `/dev/i2c-1` y `IMU: el registro 0 en 0x68 vale 0xd1 (BMI160)` |
+| Si falla | Probar a mano la dirección `0x69` y los otros buses de la lista, con la orden de la función `imu` del guion. Si ninguno responde `0xd1`, la tarjeta no tiene ese sensor accesible: la IMU pasa a trabajos futuros y el martes se dedica a G-5 |
 | Cierre | `0xd1` en los dos vehículos, con el bus y la dirección anotados |
 
 ### 1.5 · Copiar las grabaciones pendientes (tarde)
@@ -107,8 +107,9 @@ sensor, que en el BMI160 vale `0xd1`, sin instalar nada en el vehículo.
 
 | | |
 |---|---|
-| Qué | Copiar a `~/tesis/` de los dos lo corregido en la §1.2 (`corrida_nav2.py`, `correr_corrida_nav2.sh`, `lanzar_bag.inc`), el mapa corregido del piso 2 y los archivos de partición del repositorio |
-| Comprobación | El md5 de cada archivo de `~/tesis/` igual al del repositorio, en los dos |
+| Qué | Copiar a `~/tesis/` de los dos lo corregido en la §1.2 (`corrida_nav2.py`, `correr_corrida_nav2.sh`, `lanzar_bag.inc`), los mapas y el catálogo de los pisos 3 y 4, y el mapa corregido del piso 2 |
+| Comando | `bash herramientas/nivelar_carros.sh --copiar`. Compara 21 archivos de `~/tesis/` con el md5 del repositorio, copia los que falten o difieran y vuelve a comparar. Informa además del parche de rf2o y de la partición instalada en `/etc` |
+| Comprobación | `Los vehiculos estan nivelados con el repositorio.` Si avisa de la partición en `/etc`, se reinstala con el procedimiento del bloque A ([`DISENO_AISLAMIENTO_DOS_CARROS.md`](DISENO_AISLAMIENTO_DOS_CARROS.md)), no copiándola a mano |
 | Si falla | Si un vehículo no responde, queda anotado y se cierra en cuanto vuelva a la red |
 | Cierre | Ningún archivo distinto del repositorio en ninguno de los dos |
 
