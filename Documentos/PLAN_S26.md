@@ -3,7 +3,9 @@
 La meta de la semana es llegar al viernes con la misión con relevo entre los pisos 3 y 4 sobre los
 dos vehículos (compuerta G-5). La toma de datos se cierra el viernes 16, en el corte C-3 del
 [acta](ACTA_GO_NOGO.md). Para llegar hay que dejar los vehículos estables (carga, escala, cámaras),
-cerrar G-2 y G-3 y, si la tarjeta la tiene, integrar la IMU. Lo que se hizo la semana anterior está
+cerrar G-2 y G-3 y, si la tarjeta la tiene, integrar la IMU. Las pruebas de esta semana son más
+estrictas que las anteriores. El vehículo encadena misiones sin que nadie lo reubique ni le vuelva a
+dar la pose inicial, y tiene que poder volver solo a su escalera. Lo que se hizo la semana anterior está
 en [`Entregable_semana_25.md`](Entregables/Entregable_semana_25.md).
 
 Vehículos: `amss-ez9n` (deepy, 192.168.0.102) va en el piso 3 como `robot1`; `amss-jgm9` (racey,
@@ -17,14 +19,18 @@ desde la raíz del repositorio en el portátil.
 | Lun 5, mañana | Acta: cambio de sitio y corte C-1. Correcciones de las herramientas de campo | Santiago y Claude | no | Acta al día; herramientas corregidas y probadas en simulación |
 | Lun 5, tarde | Cámaras fuera, comprobar la IMU, copiar grabaciones, nivelar los dos vehículos | Santiago y Jonny | los dos | Se sabe si hay IMU; vehículos nivelados |
 | Mar 6 | IMU funcionando y combinada con rf2o (si existe). Red entre los pisos 3 y 4 | Santiago y Claude; Jonny la red | los dos | La IMU publica en los dos vehículos; la red llega a los dos pisos |
-| Mié 7 | Radio de giro. Corridas medidas en el piso 4 (y en el piso 3): cerrar G-2 y evaluar G-3 | Santiago y Jonny | uno cada vez | G-2 cerrada; G-3 evaluada con y sin IMU |
+| Mié 7 | Radio de giro. Misiones encadenadas en el piso 4 sin tocar el vehículo, con y sin IMU. Media vuelta y regreso a la escalera | Santiago y Jonny | uno cada vez | G-2 cerrada; G-3 evaluada; se sabe si el vehículo vuelve solo a su escalera |
 | Jue 8 | Coordinador en el vehículo, agentes en los dos, interfaz desde el teléfono; una misión en un solo piso | los dos | los dos | Misión en un piso pedida desde el teléfono, con registro |
-| Vie 9 | G-5: misión del piso 3 al piso 4 con relevo. Corte semanal en la noche | los dos | los dos | G-5 intentada con registro; entregable de S26 |
+| Vie 9 | G-5: misión del piso 3 al piso 4 con relevo, y regreso del robot del piso 4 a su escalera. Corte semanal en la noche | los dos | los dos | G-5 intentada con registro; entregable de S26 |
 
 Reglas de toda la semana:
 
 - Los dos vehículos se tocan a la vez: lo que se instale en uno se instala en el otro el mismo día.
-- No se navega hacia el borde de una escalera ni se pide una media vuelta a Nav2.
+- No se navega hacia el borde de una escalera.
+- Las medias vueltas solo se piden en los tramos anchos frente a los salones 301-302 y 401-402
+  (de 3,1 a 3,2 m), con una persona junto al vehículo.
+- Después de la primera salida, el vehículo no se toca ni se reubica entre misiones. Cada llegada se
+  marca en el piso, junto al vehículo, y se mide desde esa marca.
 - Cada llegada se mide con flexómetro antes de tocar el vehículo.
 - Las grabaciones y registros se copian al portátil, a `~/tesis_evidencia/`, al terminar cada corrida.
 
@@ -37,7 +43,7 @@ Reglas de toda la semana:
 | | |
 |---|---|
 | Objetivo | Dejar escrito qué pasa con el corte C-1 del 2 de octubre, en el que G-2 cumplió su criterio y G-3 no |
-| Qué preguntar | (1) ¿El cambio de sitio a los pisos 3 y 4 movió la fecha de C-1? (2) Si la movió, ¿a cuándo? (3) Si no, ¿se aplica el NO-GO que prevé el acta? |
+| Qué preguntar | (1) ¿El cambio de sitio a los pisos 3 y 4 movió la fecha de C-1? (2) Si la movió, ¿a cuándo? (3) Si no, ¿se aplica el NO-GO que prevé el acta? (4) ¿El regreso automático del robot a su escalera después de una misión exitosa debe ser parte del sistema? Hoy el coordinador solo lo hace al cancelar (RF-29) |
 | Después | Claude redacta la entrada en la sección 6.1 del acta con lo acordado, el sitio nuevo y las cifras de G-2 (+3,3 % y −4,6 %) y G-3 (0,57 m y 0,62 m) |
 | Cierre | Commit con el acta actualizada |
 
@@ -54,6 +60,7 @@ atómicas y el trabajo pasa al análisis y a la presentación. En ese caso se pa
 | d | `corrida_nav2.py` deja de imprimir «tolerancia de Nav2: 0,25» | Es un texto fijo; el margen real es 1,0 m |
 | e | `lanzar_bag.inc` cierra el grabador con una interrupción y espera 10 s antes de matarlo | Con `SIGKILL` se pierde el final de la grabación (2-oct) |
 | f | `nav2_mapa_guardado.sh` admite `ESCALA` (por defecto 0,9) y apaga `camera_node` y `sensor_fusion_node` antes de Nav2 | Con 0,9 racey no arranca y deepy va a 1,58 m/s; con la cámara y la fusión encendidas Nav2 se cayó (2-oct) |
+| g | `corrida_nav2.py --sin-pose-inicial`: no publica la pose inicial y toma como salida la pose actual de AMCL | Para encadenar misiones sin volver a decirle a AMCL dónde está el vehículo, como en la operación real |
 
 Prueba de cierre: el ensayo en simulación de la §9 de
 [`GUIA_CAMPANA_NAV2_HARDWARE.md`](GUIA_CAMPANA_NAV2_HARDWARE.md), interrumpiendo una corrida a la
@@ -161,28 +168,56 @@ del sensor, medidas sobre el vehículo.
 | Después | Poner el mayor de los radios en `minimum_turning_radius` de `nav2_params_jazzy.yaml` |
 | Cierre | Cuatro medidas anotadas y el valor en el YAML |
 
-### 3.2 · Corridas del piso 4 para G-2 y G-3
+### 3.2 · Misiones encadenadas en el piso 4, sin tocar el vehículo
 
-Salida (la misma del 2-oct): el centro del vehículo a 1,00 m de la pared sur y a 1,25 m de la pared
-este, mirando al norte.
+El vehículo sale una vez de la salida medida y recorre tres tramos seguidos hacia el norte, sin media
+vuelta. Entre un tramo y el siguiente nadie lo toca ni le vuelve a dar la pose inicial. Así se mide
+lo mismo que el 2-oct (avance y llegada), y además si el error se acumula de una misión a la
+siguiente.
+
+| Tramo | De | A | Distancia |
+|---|---|---|---|
+| 1 | Salida frente a las escaleras (24,45, 1,21) | Salón 403 (17,22, 2,06) | 7,23 m |
+| 2 | Llegada del tramo 1 | Salón 402 (9,31, 2,15) | 7,91 m |
+| 3 | Llegada del tramo 2 | Salón 401 (6,20, 2,03) | 3,11 m |
 
 | Paso | Qué | Comando o acción | Esperado | Cierre |
 |---|---|---|---|---|
-| 1 | Arrancar Nav2 en racey, con IMU si quedó lista el martes | `CARRO=192.168.0.104 MAPA=/home/deepracer/tesis/piso4.yaml POSE_X=24.45 POSE_Y=1.21 POSE_YAW=3.1416 ESCALA=1.0 bash herramientas/nav2_mapa_guardado.sh   # ruta fija del vehiculo` | `Managed nodes are active` en 3 a 5 min | Nav2 activo |
-| 2 | Comprobar la ruta sin mover el vehículo | `compute_path_to_pose` a cada meta (§4.3 de [`GUIA_PISOS_3_Y_4.md`](GUIA_PISOS_3_Y_4.md)) | `SUCCEEDED` | Rutas a los salones 403, 402 y 401 |
-| 3 | Tres corridas | `ssh deepracer@192.168.0.104 "sudo -n bash ~deepracer/tesis/correr_corrida_nav2.sh p4r_04 --salida 24.45 1.21 3.1416 --meta 9.31 2.15 3.1416 --mapa /home/deepracer/tesis/piso4.yaml --csv ~deepracer/campana_p4_racey.csv"` (ruta fija del vehículo), y `p4r_05`, `p4r_06` | Una fila en el CSV por corrida | Las tres medidas: avance (desde la pared sur, menos 1,00 m) y distancia a la pared oeste |
-| 4 | Lo mismo con deepy, ids `p4d_03` a `p4d_05` | Con `CARRO=192.168.0.102`, `ESCALA=0.85` y su CSV | Igual | Igual |
+| 1 | Colocar el vehículo | Centro a 1,00 m de la pared sur y a 1,25 m de la pared este, mirando al norte | — | Vehículo en la salida |
+| 2 | Arrancar Nav2 en racey, con IMU si quedó lista el martes | `CARRO=192.168.0.104 MAPA=/home/deepracer/tesis/piso4.yaml POSE_X=24.45 POSE_Y=1.21 POSE_YAW=3.1416 ESCALA=1.0 bash herramientas/nav2_mapa_guardado.sh   # ruta fija del vehiculo` | `Managed nodes are active` en 3 a 5 min | Nav2 activo |
+| 3 | Comprobar las rutas sin mover el vehículo | `compute_path_to_pose` a los tres salones (§4.3 de [`GUIA_PISOS_3_Y_4.md`](GUIA_PISOS_3_Y_4.md)) | `SUCCEEDED` | Tres rutas |
+| 4 | Tramo 1, con la pose inicial | `ssh deepracer@192.168.0.104 "sudo -n bash ~deepracer/tesis/correr_corrida_nav2.sh p4r_04 --salida 24.45 1.21 3.1416 --meta 17.22 2.06 3.1416 --mapa /home/deepracer/tesis/piso4.yaml --csv ~deepracer/campana_p4_racey.csv"` (ruta fija del vehículo) | Fila en el CSV | Marca en el piso junto al centro del vehículo; avance desde la salida y distancia a la pared oeste |
+| 5 | Tramo 2, sin pose inicial | La misma orden con `p4r_05`, `--sin-pose-inicial` en lugar de `--salida` y `--meta 9.31 2.15 3.1416` | Fila en el CSV; AMCL no se reinicia | Marca nueva; avance medido de marca a marca y distancia a la pared oeste |
+| 6 | Tramo 3, sin pose inicial | Igual, `p4r_06` y `--meta 6.20 2.03 3.1416` | Igual | Igual |
+| 7 | La misma cadena con deepy | `CARRO=192.168.0.102`, `ESCALA=0.85`, ids `p4d_03` a `p4d_05` y su CSV | Igual | Igual |
 
-Si la IMU quedó lista, cada vehículo corre primero sin IMU y con margen de 1,0 m, y después con IMU y
-margen de 0,5 m, para poder compararlos. El margen se cambia en `nav2_hardware.launch.py` (ajuste 8).
+Si la IMU quedó lista, cada vehículo hace la cadena dos veces: primero sin IMU y con margen de 1,0 m,
+y después con IMU y margen de 0,5 m. El margen se cambia en `nav2_hardware.launch.py` (ajuste 8).
 
-Cierre de G-2: error de rf2o, o del filtro con IMU, de 10 % o menos en todas las corridas medidas.
-Cierre de G-3: llegada a 0,5 m o menos, medida con flexómetro.
+Cierre de G-2: error de la odometría de 10 % o menos en los tramos de 5 m o más (tramos 1 y 2),
+medido de marca a marca. Cierre de G-3: llegada a 0,5 m o menos. Se anota además si el error de
+llegada crece del tramo 1 al 3.
 
-Punto de decisión a las 12:00. Si la IMU no mejora la llegada en las corridas de la mañana, se quita
+Punto de decisión a las 12:00. Si la IMU no mejora la llegada en las cadenas de la mañana, se quita
 (`imu:=false`) y se sigue con el margen de 1,0 m. G-3 se reporta con su cifra.
 
-### 3.3 · Una corrida en el piso 3 con deepy
+### 3.3 · Media vuelta y regreso a la escalera (homing)
+
+Con el radio de giro real ya en el planificador (§3.1), el vehículo vuelve solo desde el Salón 401,
+donde terminó la cadena, a su salida frente a las escaleras. La media vuelta se hace en el tramo
+ancho frente a los salones 401 y 402 (de 3,1 a 3,2 m).
+
+| Paso | Qué | Comando o acción | Esperado | Cierre |
+|---|---|---|---|---|
+| 1 | Pedir el regreso, sin tocar el vehículo | La orden del tramo 2 con `p4r_07`, `--sin-pose-inicial` y `--meta 24.45 1.21 0.0` | Nav2 traza una maniobra con marcha atrás en el tramo ancho y vuelve hacia el sur | Una persona junto al vehículo durante la maniobra |
+| 2 | Si no gira | Una meta intermedia en el tramo ancho mirando al sur: `--meta 8.00 1.70 0.0`, y después la de la escalera | El vehículo queda mirando al sur | — |
+| 3 | Medir | Del centro del vehículo a la pared sur y a la pared este | Cerca de 1,00 m y 1,25 m | Número de maniobras, recuperaciones, tiempo y error de llegada anotados |
+
+Si la media vuelta no sale ni con la meta intermedia, el regreso automático queda como limitación
+declarada de un vehículo Ackermann en pasillos de 2,3 m. En ese caso G-5 se hace en la variante sin
+media vuelta (§5.1).
+
+### 3.4 · Una corrida en el piso 3 con deepy
 
 Salida: frente a las escaleras y mirando al norte, con el centro del vehículo a 3,23 m de la pared sur
 y a 1,26 m de la pared este. En el mapa es (22,10, 1,06). Meta: Salón 302 (9,31, 2,21). Es la primera
@@ -220,7 +255,7 @@ equipo lo aprueba, y la decisión queda en la bitácora de `ESTADO.md`.
 
 | | |
 |---|---|
-| Qué | Desde el teléfono, una misión en el piso 4: de las escaleras al Salón 402 |
+| Qué | Desde el teléfono, una misión en el piso 4: de las escaleras al Salón 402. El vehículo sale de donde quedó, sin reubicarlo: el coordinador primero lo manda al origen («El robot va hacia… Espere allí») |
 | Esperado | racey llega; la interfaz muestra el avance y el final |
 | Cierre | El registro de la misión, compuesto con `componer_registro.py --banco fisico` |
 
@@ -230,12 +265,21 @@ equipo lo aprueba, y la decisión queda en la bitácora de `ESTADO.md`.
 
 ### 5.1 · G-5: misión del piso 3 al piso 4 con relevo
 
+Cada misión empieza con el robot del origen yendo, desde donde esté, hasta el salón de origen. Si va
+hacia el norte, después tiene que dar media vuelta para guiar al usuario hacia las escaleras. Por eso
+hay dos variantes, y la que se corre depende del resultado del miércoles (§3.3).
+
+| Variante | Disposición inicial | Cuándo |
+|---|---|---|
+| A, con regreso | deepy en su escalera del piso 3, mirando al norte; racey en su escalera del piso 4, mirando al norte | Si la media vuelta funcionó el miércoles |
+| B, sin media vuelta | deepy al norte del salón de origen, mirando al sur; racey en su escalera del piso 4, mirando al norte | Si la media vuelta no funcionó |
+
 | | |
 |---|---|
-| Disposición | deepy en el piso 3, junto al salón de origen y mirando hacia las escaleras (al sur). racey en el piso 4, en la salida frente a las escaleras y mirando al norte |
-| Misión | Desde el teléfono: origen un salón del piso 3 (por ejemplo, el 302) y destino un salón del piso 4 (por ejemplo, el 402) |
-| Esperado | deepy guía hasta las escaleras del piso 3; la interfaz pide subir y confirmar la llegada al piso 4; racey guía desde las escaleras del piso 4 hasta el destino |
-| Medidas | Llegada de cada vehículo con flexómetro; la grabación de los dos |
+| Misión | Desde el teléfono: origen el Salón 302 y destino el Salón 402 |
+| Esperado | deepy va al origen y guía hasta las escaleras del piso 3; la interfaz pide subir y confirmar la llegada al piso 4; racey guía desde las escaleras del piso 4 hasta el Salón 402 |
+| Regreso | Al terminar, racey vuelve solo a su escalera, con la meta de regreso de la §3.3 pedida a mano (el coordinador hoy solo lo hace al cancelar; ver la pregunta 4 de la §1.1). En la variante A, deepy ya termina en su escalera |
+| Medidas | Llegada de cada vehículo con flexómetro, desde marcas en el piso; la grabación de los dos |
 | Si falla | Anotar en qué fase falló y por qué; se repite el lunes 12 |
 | Cierre | El registro de la misión compuesto y validado: G-5 alcanzada |
 
@@ -250,7 +294,8 @@ push.
 
 | Qué | Por qué |
 |---|---|
-| Medias vueltas con Nav2 | No caben en estos pasillos con la configuración actual (2-oct). Los vehículos se colocan mirando hacia su destino |
+| Medias vueltas fuera de los tramos anchos | Con 2,3 m de pasillo no caben con la configuración actual (2-oct) |
+| Regreso automático en el coordinador tras una misión exitosa | Es un cambio de alcance y se consulta a los directores (§1.1). Esta semana el regreso se pide a mano |
 | Navegar hacia el borde de una escalera | Se suspendió el 30-sep; las metas de las escaleras quedan centradas en el pasillo |
 | La campaña de RF-27 | Necesita G-5. Va en la semana 27, con cierre de datos el viernes 16 |
 | La IMU en la simulación | Solo si sobra tiempo; si no, queda como limitación declarada |
@@ -262,5 +307,6 @@ push.
 | El corte C-1 se mantiene y se declara NO-GO | Se para la demostración física y se replanifica hacia el análisis y la presentación (§1.1) |
 | La IMU no existe o no funciona el martes | Se sigue sin ella y el martes pasa a preparar G-5 |
 | La red no cubre los dos pisos | Rutas dentro de la cobertura; el coordinador sigue en racey |
+| La media vuelta no sale ni con la meta intermedia | G-5 en la variante B; el regreso automático queda como limitación declarada |
 | G-5 no sale el viernes | Se repite el lunes 12. Si tampoco sale, el cronograma prevé bajar a un vehículo real y uno simulado (sección 9 de [`CRONOGRAMA_S17_S32.md`](CRONOGRAMA_S17_S32.md)) |
 | Un vehículo se queda sin batería | Cargar las dos baterías (cómputo y tracción) cada noche; llevar el cargador a la sesión |
