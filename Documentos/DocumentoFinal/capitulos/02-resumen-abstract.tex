@@ -1,30 +1,37 @@
 % =====================================================================
 %  RESUMEN Y ABSTRACT
-%  La plantilla fija 150-250 palabras y pide objetivo, método, resultados y
-%  discusión. Las palabras clave son obligatorias en los dos idiomas.
+%  La plantilla fija 150-250 palabras y pide objetivo, metodo, resultados y
+%  discusion. Las palabras clave son obligatorias en los dos idiomas.
+%
+%  REGISTRO: un resumen comprime, asi que sus frases salen mas largas que las
+%  del cuerpo. Aun asi se mantienen por debajo de las 30 palabras, que es el
+%  limite que el resto del documento respeta.
 % =====================================================================
 \ustaseccion{Resumen}
 
 Orientarse en un edificio de varios pisos es difícil para quien no lo conoce, y
 el cambio de nivel corta la continuidad del recorrido. Las soluciones robóticas
-existentes resuelven ese salto dotando al robot de mecanismos para subir
-escaleras o conectándolo al ascensor, dos vías caras que obligan a intervenir la
-infraestructura. Este trabajo propone y evalúa una alternativa: un sistema
-colaborativo de dos robots móviles terrestres, cada uno dedicado a una planta,
-que se reparten el guiado de una persona mediante un protocolo de relevo en la
-zona de escaleras. Ningún vehículo cruza de nivel. La arquitectura es
-centralizada: un coordinador asigna el agente según el nivel del origen y del
-destino, y el usuario solicita el servicio desde una interfaz web que funciona en
-cualquier teléfono sin instalación ni acceso a internet. La evaluación siguió un
-protocolo escrito antes de instrumentar el sistema, con cuatro métricas de
-definición operativa y treinta misiones sorteadas en simulación. La campaña
-resultó válida sin descartes y permite afirmar, con 95~\% de confianza, que la
-tasa de éxito supera el 70~\%. Sobre los vehículos físicos se verificó la cadena
-completa de navegación y la odometría cumplió su criterio, con error entre
-$-4{,}6$~\% y $+3{,}3$~\% sobre recorridos de 6,7 y 14,6~m. La precisión de
-llegada quedó fuera de la tolerancia por una limitación medida de la plataforma:
-el vehículo no admite velocidades por debajo de 0,40~m/s y carece de régimen de
-aproximación fina.
+existentes resuelven ese salto de dos maneras: dotando al robot de mecanismos
+para subir escaleras, o conectándolo al ascensor. Las dos son caras y obligan a
+intervenir el edificio.
+
+Este trabajo propone y evalúa una alternativa. Dos robots móviles terrestres, uno
+por planta, se reparten el guiado de una persona mediante un protocolo de relevo
+en la zona de escaleras. Ningún vehículo cruza de nivel. Un coordinador central
+asigna el agente según el nivel del origen y del destino. El usuario pide el
+servicio desde una interfaz web que funciona en cualquier teléfono, sin instalar
+nada y sin salida a internet.
+
+La evaluación siguió un protocolo escrito antes de instrumentar el sistema, con
+cuatro métricas de definición operativa y treinta misiones sorteadas en
+simulación. La campaña resultó válida sin descartes. Permite afirmar, con 95~\%
+de confianza, que la tasa de éxito supera el 70~\%.
+
+Sobre los vehículos físicos se verificó la cadena completa de navegación. La
+odometría cumplió su criterio, con error entre $-4{,}6$~\% y $+3{,}3$~\% sobre
+recorridos de 6,7 y 14,6~m. La precisión de llegada quedó fuera de la tolerancia,
+por una limitación medida de la plataforma: el vehículo no admite velocidades por
+debajo de 0,40~m/s, de modo que carece de régimen de aproximación fina.
 
 \vspace{1em}
 \textbf{Palabras clave:} robótica móvil colaborativa; sistemas multi-robot;
@@ -34,24 +41,27 @@ navegación en interiores; protocolo de relevo; interacción humano-robot; ROS~2
 
 Finding one's way inside a multi-storey building is hard for first-time
 visitors, and changing floors breaks the continuity of the route. Existing
-robotic solutions address that gap either by equipping the robot to climb stairs
-or by interfacing it with the building lift, two expensive approaches that
-require modifying the infrastructure. This work proposes and evaluates an
-alternative: a collaborative system of two ground mobile robots, each assigned to
-one floor, that share the task of guiding a person through a handover protocol at
-the stairwell. Neither vehicle crosses between levels. The architecture is
-centralised: a coordinator assigns the agent according to the floor of the origin
-and the destination, and the user requests the service from a web interface that
-runs on any phone with no installation and no internet access. The evaluation
-followed a protocol written before instrumenting the system, with four
-operationally defined metrics and thirty randomised missions in simulation. The
-campaign was valid with no discards and supports, with 95~\% confidence, the
-claim that the success rate exceeds 70~\%. On the physical vehicles the full
-navigation chain was verified and the odometry met its criterion, with errors
-between $-4{,}6$~\% and $+3{,}3$~\% over runs of 6.7 and 14.6~m. Arrival accuracy
-fell outside tolerance because of a measured platform limitation: the vehicle
-does not accept commanded speeds below 0.40~m/s and therefore has no fine
-approach regime.
+robotic solutions address that gap in two ways: by equipping the robot to climb
+stairs, or by interfacing it with the building lift. Both are expensive and
+require modifying the infrastructure.
+
+This work proposes and evaluates an alternative. Two ground mobile robots, one
+per floor, share the task of guiding a person through a handover protocol at the
+stairwell. Neither vehicle crosses between levels. A central coordinator assigns
+the agent according to the floor of the origin and the destination. The user
+requests the service from a web interface that runs on any phone, with no
+installation and no internet access.
+
+The evaluation followed a protocol written before instrumenting the system, with
+four operationally defined metrics and thirty randomised missions in simulation.
+The campaign was valid with no discards. It supports, with 95~\% confidence, the
+claim that the success rate exceeds 70~\%.
+
+On the physical vehicles the full navigation chain was verified. Odometry met its
+criterion, with errors between $-4{,}6$~\% and $+3{,}3$~\% over runs of 6.7 and
+14.6~m. Arrival accuracy fell outside tolerance because of a measured platform
+limitation: the vehicle does not accept commanded speeds below 0.40~m/s, so it
+has no fine approach regime.
 
 \vspace{1em}
 \textbf{Keywords:} collaborative mobile robotics; multi-robot systems; indoor
