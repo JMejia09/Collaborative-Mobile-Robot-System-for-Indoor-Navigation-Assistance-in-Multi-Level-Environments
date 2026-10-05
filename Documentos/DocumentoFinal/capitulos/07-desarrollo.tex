@@ -1,31 +1,184 @@
 % =====================================================================
-%  DESARROLLO
-%  La plantilla pide organizarlo por capítulos según la metodología del
-%  proyecto de grado I, partiendo de las etapas o del diagrama de bloques:
-%  selección de topologías, simulaciones, implementación.
-%
-%  ESTRUCTURA PROPUESTA: una sección por objetivo específico, que es como
-%  Documentos/REQUISITOS.md ya rastrea el trabajo (matriz RF <-> OE <-> prueba).
+%  DESARROLLO  —  una sección por objetivo específico, que es como
+%  REQUISITOS.md rastrea el trabajo (matriz RF <-> OE <-> prueba).
 % =====================================================================
 \chapter{Desarrollo}
 
+El sistema se construyó en cuatro frentes, uno por objetivo específico. Cada
+sección describe qué se hizo, qué decisión se tomó y por qué. Las decisiones que
+hubo que revisar aparecen con su corrección, porque el camino que se descartó
+explica el que quedó.
+
+% ---------------------------------------------------------------------
 \section{Arquitectura funcional del sistema (OE1)}
-% Documentos/CONTRATO_INTERFACES.md, Evidencia/arquitectura.png,
-% REQUISITOS.md (34 requisitos con fuente y prueba), coordinacion_msgs,
-% y el planificador como función pura con sus 992 planes verificados.
 
+\subsection{El contrato de interfaces}
+
+Antes de escribir código se fijó un contrato: qué habla con qué y en qué formato.
+El sistema tiene tres piezas. Un \textbf{coordinador} central decide y manda. Dos
+\textbf{agentes}, uno por nivel, ejecutan. Y una \textbf{interfaz web} por la que
+el usuario pide el servicio.
+
+La comunicación sigue tres reglas que no se rompen:
+
+\begin{enumerate}[leftmargin=*]
+  \item El coordinador manda a un agente \textbf{solo} mediante la acción de
+    navegación de ROS~2. No publica velocidades directamente.
+  \item La interfaz habla \textbf{solo} con el coordinador. Nunca con los
+    agentes.
+  \item El texto que ve el usuario lo redacta el coordinador. La interfaz lo
+    muestra literal.
+\end{enumerate}
+
+La tercera evita que la lógica de presentación se duplique en el navegador. Si el
+cliente interpretara el estado numérico para decidir qué mostrar, habría dos
+copias de la misma lógica y acabarían divergiendo.
+
+\subsection{El planificador, escrito sin ROS a propósito}
+
+El relevo es el aporte declarado del proyecto. Por eso se escribió como función
+pura: entran el catálogo de puntos y un par origen-destino, salen los tramos que
+hay que ejecutar. No importa el middleware ni mantiene estado.
+
+La razón es de verificabilidad. Si el relevo viviera dentro del nodo, mezclado
+con clientes de acción, la única forma de comprobarlo sería levantar dos
+simuladores y mirar si el carro llega. Eso es lento y frágil. Como función pura
+se agota en milisegundos: \textbf{la prueba recorre 930 combinaciones de
+origen-destino y verifica cada plan, sin simulador}.
+
+Esa prueba encontró defectos que una corrida no habría delatado. El más claro:
+cuando el origen o el destino \emph{es} el punto de transferencia de su nivel, el
+plan mandaba al mismo robot dos veces a la misma pose. Un desplazamiento de cero
+metros no falla en Nav2 —devuelve éxito al instante— así que la simulación no lo
+habría mostrado.
+
+\subsection{La asignación de tareas}
+
+Cada nivel tiene un robot asignado, y esa correspondencia es un dato de
+configuración, no una constante del código. El coordinador elige el agente al
+aceptar la solicitud, según el nivel del origen y del destino.
+
+En la taxonomía de Gerkey y Matarić \cite{gerkey2004taxonomy} es una asignación
+centralizada e instantánea. Con dos agentes y el nivel decidiendo cuál responde,
+un esquema de subasta añadiría complejidad sin dar flexibilidad.
+
+El planificador exige \textbf{exactamente un punto de transferencia por nivel} y
+falla con un mensaje explícito si encuentra dos. Hoy cada planta tiene una
+escalera y eso se cumple. La verificación está puesta para que el día que haya
+dos la decisión se tome a la vista, y no en silencio.
+
+% ---------------------------------------------------------------------
 \section{Plataforma robótica (OE2)}
-% Simulación Gazebo, URDF, LiDAR, cadena /cmd_vel -> servos, y el despliegue
-% en las dos tarjetas Jazzy. Aquí van también los peldaños de la escalera de
-% Nav2 sobre hardware: Documentos/MAPA_TRABAJO_RESTANTE.md §2.3.
 
+\subsection{Nav2 sobre un vehículo que no gira sobre su eje}
+
+La plataforma sigue cinemática tipo automóvil. No es holonómica: no puede girar
+en el sitio. La configuración por omisión del marco de navegación de ROS~2 asume
+tracción diferencial, de modo que propone trayectorias que el vehículo no puede
+ejecutar.
+
+Se sustituyeron dos de sus tres capas. La planificación global pasó a un
+planificador híbrido A* con modelo Reeds-Shepp, que admite marcha atrás y genera
+las maniobras de inversión que el vehículo necesita. El control de seguimiento
+pasó a un controlador de persecución pura regulada, con marcha atrás habilitada.
+Del árbol de comportamiento se quitó la recuperación que gira sobre el propio
+eje, porque el vehículo no puede hacerla.
+
+\subsection{La odometría, que fue el cuello de botella}
+
+El vehículo no tiene encoders de rueda. Su única fuente de odometría es la
+correspondencia entre barridos sucesivos del láser. Durante meses esa pieza no
+funcionó, y el proyecto tardó en entender por qué.
+
+La causa no era de calibración sino de información. En un pasillo recto y de
+sección uniforme, cada barrido es prácticamente idéntico al anterior a lo largo
+del eje del corredor. El estimador devuelve un desplazamiento cercano a cero y
+\emph{acierta}: desde el sensor no ha cambiado nada. Se midió sobre el edificio y
+el resultado fue contundente: en los pasillos disponibles la odometría registraba
+entre el 5~\% y el 73~\% del avance real.
+
+La solución no fue afinar el algoritmo, porque no había nada que afinar. Fue
+cambiar de entorno. El criterio para elegirlo salió de la misma medida: hace
+falta estructura no uniforme dentro del alcance del sensor durante todo el
+recorrido.
+
+Se levantaron con flexómetro dos plantas que la tienen. Entre las tres hornacinas
+de salón, los lockers, la papelera, el ascensor y la escalera suman ocho cambios
+de perfil en 25~m, uno cada tres metros. Con la misma odometría y sin tocar un
+parámetro, el error cayó a menos del 5~\%.
+
+\subsection{Los mapas, derivados de medidas y no de SLAM}
+
+El proyecto intentó durante semanas construir el mapa con SLAM y no lo consiguió
+en ningún pasillo, por la misma razón del apartado anterior. La vía que
+funcionó fue otra: \textbf{levantar la planta con flexómetro y derivar de ese
+levantamiento tanto el mundo simulado como el mapa de navegación}.
+
+Eso tiene una consecuencia que conviene subrayar. Simulación y edificio coinciden
+porque salen de la misma fuente, no porque se parezcan. El proyecto había dado
+esa correspondencia por supuesta, y al verificarla por primera vez resultó falsa:
+el modelo anterior daba un hall 0,84~m más ancho de lo que es, un 20~\% de error.
+
+La herramienta que genera las plantas incluye una comprobación que no se salta:
+un pasillo mide lo mismo por sus dos lados, así que suma las dos paredes y avisa
+si no cierran dentro del 2~\%. Esa comprobación encontró cinco errores antes de
+generar nada. Las dos plantas cierran al 0,32~\% y al 0,62~\%.
+
+% ---------------------------------------------------------------------
 \section{Interfaz humano-robot (OE3)}
-% interfaz_web/, rosbridge sin roslib.js, RF-17 a RF-20 y RF-28
-% (confirmación de cambio de piso), y el botón Cancelar con la etapa
-% CANCELANDO.
 
+\subsection{Una página web, no una aplicación}
+
+El requisito pedía que el usuario no instalara nada. La interfaz es una página
+web que se abre desde el navegador del teléfono. No usa recursos externos,
+porque debe funcionar sin salida a internet: en la red del edificio puede no
+haberla.
+
+La comunicación con el middleware pasa por un puente que expone las acciones de
+ROS~2 como JSON sobre WebSocket. La librería de cliente más difundida del
+ecosistema no servía: su cliente de acciones corresponde a la generación anterior
+del middleware y es incompatible. La interfaz usa por eso un cliente propio,
+escrito directamente sobre el protocolo del puente.
+
+\subsection{Lo que el usuario ve}
+
+El usuario elige origen y destino de un catálogo con búsqueda por nombre, y pulsa
+un botón. A partir de ahí la página muestra el estado de la misión con el texto
+que redacta el coordinador.
+
+Dos funciones se añadieron después de ver el sistema en uso:
+
+\textbf{Confirmación de cambio de piso.} La secuencia de una misión entre niveles
+termina la etapa de transferencia cuando el robot del piso de destino llega a su
+escalera. Pero el robot no puede saber si \emph{la persona} ya subió. Sin una
+pausa explícita, la misión podía declararse completada con el usuario todavía en
+el piso equivocado, y la instrumentación lo habría registrado como éxito.
+
+\textbf{Cancelación.} El botón existía pero no hacía nada, y nadie lo había
+notado: el servidor de acción no registraba la función de cancelación, de modo
+que el middleware rechazaba toda solicitud por omisión y en silencio. Al
+corregirlo se añadió además el comportamiento que faltaba: al cancelar, el robot
+en curso regresa a su escalera antes de que la misión cierre.
+
+% ---------------------------------------------------------------------
 \section{Protocolo experimental (OE4)}
-% Documentos/PROTOCOLO_EXPERIMENTAL.md: las cuatro métricas con definición
-% operativa, criterio de éxito contra /odom, N=30 con sorteo por semilla y la
-% lista cerrada de causas de descarte. Escrito ANTES de instrumentar, y eso
-% conviene decirlo.
+
+El protocolo se escribió \textbf{antes} de instrumentar el sistema, y esa
+secuencia es deliberada. Fija las cuatro métricas con definición operativa, el
+criterio de éxito, el tamaño de muestra y una lista cerrada de causas de
+descarte con su techo.
+
+Dos decisiones del protocolo merecen mención porque condicionan cómo se leen los
+resultados.
+
+La primera: \textbf{el éxito se mide contra la odometría del vehículo, nunca
+contra el resultado que devuelve Nav2}. Una navegación puede terminar en
+\emph{éxito} y haber dejado al robot lejos del destino. Aceptar ese resultado
+sería dejar que el sistema se evalúe a sí mismo.
+
+La segunda: \textbf{las misiones se sortean}. Con pares elegidos a mano se corre
+el riesgo de probar justo los recorridos que funcionan.
+
+Durante la escritura del analizador apareció un defecto que ninguna corrida
+habría revelado, y que se trata en el §\ref{sec:limitaciones}: uno de los
+criterios estaba formulado de manera que no podía dar resultado negativo.

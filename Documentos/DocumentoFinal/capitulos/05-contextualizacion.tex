@@ -1,22 +1,75 @@
 % =====================================================================
 %  CONTEXTUALIZACIÓN
-%  DE DÓNDE SALE: anteproyecto cap. 2 (planteamiento) y §4.1-4.2 (objetivos).
-%  Los objetivos NO se reescriben: son los aprobados y se transcriben literal.
+%  Los objetivos se transcriben LITERAL del anteproyecto §4.1 y §4.2: son los
+%  aprobados y no se reescriben.
 % =====================================================================
 \chapter{Contextualización}
 
 \section{Planteamiento del problema}
-% Anteproyecto §2.1
+
+Orientarse en un edificio desconocido exige construir y actualizar una
+representación mental del espacio. El proceso se complica cuando el entorno tiene
+visibilidad limitada, estructuras repetidas y varios puntos de decisión
+\cite{omer2025multilayer}. Las edificaciones de varios pisos añaden una
+dificultad propia: el cambio de nivel rompe la continuidad espacial y obliga a
+integrar información vertical en el recorrido \cite{kim2024indoor}.
+
+La robótica móvil colaborativa ha avanzado en exploración, logística y cobertura
+distribuida, con estrategias consolidadas de coordinación y asignación de tareas
+\cite{gerkey2004taxonomy}. Pero la mayoría de esos desarrollos se evaluó en
+entornos de una sola planta, donde la segmentación vertical no es el problema
+central \cite{nair2024collaborative}.
+
+Resolver el cambio de piso con un solo robot resulta caro. Exige mecanismos de
+locomoción capaces de subir escaleras, o intervenir el sistema de control del
+ascensor \cite{song2024elevator}. Las dos opciones elevan el costo del hardware y
+obligan a modificar el edificio.
+
+De ahí el planteamiento de este trabajo. El problema no es cómo hacer que un
+robot suba, sino \textbf{cómo lograr que dos robots sencillos se repartan el
+recorrido y se pasen al usuario sin que la asistencia se interrumpa}. La
+comunicación entre agentes sustituye al hardware de transición vertical.
 
 \section{Pregunta problema}
-% El anteproyecto NO la enuncia como pregunta explícita. Hay que formularla a
-% partir del §2.1 y del objetivo general, y que sea coherente con los dos.
+
+\begin{quote}
+¿Es viable mantener la continuidad de la asistencia de orientación a una persona
+que cambia de nivel en un edificio, mediante un esquema de relevo entre dos
+robots móviles dedicados cada uno a una planta, sin que ninguno de ellos
+atraviese la zona de transición vertical?
+\end{quote}
+
+La pregunta tiene dos mitades y las dos se responden en el capítulo~4. La primera
+es de funcionamiento: si el relevo ocurre. La segunda es de medida: con qué
+incertidumbre se puede afirmar.
 
 \section{Objetivos}
 
 \subsection{Objetivo general}
-% Anteproyecto §4.1, literal.
+
+Implementar un sistema colaborativo de dos robots móviles terrestres para la guía
+coordinada y eficiente de asistencia a visitantes en entornos interiores con
+múltiples pisos, mediante comunicación inter-robot, asignación dinámica de tareas
+y una interfaz móvil de interacción usuario-robot.
 
 \subsection{Objetivos específicos}
-% Anteproyecto §4.2, literal. Son los cuatro OE que la matriz de
-% Documentos/REQUISITOS.md rastrea uno a uno.
+
+\begin{enumerate}[leftmargin=*,label=\textbf{OE\arabic*.}]
+  \item Modelar la arquitectura funcional del sistema colaborativo de dos robots
+    móviles, definiendo requerimientos, escenarios de operación con múltiples
+    pisos, estrategia de asignación de tareas y esquema de comunicación
+    inter-robot.
+  \item Desarrollar una plataforma robótica móvil basada en dos vehículos tipo
+    DonkeyCar, integrando los módulos de locomoción, sensado, procesamiento y
+    comunicación necesarios para la operación colaborativa en entornos
+    interiores.
+  \item Programar una interfaz móvil para interacción humano-robot (HRI) basada
+    en la selección de localizaciones de interés de origen y destino.
+  \item Evaluar el desempeño del sistema mediante pruebas experimentales en un
+    entorno interior controlado, utilizando métricas como tiempo de respuesta,
+    tiempo de asignación de robot, tasa de éxito en la entrega de asistencia y
+    continuidad del servicio entre niveles.
+\end{enumerate}
+
+Estos cuatro objetivos organizan el resto del documento. El capítulo~3 dedica una
+sección a cada uno, y el~4 reporta lo que se midió para cada uno.

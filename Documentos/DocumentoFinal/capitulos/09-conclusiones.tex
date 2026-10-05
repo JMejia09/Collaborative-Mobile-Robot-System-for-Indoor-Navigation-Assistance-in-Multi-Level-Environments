@@ -1,11 +1,57 @@
 % =====================================================================
-%  CONCLUSIONES
-%  La plantilla admite dos formas: un párrafo por objetivo específico, o un
-%  párrafo denso que evidencie el cumplimiento de los específicos y con ellos
-%  el general. Con cuatro OE rastreados uno a uno en REQUISITOS.md, la primera
-%  forma es la que menos margen deja a la vaguedad.
+%  CONCLUSIONES  —  un párrafo por objetivo específico, que es la forma
+%  que menos margen deja a la vaguedad con cuatro OE rastreados uno a uno.
 % =====================================================================
 \chapter*{Conclusiones}
 \addcontentsline{toc}{chapter}{CONCLUSIONES}
 
-% PENDIENTE
+\textbf{Sobre OE1, la arquitectura funcional.} El objetivo se cumplió. El sistema
+tiene un contrato de interfaces escrito, treinta y cuatro requisitos numerados con
+su prueba, y una capa de coordinación que ejecuta el relevo entre niveles. La
+decisión de escribir el planificador como función pura, sin depender del
+middleware, resultó más valiosa de lo previsto: permite verificar 930
+combinaciones de origen y destino en milisegundos, y encontró defectos que una
+corrida en el simulador no habría delatado, como planes que mandaban al mismo
+robot dos veces a la misma pose.
+
+\textbf{Sobre OE2, la plataforma robótica.} El objetivo se cumplió
+parcialmente. Los dos vehículos navegan con Nav2 reconfigurado para cinemática
+Ackermann, y la cadena completa —transformadas, odometría, mapa, localización,
+costmaps, planificador y controlador— funciona sobre hardware. Lo que no se
+alcanzó es la precisión de llegada: el vehículo tiene una banda muerta de
+tracción que le impide aproximarse a menos de 0,40~m/s, y eso le impide detenerse
+dentro de la tolerancia fijada. El límite es de la plataforma, no del software, y
+está medido.
+
+\textbf{Sobre OE3, la interfaz humano-robot.} El objetivo se cumplió. La interfaz
+funciona desde el navegador de un teléfono, sin instalación y sin salida a
+internet, y se operó una misión completa con relevo desde un dispositivo real. Dos
+funciones se añadieron después de ver el sistema en uso: la confirmación de cambio
+de piso, que impide declarar completada una misión con el usuario en el nivel
+equivocado, y la cancelación, que no funcionaba porque el servidor de acción
+rechazaba las solicitudes en silencio.
+
+\textbf{Sobre OE4, la evaluación.} El objetivo se cumplió en simulación y queda
+parcial sobre hardware. La campaña de treinta misiones sorteadas dio veredicto
+válido con cero descartes, y permite afirmar que \textbf{la tasa de éxito supera
+el 70~\%} con 95~\% de confianza. Sobre hardware, la odometría cumple su criterio
+—con error entre $-4{,}6$~\% y $+3{,}3$~\% sobre recorridos de 6,7 y 14,6~m— pero
+la llegada no alcanza la tolerancia.
+
+\textbf{Sobre el objetivo general.} El esquema de relevo \textbf{es viable}: dos
+robots dedicados cada uno a un nivel pueden repartirse el guiado de una persona
+que cambia de piso, sin que ninguno atraviese la zona de transición vertical y
+sin modificar el edificio. Eso quedó demostrado en simulación con una campaña
+medida, y la cadena de navegación que lo sostiene funciona sobre los vehículos
+reales. Lo que queda abierto no es el esquema sino su precisión, y el límite está
+localizado en una característica concreta y medida de la plataforma.
+
+\textbf{Una conclusión de método, que el trabajo defiende con el mismo peso.} La
+parte más costosa del proyecto no fue construir el sistema sino averiguar qué
+estaba midiendo de verdad. Tres episodios lo muestran. Una métrica valía cero por
+construcción hasta que se saneó. Un criterio de aceptación no podía dar resultado
+negativo, de modo que sus treinta verificaciones en verde no eran evidencia. Y la
+correspondencia entre el modelo del edificio y el edificio real, que el proyecto
+daba por supuesta desde agosto, resultó falsa en un 20~\% la primera vez que se
+midió. Los tres se encontraron preguntando si el criterio podía fallar, y ninguno
+habría aparecido corriendo más experimentos.

@@ -1,15 +1,48 @@
 % =====================================================================
 %  TRABAJOS FUTUROS
-%  Insumos ya escritos y con nombre propio:
-%   - R3: la inobservabilidad longitudinal en pasillos uniformes, y las vías
-%     candidatas (IMU, odometría visual, aproximación relativa a una hornacina)
-%   - La tensión entre la banda muerta de tracción y la tolerancia de llegada
-%     de 0,25 m (§2 de S24_nav2_navegacion_mapa_guardado.md)
-%   - R8: la conversión de nav2_msgs/NavigateToPose entre Humble y Jazzy
-%   - Cámara a 640x480 y calibración, para marcadores
-%   - Espacios de nombres por vehículo, que hoy no existen en hardware
 % =====================================================================
 \chapter*{Trabajos futuros}
 \addcontentsline{toc}{chapter}{TRABAJOS FUTUROS}
 
-% PENDIENTE
+Las líneas que siguen salen de límites concretos que el trabajo encontró y
+documentó, no de una lista genérica de mejoras.
+
+\textbf{Resolver la aproximación fina del vehículo.} Es la limitación que impide
+cumplir la tolerancia de llegada, y está localizada: el vehículo no se mueve por
+debajo de 0,40~m/s porque la cadena de tracción traduce esa velocidad a cero. Hay
+dos vías. Una es de hardware —calibrar los servos o cambiar la relación de
+transmisión— y daría al vehículo un régimen lento del que hoy carece. La otra es
+de criterio: fijar la tolerancia de llegada a un valor compatible con la
+plataforma, con justificación previa y no a la vista de los resultados.
+
+\textbf{Añadir una fuente de odometría independiente del láser.} La odometría
+actual deduce el movimiento comparando barridos, y eso falla por construcción en
+pasillos uniformes. El proyecto lo resolvió eligiendo un entorno con estructura,
+pero esa solución limita dónde puede operar el sistema. Una unidad inercial, o
+odometría visual con las cámaras que los vehículos ya llevan, daría información
+de avance que no depende de la geometría del sitio.
+
+\textbf{El ascensor como segunda vía de transición.} Hoy el cambio de piso se
+hace siempre por la escalera, y el ascensor es un destino más. Admitir los dos
+exige que el planificador elija entre dos puntos de transferencia por nivel,
+presumiblemente el más cercano al punto anterior. El código ya nombra esa
+decisión y falla explícitamente cuando encuentra dos, de modo que el punto de
+extensión está identificado.
+
+\textbf{Resolver una esquina.} Todos los recorridos medidos fueron sobre tramos
+rectos. El guiado real tiene esquinas, y aunque el controlador demostró mover la
+dirección, no se ha probado que el vehículo resuelva un cambio de rumbo grande en
+un pasillo estrecho. Un intento de media vuelta en un corredor de 2,3~m no fue
+posible.
+
+\textbf{Ampliar la muestra de la campaña.} Con treinta misiones el intervalo de
+confianza mide 24 puntos porcentuales. Ese ancho es de diseño y solo se reduce
+con más repeticiones. Una campaña mayor permitiría además comparar las dos
+condiciones experimentales, cosa que hoy no se sostiene porque sus intervalos se
+solapan.
+
+\textbf{Operar con los dos vehículos en el mismo grafo.} Las pruebas de hardware
+se hicieron con un vehículo cada vez, porque los dos publican en los mismos
+nombres de tópico y una orden alcanza a ambos. Separarlos por espacio de nombres
+está diseñado y probado en el computador, pero no ejercitado en campo, y es
+condición para la demostración del sistema completo.
