@@ -272,48 +272,47 @@ vez que un vehículo navega en el piso 3; sirve para comprobar el mapa antes de 
 
 ## 4. Jueves 8
 
-### 4.1 · El coordinador reconoce los pisos 3 y 4 (decisión del equipo)
+### 4.1 · El coordinador en los pisos 3 y 4 (hecho el 5-oct)
 
-El coordinador solo declara los niveles 1 y 2 (`robot_nivel_1` y `robot_nivel_2` en
-`coordinador.py`). Con el catálogo de los pisos 3 y 4 no encuentra robot y la misión no se
-planifica. Son cuatro líneas en un archivo congelado desde el 18 de septiembre: se aplica solo si el
-equipo lo aprueba, y la decisión queda en la bitácora de `ESTADO.md`.
+El equipo aprobó el 5-oct dos cambios en `coordinador.py`:
 
-| | |
-|---|---|
-| Cambio | Declarar `robot_nivel_3` y `robot_nivel_4` y añadirlos a la asignación |
-| Prueba | `prueba_planificador.py` y `prueba_agente.py`, más las 90 combinaciones del catálogo `puntos_interes_pisos34.yaml` con la asignación `{3: robot1, 4: robot2}` |
-| Cierre | Todas las pruebas pasan y el coordinador está copiado y compilado en los dos vehículos |
+| Cambio | Qué hace | Por qué |
+|---|---|---|
+| Niveles 3 y 4 | Parámetros `robot_nivel_3` y `robot_nivel_4`, vacíos por defecto. La vuelta a la escalera al cancelar busca entre todos los niveles del robot. El agente admite `nivel:=3` y `nivel:=4` | Sin ellos el catálogo de los pisos 3 y 4 no tiene robot y la misión no se planifica. En simulación la asignación sigue siendo `{1: robot1, 2: robot2}` |
+| Pose en el mapa (opción B) | Con `condicion:=hardware`, el rumbo de llegada, la verificación de llegada y el registro usan la pose que el agente de cada vehículo publica en `/robotN/estado`, en el marco del mapa. Una pose de más de 2 s no vale, y sin pose la llegada no se acepta | En el vehículo, `/robotN/odom` empieza en (0, 0) y no en la salida del mapa. Un vehículo en el Salón 403 queda en `/odom` a unos 10 m de las coordenadas del catálogo, y el coordinador habría rechazado la llegada. La TF del mapa es privada de cada vehículo, y por eso la pose llega por el agente |
 
-Hay un segundo cambio pendiente en el mismo archivo, encontrado el 5-oct al preparar la IMU. El
-coordinador compara las coordenadas del catálogo, que están en el marco del mapa, con la posición de
-`/robotN/odom`. Lo hace al elegir el rumbo de llegada (`_yaw_de_llegada`) y al verificar la llegada
-(`_distancia`). En la simulación funciona, porque el `/odom` del plugin de Gazebo es la pose del
-vehículo en el mundo, que coincide con el mapa. En el vehículo, rf2o y el EKF empiezan en (0, 0)
-mirando a +x. La salida del piso 4 es, en el mapa, (24,45, 1,21) mirando a −x. Un vehículo que sale
-de ahí y llega al Salón 403 queda en `/odom` cerca de (7,2, −0,9), a unos 10 m de las coordenadas
-del salón en el catálogo. El coordinador rechazaría esa llegada aunque el vehículo estuviera en la meta.
+Se descartó la opción A (arrancar la odometría en la salida del mapa): su deriva se acumula entre
+misiones encadenadas, y con +3,3 % en 14,57 m ya son 0,48 m.
 
-| Opción | Qué cambia | A favor | En contra |
-|---|---|---|---|
-| A. La odometría arranca en la salida del mapa | rf2o con `init_pose_from_topic` y el EKF con `initial_state`; el coordinador no se toca | No toca el código congelado | La llegada se juzga con la odometría, que deriva: +3,3 % en 14,57 m son 0,48 m, casi toda la tolerancia de 0,5 m. En misiones encadenadas el error se acumula y el coordinador rechazaría llegadas buenas |
-| B. El coordinador lee la pose en el marco del mapa en el vehículo | Con `condicion:=hardware`, `_distancia` y `_yaw_de_llegada` leen la TF `robotN/map → robotN/base_link`, que mantiene AMCL; en simulación sigue `/odom` | Sirve en misiones encadenadas; es la pose con la que navega Nav2 | Toca el código congelado (pocas líneas, con sus pruebas). La llegada se juzga con AMCL, que el 2-oct erró 0,42 y 0,43 m; la llegada real se sigue midiendo con flexómetro |
+[`prueba_coordinador_vehiculo.py`](../Robot/aws-deepracer/coordinacion/test/prueba_coordinador_vehiculo.py)
+corre el coordinador real con dos robots falsos cuya `/odom` empieza en su salida, como rf2o: 15 de
+15. Prueba una misión del Salón 302 al 402 con relevo, otra encadenada sin reubicar, la cancelación
+y el agente callado. Como control, el mismo escenario leyendo `/odom` rechaza la llegada. Con el
+coordinador anterior fallan 13 de 14.
 
-Se recomienda la opción B. El §4 del acta pide verificar la llegada contra `/odom` porque en la
-simulación `/odom` es la pose real. En el vehículo es una estimación más, y la medida real es el
-flexómetro.
-La decisión es del equipo, junto con la de los niveles 3 y 4, y hace falta antes de la §4.3.
+El coordinador juzga ahora la llegada con la pose de AMCL, que el 2-oct erró 0,42 y 0,43 m. La
+llegada real se sigue midiendo con flexómetro, como en G-3.
+
+Con `condicion:=hardware` el coordinador acepta la llegada a 0,5 m o menos, y Nav2 se detiene al
+cruzar su margen: con 1,0 m, una llegada entre 0,5 y 1,0 m se rechaza y la misión falla. Las
+misiones coordinadas (§4.3 y G-5) necesitan `MARGEN=0.5`, que es lo que se prueba el miércoles con
+la IMU (§3.2).
 
 ### 4.2 · Coordinador, agentes e interfaz en los vehículos
 
-| Paso | Qué | Comando | Esperado |
-|---|---|---|---|
-| 1 | Copiar y compilar el coordinador en los dos | `scp -r Robot/aws-deepracer/coordinacion deepracer@192.168.0.104:~/coordinacion_ws/src/` y `ssh deepracer@192.168.0.104 "source /opt/ros/jazzy/setup.bash && cd ~/coordinacion_ws && colcon build --packages-select coordinacion"`; igual con la .102 | md5 de `coordinador.py` igual en el repositorio y en los dos |
-| 2 | `rosbridge` en racey | `ssh deepracer@192.168.0.104 "source /opt/ros/jazzy/setup.bash; ros2 pkg list \| grep rosbridge_server"` | `rosbridge_server` |
-| 3 | Nav2 con espacio de nombres en los dos | `NS=robot1` en deepy (piso 3) y `NS=robot2` en racey (piso 4), con su mapa y su salida | `Managed nodes are active` en los dos |
-| 4 | Un agente en cada vehículo, con la partición | `ros2 run coordinacion agente --ros-args -r __ns:=/robot2 -p nivel:=4` en racey y `-r __ns:=/robot1 -p nivel:=3` en deepy | `/robot1/estado` y `/robot2/estado` a 2 Hz |
-| 5 | Coordinador y `rosbridge` en racey | El coordinador con `-p condicion:=hardware -p ruta_puntos:=<catálogo de los pisos 3 y 4 en el vehículo> -p robot_nivel_3:=robot1 -p robot_nivel_4:=robot2 -p ruta_registros:=~deepracer/registros`, y `ros2 launch rosbridge_server rosbridge_websocket_launch.xml send_action_goals_in_new_thread:=true` | El coordinador escribe `condicion 'hardware': la llegada se acepta a 0.5 m o menos` |
-| 6 | La interfaz desde el teléfono | En el portátil, `python3 -m http.server 8000 --directory interfaz_web`; en el teléfono, conectado a la red de los vehículos, `http://<IP del portátil>:8000/?ws=192.168.0.104:9090` | La interfaz muestra los dos robots |
+`rosbridge_server` no está instalado en los vehículos, y sin internet no se puede instalar allí. Va
+en el portátil, que lo tiene (Humble). Según el estudio de S19, los mensajes de `coordinacion_msgs` son los mismos
+en Humble y en Jazzy. Lo único distinto es la acción de Nav2, y esa la llama el coordinador, que
+corre en racey. El paso 3 comprueba que el portátil reciba los mensajes de los vehículos.
+
+| Paso | Qué | Comando | Esperado | Si falla |
+|---|---|---|---|---|
+| 1 | Coordinador y agente iguales al repositorio en los dos | `herramientas/nivelar_carros.sh` | `coordinacion_ws: los ... archivos del coordinador y del agente iguales al repositorio` en los dos | `herramientas/nivelar_carros.sh --copiar`, que copia y recompila |
+| 2 | Nav2 con espacio de nombres en los dos | deepy: `NS=robot1 IMU=true MARGEN=0.5 CARRO=192.168.0.102 MAPA=/home/deepracer/tesis/piso3.yaml POSE_X=22.10 POSE_Y=1.06 POSE_YAW=3.1416 ESCALA=0.85 bash herramientas/nav2_mapa_guardado.sh` (ruta fija del vehículo). racey: `NS=robot2 IMU=true MARGEN=0.5 CARRO=192.168.0.104 MAPA=/home/deepracer/tesis/piso4.yaml POSE_X=24.45 POSE_Y=1.21 POSE_YAW=3.1416 ESCALA=1.0 bash herramientas/nav2_mapa_guardado.sh` (ruta fija del vehículo) | `CADENA LISTA` en los dos, con `imu/data` y `odom` publicando | El aviso en rojo del guion dice qué pieza falló |
+| 3 | Un agente en cada vehículo | racey: `ssh deepracer@192.168.0.104 "sudo -n bash -c 'export FASTRTPS_DEFAULT_PROFILES_FILE=/etc/deepracer-tesis/particion.xml; source /opt/ros/jazzy/setup.bash; source /home/deepracer/coordinacion_ws/install/setup.bash; setsid nohup ros2 run coordinacion agente --ros-args -r __ns:=/robot2 -p nivel:=4 > /tmp/agente.log 2>&1 &'"` (ruta fija del vehículo). deepy: lo mismo con `192.168.0.102`, `/robot1` y `nivel:=3`. En el portátil: `ros2 topic echo --once /robot2/estado --field pose` | La pose cerca de la salida del mapa, (24,45, 1,21) en racey y (22,10, 1,06) en deepy, con `frame_id: robot2/map`. Que llegue al portátil confirma que Humble recibe los mensajes de Jazzy | Pose en (0, 0): es `odom`, no el mapa; revisar AMCL. Nada en el portátil: probar el mismo `echo` dentro de racey; si allí llega, es la comunicación entre distribuciones, y `rosbridge` tendría que ir en racey (traer el paquete sin internet) |
+| 4 | Coordinador en racey | `ssh deepracer@192.168.0.104 "sudo -n bash -c 'export FASTRTPS_DEFAULT_PROFILES_FILE=/etc/deepracer-tesis/particion.xml; source /opt/ros/jazzy/setup.bash; source /home/deepracer/coordinacion_ws/install/setup.bash; mkdir -p /home/deepracer/registros; setsid nohup ros2 run coordinacion coordinador --ros-args -p condicion:=hardware -p ruta_puntos:=/home/deepracer/tesis/puntos_interes_pisos34.yaml -p robot_nivel_3:=robot1 -p robot_nivel_4:=robot2 -p ruta_registros:=/home/deepracer/registros > /tmp/coordinador.log 2>&1 &'"` (ruta fija del vehículo), y `ssh deepracer@192.168.0.104 "sudo -n grep -E 'condicion|listo' /tmp/coordinador.log"` | `condicion 'hardware': la llegada se acepta a 0.5 m o menos` y `Coordinador listo`, con la asignación de los niveles 3 y 4 | `GUARDIAN`: ya hay otro coordinador; pararlo con `sudo -n pkill -f "coordinacion[/]coordinador"` |
+| 5 | `rosbridge` y la interfaz en el portátil | En una terminal, `ros2 launch rosbridge_server rosbridge_websocket_launch.xml send_action_goals_in_new_thread:=true`; en otra, `python3 -m http.server 8000 --directory interfaz_web` | `Rosbridge WebSocket server started on port 9090` | — |
+| 6 | La interfaz desde el teléfono | El teléfono en la red de los vehículos, `http://192.168.0.105:8000/` | La lista de destinos de los pisos 3 y 4 y los dos robots | Sin destinos: el portátil no recibe `/coordinacion/puntos_interes`; volver al paso 3 |
 
 ### 4.3 · Una misión dentro de un solo piso
 
@@ -369,7 +368,7 @@ push.
 | Si pasa | Qué se hace |
 |---|---|
 | La IMU o el EKF no funcionan en un vehículo el martes | Se sigue sin ella (`IMU=false`) y el martes pasa a preparar G-5 |
-| El coordinador rechaza llegadas buenas en el vehículo (§4.1, segundo cambio) | Decidir la opción A o B antes del jueves; sin eso, la §4.3 y G-5 no pueden cerrar |
+| El miércoles la IMU no permite bajar el margen de Nav2 a 0,5 m | El coordinador rechazaría las llegadas entre 0,5 y 1,0 m (§4.1): decidirlo con los resultados del miércoles, antes de la §4.3 |
 | La red no cubre los dos pisos | Rutas dentro de la cobertura; el coordinador sigue en racey |
 | La media vuelta no sale ni con la meta intermedia | G-5 en la variante B; el regreso automático queda como limitación declarada |
 | G-5 no sale el viernes | Se repite el lunes 12. Si tampoco sale, el cronograma prevé bajar a un vehículo real y uno simulado (sección 9 de [`CRONOGRAMA_S17_S32.md`](CRONOGRAMA_S17_S32.md)) |

@@ -51,6 +51,10 @@ from rclpy.qos import qos_profile_action_status_default
 from coordinacion.estado_agente import (
     PERIODO_S, TOPICO_ESTADO, TOPICO_STATUS_ACCION, MaquinaEstado)
 
+#: Niveles del edificio que un agente puede atender: 1 y 2 en simulacion, 3 y 4
+#: en los pisos del vehiculo desde el 2026-10-02 (acta §6.2).
+NIVELES_VALIDOS = (1, 2, 3, 4)
+
 #: Cada cuantos ciclos se repite el aviso de TF ausente. A 2 Hz, 20 ciclos son
 #: 10 s: suficiente para enterarse, poco para inundar el log de una mision larga.
 CICLOS_ENTRE_AVISOS = 20
@@ -83,15 +87,16 @@ class Agente(Node):
                 "publicara en /estado con robot_id vacio. Se lanza dentro del "
                 "namespace del robot: ros2 run ... --ros-args -r __ns:=/robot1")
 
-        # EstadoRobot.msg admite nivel 1 o 2. Un 0 no es un valor valido, es un
-        # parametro que nadie puso. Se avisa en vez de publicarlo en silencio,
-        # que es como el registro de una campana entera sale con un campo malo
-        # y nadie se entera hasta que toca analizarla.
-        if self.nivel not in (1, 2):
+        # Niveles validos: 1 y 2 en simulacion, 3 y 4 en los pisos del vehiculo
+        # (acta §6.2). Un 0 no es un valor valido, es un parametro que nadie
+        # puso. Se avisa en vez de publicarlo en silencio, que es como el
+        # registro de una campana entera sale con un campo malo y nadie se
+        # entera hasta que toca analizarla.
+        if self.nivel not in NIVELES_VALIDOS:
             self.get_logger().warn(
-                f"nivel={self.nivel}, y EstadoRobot.msg solo admite 1 o 2. Se "
+                f"nivel={self.nivel}, y solo valen {NIVELES_VALIDOS}. Se "
                 "publicara igual para no ocultar el problema, pero el dato es "
-                "invalido. Pasar 'nivel:=1' o 'nivel:=2' al lanzamiento.")
+                "invalido. Pasar 'nivel:=N' al lanzamiento.")
 
         self.maquina = MaquinaEstado()
         self.ultima_pose = None

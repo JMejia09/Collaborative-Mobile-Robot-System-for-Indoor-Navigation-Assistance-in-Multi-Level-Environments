@@ -16,7 +16,9 @@
 #                                0xd1 si la tarjeta tiene la IMU. No instala nada
 #
 # Compara, en cada vehiculo, los archivos de ~/tesis que usan los guiones de
-# campo (lista ARCHIVOS, abajo), el fuente de rf2o con el parche del proyecto
+# campo (lista ARCHIVOS, abajo), el codigo del coordinador y del agente en
+# ~/coordinacion_ws/src (todo lo que git sigue de coordinacion y
+# coordinacion_msgs; con --copiar se copia y se recompila), el fuente de rf2o con el parche del proyecto
 # (herramientas/parches/LEEME.md) y la particion instalada en /etc contra la del
 # repositorio, y si las camaras estan desactivadas por la regla de udev
 # config/90-tesis-camaras-desactivadas.rules (conectadas, sin /dev/video). La
@@ -62,6 +64,13 @@ ARCHIVOS=(
   "$B/scripts/imu_bmi160.py"
 )
 
+# Coordinador y agente: corren desde ~/coordinacion_ws del vehiculo, compilado
+# con --symlink-install. Hasta el 2026-10-05 nadie lo comparaba, y los dos
+# vehiculos tenian el coordinador del 13-sep, sin la tolerancia de llegada del
+# 28-sep.
+mapfile -t COORD < <(git -C "$REPO" ls-files Robot/aws-deepracer/coordinacion Robot/aws-deepracer/coordinacion_msgs)
+destino_coord() { echo "${1#Robot/aws-deepracer/}"; }
+
 # Ruta dentro de ~/tesis: los arboles van en su carpeta, el resto suelto.
 destino() {
   case "$1" in
@@ -95,6 +104,22 @@ comparar() {
     fi
   done
   [ "$distintos" -eq 0 ] && verde "   ~/tesis: los ${#ARCHIVOS[@]} archivos iguales al repositorio"
+  # Coordinador y agente.
+  lista=""
+  for f in "${COORD[@]}"; do lista+=" ~/coordinacion_ws/src/$(destino_coord "$f")"; done
+  remoto_c=$(en_carro "$ip" "md5sum $lista 2>/dev/null")
+  FALTAN_C=()
+  for f in "${COORD[@]}"; do
+    d=$(destino_coord "$f")
+    esperado=$(md5sum "$REPO/$f" | cut -d' ' -f1)
+    actual=$(echo "$remoto_c" | awk -v d="$d" '{r = $2; sub(/.*\/coordinacion_ws\/src\//, "", r)} r == d {print $1; exit}')
+    if [ "$actual" != "$esperado" ]; then
+      FALTAN_C+=("$f")
+      if [ -z "$actual" ]; then rojo "   falta      coordinacion_ws/src/$d"; else rojo "   distinto   coordinacion_ws/src/$d"; fi
+    fi
+  done
+  distintos=$((distintos + ${#FALTAN_C[@]}))
+  [ "${#FALTAN_C[@]}" -eq 0 ] && verde "   coordinacion_ws: los ${#COORD[@]} archivos del coordinador y del agente iguales al repositorio"
   actual=$(echo "$remoto" | awk '$1 == "RF2O" {print $2}')
   if [ "$actual" = "$MD5_RF2O_PARCHE" ]; then verde "   rf2o: con el parche"
   else rojo "   rf2o: SIN el parche (md5 ${actual:-desconocido}); ver herramientas/parches/LEEME.md"; AVISOS=$((AVISOS + 1)); fi
@@ -111,13 +136,27 @@ comparar() {
 }
 
 copiar() {
-  local ip="$1" f
-  [ "${#FALTAN[@]}" -eq 0 ] && return 0
-  en_carro "$ip" "mkdir -p ~/tesis/behavior_trees"
-  for f in "${FALTAN[@]}"; do
-    scp -q -o BatchMode=yes -o ConnectTimeout=10 "$REPO/$f" "deepracer@$ip:~/tesis/$(destino "$f")" \
-      && echo "   copiado    $(destino "$f")" || rojo "   NO se copio $(destino "$f")"
+  local ip="$1" f d paquetes
+  if [ "${#FALTAN[@]}" -gt 0 ]; then
+    en_carro "$ip" "mkdir -p ~/tesis/behavior_trees"
+    for f in "${FALTAN[@]}"; do
+      scp -q -o BatchMode=yes -o ConnectTimeout=10 "$REPO/$f" "deepracer@$ip:~/tesis/$(destino "$f")" \
+        && echo "   copiado    $(destino "$f")" || rojo "   NO se copio $(destino "$f")"
+    done
+  fi
+  [ "${#FALTAN_C[@]}" -eq 0 ] && return 0
+  for f in "${FALTAN_C[@]}"; do
+    d=$(destino_coord "$f")
+    en_carro "$ip" "mkdir -p ~/coordinacion_ws/src/$(dirname "$d")"
+    scp -q -o BatchMode=yes -o ConnectTimeout=10 "$REPO/$f" "deepracer@$ip:~/coordinacion_ws/src/$d" \
+      && echo "   copiado    coordinacion_ws/src/$d" || rojo "   NO se copio coordinacion_ws/src/$d"
   done
+  # Con --symlink-install el Python ya queda al dia; los mensajes y el setup.py
+  # necesitan compilar. Se compila siempre: es un minuto y evita adivinar.
+  paquetes="coordinacion"
+  printf '%s\n' "${FALTAN_C[@]}" | grep -q 'coordinacion_msgs/' && paquetes="coordinacion_msgs coordinacion"
+  echo "   compilando $paquetes en el vehiculo..."
+  en_carro "$ip" "cd ~/coordinacion_ws && source /opt/ros/jazzy/setup.bash && colcon build --symlink-install --packages-select $paquetes 2>&1 | tail -1"
 }
 
 imu() {

@@ -25,11 +25,11 @@ Consecuencia práctica: `/robot1` puede ser un robot simulado y `/robot2` uno f�
 | Nombre | Tipo | Dirección | Notas |
 |---|---|---|---|
 | `/<ns>/cmd_vel` | `geometry_msgs/Twist` | entra al robot | ya es relativo en el plugin |
-| `/<ns>/odom` | `nav_msgs/Odometry` | sale del robot | ya es relativo en el plugin |
+| `/<ns>/odom` | `nav_msgs/Odometry` | sale del robot | ya es relativo en el plugin. En simulación es la pose de Gazebo en el mundo, que coincide con el mapa; en el vehículo empieza en (0, 0) donde arranca rf2o |
 | `/<ns>/scan` | `sensor_msgs/LaserScan` | sale del robot | ya es relativo (`~/out:=scan`) |
 | `/<ns>/joint_states` | `sensor_msgs/JointState` | sale del robot | vía `joint_state_broadcaster` |
 | `/<ns>/navigate_to_pose` | acción `nav2_msgs/NavigateToPose` | **el coordinador la llama** | interfaz única de mando |
-| `/<ns>/estado` | `coordinacion_msgs/EstadoRobot` | sale del robot | 2 Hz |
+| `/<ns>/estado` | `coordinacion_msgs/EstadoRobot` | sale del robot | 2 Hz. Con `condicion:=hardware` el coordinador toma de aquí la pose en el mapa, para el rumbo y la verificación de llegada (desde el 2026-10-05, `PLAN_S26.md` §4.1) |
 | `/<ns>/initialpose` | `geometry_msgs/PoseWithCovarianceStamped` | entra | inicialización de AMCL |
 
 **El coordinador manda a un robot de una sola forma: llamando su acción `navigate_to_pose`.** No publica `cmd_vel`. No llama servicios internos de Nav2. Si algo no se puede expresar como "ve a esta pose", no entra en la coordinación.

@@ -78,7 +78,9 @@ dos padres, uno por carro. Con una TF **privada por carro**, cada uno tiene su �
 estática— y no hay conflicto. **Nadie necesita la TF del otro carro**: el coordinador usa
 `/robotN/odom` y las acciones, la interfaz solo usa `/coordinacion/*`, el registro de misión solo lee
 el estado de la misión y las `/robotN/odom`, y el agente consulta la TF de su propio vehículo.
-Comprobado leyendo el código el 2026-09-25.
+Comprobado leyendo el código el 2026-09-25. Desde el 2026-10-05, con `condicion:=hardware` el
+coordinador toma además la pose en el mapa de `/robotN/estado`, que el agente publica leyendo su
+propia TF: la pose cruza la partición por ese tópico, y la TF sigue privada.
 
 **Dónde corre cada cosa:**
 

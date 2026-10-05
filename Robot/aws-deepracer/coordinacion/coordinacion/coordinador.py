@@ -12,6 +12,20 @@ Interfaces, segun §4 de Documentos/CONTRATO_INTERFACES.md:
     /coordinacion/puntos_interes   ListaPuntosInteres      (latched, al arrancar)
     /coordinacion/confirmacion_piso  std_msgs/String       (la escucha, RF-28)
     /<ns>/navigate_to_pose         accion de Nav2          (la llama)
+    /<ns>/odom                     Odometry                (la lee)
+    /<ns>/estado                   EstadoRobot             (la lee, solo con
+                                                            condicion:=hardware)
+
+DE DONDE SALE LA POSE DE CADA ROBOT. Las coordenadas del catalogo estan en el
+marco del mapa. En simulacion /<ns>/odom tambien: el plugin de Gazebo la
+publica desde WorldPose(), que coincide con el mapa. En el vehiculo no: rf2o
+(o el EKF) empieza en (0, 0) donde arranca, y desde la salida del piso 4 un
+robot que llega al Salon 403 queda en /odom a unos 10 m de las coordenadas del
+salon. Por eso, con condicion:=hardware, la pose sale de /<ns>/estado, que el
+agente de cada vehiculo publica en <ns>/map leyendo su propia TF (la TF es
+privada de cada vehiculo y el coordinador no la ve; ver
+Documentos/DISENO_AISLAMIENTO_DOS_CARROS.md). Lo decidio el equipo el
+2026-10-05 (Documentos/PLAN_S26.md §4.1, opcion B).
 
 UN AVISO QUE NO ES TEORICO. El §2 del contrato quedo refutado el 2026-08-18:
 nav2_msgs/NavigateToPose CAMBIA de definicion entre Humble y Jazzy -en Humble el
@@ -42,7 +56,8 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, HistoryPolicy, QoSProfile
 
 from coordinacion_msgs.action import GuiarUsuario
-from coordinacion_msgs.msg import EstadoMision, ListaPuntosInteres, PuntoInteres
+from coordinacion_msgs.msg import (
+    EstadoMision, EstadoRobot, ListaPuntosInteres, PuntoInteres)
 from coordinacion.registrador import (
     TOLERANCIA_POR_CONDICION, RegistroMision, entorno_simulacion)
 
@@ -69,7 +84,7 @@ class _Cancelada(Exception):
         self.robot = robot
 
 # Criterio de llegada del §3.3 de PROTOCOLO_EXPERIMENTAL.md, medido contra
-# /<ns>/odom. Sale de TOLERANCIA_POR_CONDICION (registrador.py) segun el
+# /<ns>/odom en simulacion y contra la pose del agente en el vehiculo. Sale de TOLERANCIA_POR_CONDICION (registrador.py) segun el
 # parametro 'condicion': 0.25 m en simulacion y 0.50 m en los vehiculos reales
 # desde el 2026-09-28. No inventar otro aqui: si se cambia, se cambia en el
 # protocolo primero, y entonces las corridas anteriores dejan de ser comparables.
@@ -82,6 +97,17 @@ class _Cancelada(Exception):
 # La tolerancia bajo a 0.15 justamente para comprar ese margen: 0.150 de parada
 # + 0.065 de error previsto de AMCL + 0.023 de desfase del fin del plan = 0.238,
 # que cabe en los 0.25 de simulacion. Bajarlos a 0.15 destruiria ese presupuesto.
+
+
+# Con condicion:=hardware, la pose del agente llega a 2 Hz. Si la ultima tiene
+# mas de esto, el robot se da por sin pose: aceptar una llegada con una pose
+# vieja es aceptarla sin mirar.
+EDAD_MAXIMA_POSE_S = 2.0
+
+# Niveles que el coordinador sabe asignar. El 1 y el 2 son los de la simulacion
+# (pisos 1 y 2); el 3 y el 4, los pisos del vehiculo desde el 2026-10-02 (acta
+# §6.2). Un nivel con el parametro vacio no se asigna.
+NIVELES = (1, 2, 3, 4)
 
 
 def _normalizar(a):
@@ -97,6 +123,8 @@ class Coordinador(Node):
         self.declare_parameter("ruta_puntos", "")
         self.declare_parameter("robot_nivel_1", ASIGNACION_POR_DEFECTO[1])
         self.declare_parameter("robot_nivel_2", ASIGNACION_POR_DEFECTO[2])
+        self.declare_parameter("robot_nivel_3", "")
+        self.declare_parameter("robot_nivel_4", "")
         self.declare_parameter("espera_servidor_s", 20.0)
         # Prefijo del identificador de mision. Lo pone quien lanza la campana;
         # vacio significa corrida suelta. Ver §2.1 de ESQUEMA_REGISTRO_MISION.md.
@@ -106,10 +134,11 @@ class Coordinador(Node):
         self.declare_parameter("ruta_registros", "")
         self.declare_parameter("condicion", "simulacion")
 
+        # Los niveles 3 y 4 van vacios por defecto, asi que en simulacion la
+        # asignacion es {1: robot1, 2: robot2}, la de siempre.
         self.asignacion = {
-            1: self.get_parameter("robot_nivel_1").value,
-            2: self.get_parameter("robot_nivel_2").value,
-        }
+            n: self.get_parameter(f"robot_nivel_{n}").value for n in NIVELES
+            if self.get_parameter(f"robot_nivel_{n}").value}
         self.espera_servidor = self.get_parameter("espera_servidor_s").value
         self.prefijo_mision = self.get_parameter("prefijo_mision").value
         self.ruta_registros = self.get_parameter("ruta_registros").value
@@ -142,9 +171,13 @@ class Coordinador(Node):
         self.estado.mensaje_usuario = "Sin mision activa."
         self.create_timer(1.0, self._publicar_estado)   # 1 Hz, como pide el §4
 
-        # Un cliente de navegacion y un lector de /odom por robot.
+        # Un cliente de navegacion y un lector de /odom por robot, y en el
+        # vehiculo un lector de /<ns>/estado (ver la cabecera).
         self.clientes = {}
         self.ultimo_odom = {}
+        self.pose_agente = {}   # ns -> (x, y, yaw, instante de llegada)
+        self.fuente_pose = ("la pose del agente en el mapa (/<ns>/estado)"
+                            if self.condicion == "hardware" else "/odom")
         for ns in set(self.asignacion.values()):
             self.clientes[ns] = ActionClient(
                 self, NavigateToPose, f"/{ns}/navigate_to_pose",
@@ -153,6 +186,11 @@ class Coordinador(Node):
                 Odometry, f"/{ns}/odom",
                 lambda msg, n=ns: self._odom(msg, n), 10,
                 callback_group=self.grupo)
+            if self.condicion == "hardware":
+                self.create_subscription(
+                    EstadoRobot, f"/{ns}/estado",
+                    lambda msg, n=ns: self._estado_agente(msg, n), 10,
+                    callback_group=self.grupo)
 
         # Clientes para limpiar los costmaps antes de la vuelta a casa de una
         # cancelacion. MEDIDO EL 2026-09-13: cancelar a un robot a mitad de un
@@ -419,10 +457,18 @@ class Coordinador(Node):
         Es la unica pose con sentido para "cancelar y volver": esta en el
         catalogo -no hay que inventar una pose nueva-, y es exactamente donde
         ese robot ya estaria si la mision nunca hubiera arrancado.
+
+        Un robot puede tener asignados varios niveles (robot2 atiende el 2 en
+        simulacion y el 4 en el vehiculo), y el catalogo cargado solo trae los
+        de uno de los dos sitios: se toma la escalera del primero de sus
+        niveles que este en el catalogo.
         """
-        nivel = next((n for n, r in self.asignacion.items() if r == robot), None)
-        return next((p for p in self.catalogo
-                     if p.get("nivel") == nivel and p.get("es_transferencia")), None)
+        for nivel in sorted(n for n, r in self.asignacion.items() if r == robot):
+            casa = next((p for p in self.catalogo
+                         if p.get("nivel") == nivel and p.get("es_transferencia")), None)
+            if casa is not None:
+                return casa
+        return None
 
     def _limpiar_costmaps(self, robot):
         """Vacia los dos costmaps de 'robot'. Ver la nota de 'clientes_costmap'.
@@ -499,17 +545,57 @@ class Coordinador(Node):
         return self.get_clock().now().nanoseconds / 1e9
 
     def _odom(self, msg, ns):
-        """Ultima pose de cada robot, y muestra para la traza si hay mision."""
+        """Ultima odometria de cada robot, y muestra para la traza si hay mision.
+
+        La velocidad sale siempre de /odom, a su ritmo: de ella depende el
+        instante de primer movimiento (§3.1 del protocolo). La posicion, de
+        _pose(), en el marco del catalogo; en el vehiculo cambia al ritmo del
+        agente, 2 Hz. Sin pose no se anota la muestra: una posicion en otro
+        marco falsearia el error de llegada del registro.
+        """
         self.ultimo_odom[ns] = msg
         if self.registro is None:
             return
+        pose = self._pose(ns)
+        if pose is None:
+            return
         v = msg.twist.twist.linear
-        q = msg.pose.pose.orientation
+        x, y, yaw = pose
+        self.registro.muestra(self._ahora(), ns, x, y, msg.pose.pose.position.z,
+                              math.hypot(v.x, v.y), yaw)
+
+    def _estado_agente(self, msg, ns):
+        """Pose del robot en <ns>/map, publicada por su agente (condicion:=hardware).
+
+        Una pose que el propio agente declara caducada (su TF fallo) no se
+        guarda: asi envejece y, pasados EDAD_MAXIMA_POSE_S, el robot queda sin
+        pose en vez de con una vieja.
+        """
+        if not msg.pose.header.frame_id or msg.detalle.startswith("pose caducada"):
+            return
+        p, q = msg.pose.pose.position, msg.pose.pose.orientation
         yaw = math.atan2(2.0 * (q.w * q.z + q.x * q.y),
                          1.0 - 2.0 * (q.y * q.y + q.z * q.z))
-        pos = msg.pose.pose.position
-        self.registro.muestra(self._ahora(), ns, pos.x, pos.y, pos.z,
-                              math.hypot(v.x, v.y), yaw)
+        self.pose_agente[ns] = (p.x, p.y, yaw, time.monotonic())
+
+    def _pose(self, robot):
+        """(x, y, yaw) de 'robot' en el marco del catalogo, o None si no la hay.
+
+        En simulacion, /<ns>/odom. En el vehiculo, la ultima pose del agente,
+        si no tiene mas de EDAD_MAXIMA_POSE_S. Ver la cabecera del modulo.
+        """
+        if self.condicion == "hardware":
+            p = self.pose_agente.get(robot)
+            if p is None or time.monotonic() - p[3] > EDAD_MAXIMA_POSE_S:
+                return None
+            return p[:3]
+        od = self.ultimo_odom.get(robot)
+        if od is None:
+            return None
+        q = od.pose.pose.orientation
+        return (od.pose.pose.position.x, od.pose.pose.position.y,
+                math.atan2(2.0 * (q.w * q.z + q.x * q.y),
+                           1.0 - 2.0 * (q.y * q.y + q.z * q.z)))
 
     def _confirmacion(self, msg):
         """El usuario dice que ya cambio de piso (RF-28)."""
@@ -546,11 +632,11 @@ class Coordinador(Node):
         goal_handle.publish_feedback(fb)
 
     def _distancia(self, robot, punto):
-        od = self.ultimo_odom.get(robot)
-        if od is None:
+        pose = self._pose(robot)
+        if pose is None:
             return float("nan")
-        return math.hypot(od.pose.pose.position.x - float(punto["pose"]["x"]),
-                          od.pose.pose.position.y - float(punto["pose"]["y"]))
+        return math.hypot(pose[0] - float(punto["pose"]["x"]),
+                          pose[1] - float(punto["pose"]["y"]))
 
     # ------------------------------------------------------------- navegacion
 
@@ -580,7 +666,8 @@ class Coordinador(Node):
         medido con /odom. Elegir entre esos dos NUNCA anade una maniobra: solo
         puede quitarla. No se usa el rumbo de aproximacion crudo porque en una
         ruta en L la recta origen-destino puede ser diagonal y acabariamos
-        pidiendo un rumbo que tampoco es el de llegada.
+        pidiendo un rumbo que tampoco es el de llegada. En el vehiculo la
+        posicion sale de la pose del agente y no de /odom: ver _pose().
 
         Contexto que justifica no respetar el YAML a rajatabla: de los 31 puntos
         del catalogo, 28 tienen yaw: 0.0. Ese valor no lo eligio nadie, es el
@@ -592,12 +679,12 @@ class Coordinador(Node):
         if punto.get("yaw_estricto", False):
             return yaml_yaw, "yaw_estricto en el catalogo"
 
-        od = self.ultimo_odom.get(robot)
-        if od is None:
-            return yaml_yaw, "sin /odom, no se puede medir la aproximacion"
+        pose = self._pose(robot)
+        if pose is None:
+            return yaml_yaw, f"sin {self.fuente_pose}, no se puede medir la aproximacion"
 
-        dx = float(punto["pose"]["x"]) - od.pose.pose.position.x
-        dy = float(punto["pose"]["y"]) - od.pose.pose.position.y
+        dx = float(punto["pose"]["x"]) - pose[0]
+        dy = float(punto["pose"]["y"]) - pose[1]
         if math.hypot(dx, dy) < self.tolerancia_llegada_m:
             # Demasiado cerca: el rumbo de aproximacion es ruido.
             return yaml_yaw, "el robot ya esta sobre el punto"
@@ -670,14 +757,15 @@ class Coordinador(Node):
         d = self._distancia(robot, punto)
         if math.isnan(d):
             return False, (
-                f"'{robot}' dijo SUCCEEDED pero no publica /odom, asi que "
-                f"la llegada no se puede verificar. No se acepta")
+                f"'{robot}' dijo SUCCEEDED pero no hay {self.fuente_pose}, asi "
+                f"que la llegada no se puede verificar. No se acepta")
         if d > self.tolerancia_llegada_m:
             return False, (
-                f"'{robot}' dijo SUCCEEDED pero /odom lo situa a "
+                f"'{robot}' dijo SUCCEEDED pero {self.fuente_pose} lo situa a "
                 f"{d:.3f} m del punto, por encima de los "
                 f"{self.tolerancia_llegada_m} m de tolerancia")
-        self.get_logger().info(f"    llegada verificada contra /odom: {d:.3f} m")
+        self.get_logger().info(
+            f"    llegada verificada contra {self.fuente_pose}: {d:.3f} m")
         return True, ""
 
     def _esperar_resultado_nav2(self, gh_nav2, goal_handle_top, robot):

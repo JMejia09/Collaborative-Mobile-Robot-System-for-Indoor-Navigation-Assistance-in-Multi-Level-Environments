@@ -26,7 +26,7 @@ uint8 ERROR=3
 # TF map -> <ns>/odom, que si se republica a ~9,5 Hz aunque el robot este quieto.
 
 string robot_id                 # "robot1" | "robot2"
-uint8 nivel                     # 1 | 2
+uint8 nivel                     # 1 | 2 en simulacion; 3 | 4 en el vehiculo
 geometry_msgs/PoseStamped pose  # en el marco <ns>/map
 uint8 estado                    # LIBRE | NAVEGANDO | EN_TRANSFERENCIA | ERROR
 string detalle                  # texto libre para diagnostico
