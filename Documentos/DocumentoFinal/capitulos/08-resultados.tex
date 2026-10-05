@@ -19,12 +19,11 @@ igual:
   \item El §4.1, \textbf{simulación}, está \textbf{cerrado}. La campaña de
     treinta misiones corrió el 5 de septiembre, el analizador la dictaminó
     válida y sus números no van a cambiar.
-  \item El §4.2, \textbf{hardware}, \textbf{está sin redactar a propósito}.
-    Las sesiones de campo continúan hasta el corte del \textbf{viernes 16 de
-    octubre}, fijado en el acta de directores, después del cual no se admiten
-    más datos. Reportar ahora unas cifras que van a cambiar obligaría a
-    corregirlas después, así que la sección dice qué irá en ella y no adelanta
-    ningún resultado.
+  \item El §4.2, \textbf{hardware}, \textbf{va por mitades}. La odometría
+    (compuerta G-2) cerró el 5 de octubre y se reporta. La precisión de llegada
+    (G-3) no se alcanzó en el corte C-1 y sigue abierta, así que ese apartado
+    queda sin redactar hasta el corte del \textbf{viernes 16 de octubre},
+    después del cual el acta de directores no admite más datos.
 \end{itemize}
 
 El §4.3 trata de las limitaciones de la campaña de simulación, así que cierra
@@ -126,32 +125,76 @@ aparte en banco: mediana entre 154 y 175~\textmu s, máximo 306~\textmu s.
 
 \section{Evaluación sobre hardware}
 
-\begin{notaavance}[sección abierta: la toma de datos cierra el 16 de octubre de
-2026]
-Esta sección \textbf{queda pendiente de redacción} y por eso no se presenta
-ningún resultado en ella. No es un apartado olvidado: es el único frente del
-proyecto que sigue tomando datos, y escribirlo ahora obligaría a corregirlo
-después.
+\begin{notaavance}[G-2 cerrada el 5 de octubre; G-3 sigue abierta]
+De las dos compuertas que esta sección tiene que responder, una cerró y la otra
+no, así que se reportan de forma distinta:
 
-Lo que irá aquí, cuando cierre:
+\begin{itemize}[leftmargin=*,nosep]
+  \item \textbf{G-2, la odometría}, quedó \textbf{alcanzada} en el acta de
+    directores del 5 de octubre de 2026, con las medidas del 2 de octubre en el
+    piso 4. Sus cifras son definitivas y se reportan en el §4.2.1.
+  \item \textbf{G-3, la precisión de llegada}, \textbf{no se alcanzó} en el
+    corte C-1 y sigue abierta. El §4.2.2 queda sin redactar: la toma de datos
+    continúa hasta el corte del \textbf{16 de octubre}, y escribir ahora unas
+    cifras que van a cambiar obligaría a corregirlas después.
+\end{itemize}
+\end{notaavance}
+
+\subsection{La odometría del vehículo (G-2)}
+
+El vehículo no tiene encoders, así que su odometría sale de comparar barridos
+sucesivos del láser. Durante meses esa pieza no produjo una medida utilizable.
+La tabla~\ref{tab:odometria} reúne lo que se midió en cada entorno:
+
+\begin{table}[H]
+  \centering\small
+  \caption{Fracción del avance real que registra la odometría, por entorno.}
+  \label{tab:odometria}
+  \begin{tabular}{@{}lccl@{}}
+    \toprule
+    \textbf{Entorno} & \textbf{Recorrido} & \textbf{Registrado} & \textbf{Criterio $\pm$10 \%} \\ \midrule
+    Pasillo simulado, 46,9 m & largo & 37,9 \% & falla \\
+    Pasillos del edificio (piso 1 y 2) & largo & 5,7 \% y 1,3 \% & falla \\
+    Hall del piso 2 & 6 m & 73 \% & falla \\
+    Cuarto cerrado, empujado a mano & 3 m & 96,3 -- 101,9 \% & \textbf{cumple} \\
+    \textbf{Pasillo del piso 4} & \textbf{6,68 m} & \textbf{95,4 \%} & \textbf{cumple} \\
+    \textbf{Pasillo del piso 4} & \textbf{14,57 m} & \textbf{103,3 \%} & \textbf{cumple} \\ \bottomrule
+  \end{tabular}
+\end{table}
+
+La lectura importa más que las cifras. \textbf{El estimador no mejoró: cambió el
+entorno.} En un pasillo recto y uniforme la información de avance no está en el
+dato del sensor, y ningún ajuste la recupera. En un pasillo con hornacinas,
+lockers y quiebres —ocho cambios de perfil en 25~m— la misma odometría, sin tocar
+un parámetro, queda dentro del $\pm$5~\%.
+
+Sobre esas dos últimas filas, las del piso 4, los directores declararon
+\textbf{G-2 alcanzada}. Es la compuerta que el proyecto llevaba desde septiembre
+señalando como su única ruta crítica.
+
+\subsection{La navegación y la precisión de llegada (G-3), pendientes}
+
+\begin{notaavance}[apartado sin redactar: la toma de datos cierra el 16 de
+octubre de 2026]
+Aquí irán dos cosas, y ninguna se adelanta:
 
 \begin{enumerate}[leftmargin=*,nosep]
-  \item \textbf{La odometría del vehículo} (compuerta G-2 del acta de
-    directores): error de la estimación de avance contra medida con flexómetro,
-    sobre los recorridos de los pisos 3 y 4.
-  \item \textbf{La navegación}: evidencia de que el planificador traza y el
-    controlador sigue sobre el vehículo real, a partir del registro de cada
-    corrida.
-  \item \textbf{La precisión de llegada} (compuerta G-3): distancia medida
+  \item \textbf{La navegación}: evidencia, a partir del registro de cada
+    corrida, de que el planificador traza y el controlador sigue sobre el
+    vehículo real.
+  \item \textbf{La precisión de llegada} (G-3): distancia medida con flexómetro
     entre la parada del vehículo y el destino del catálogo, contra la tolerancia
-    de 0,5~m fijada por el director.
+    de 0,5~m que fijó el director.
 \end{enumerate}
 
-Hay sesiones de campo ya realizadas y sus medidas están registradas en el
-repositorio del proyecto, pero \textbf{no se reportan todavía como resultado}:
-G-2 y G-3 no están declaradas en el acta, y esa declaración corresponde al
-equipo en el corte del \textbf{viernes 16 de octubre de 2026}. Lo que haya ese
-día es lo que se defiende.
+Hay sesiones de campo realizadas y sus medidas están registradas en el
+repositorio, pero \textbf{no se reportan todavía como resultado}: G-3 no se
+alcanzó en el corte C-1 y la demostración continúa. Lo que haya el 16 de octubre
+es lo que se defiende.
+
+Lo que sí está medido, y no depende de cuántas corridas más se hagan, es el
+mecanismo que condiciona esa llegada: la banda muerta de tracción del vehículo,
+documentada en el §3.2.6.
 \end{notaavance}
 
 \section{Limitaciones de la medición}

@@ -66,10 +66,16 @@ obligaría a corregirlos el 16 de octubre.
 
 | Apartado | Qué falta para cerrarlo |
 |---|---|
-| **§4.2 Evaluación sobre hardware** | La campaña física (RF-27). La sección dice qué irá en ella —odometría G-2, navegación, precisión de llegada G-3— y no adelanta ningún resultado |
-| **Conclusión de OE2** | La declaración de G-2 y G-3 en el acta de directores |
-| **Conclusión de OE4, mitad de hardware** | Lo mismo. La mitad de simulación sí está cerrada y escrita |
+| **§4.2.2 La navegación y la precisión de llegada** | La compuerta **G-3**, que no se alcanzó en el corte C-1 y sigue abierta. La sección dice qué irá en ella y no adelanta ningún resultado |
+| **Conclusión de OE2, mitad de llegada** | Lo mismo: G-3. La mitad de odometría ya está escrita |
+| **Conclusión de OE4, mitad de llegada** | Lo mismo. La simulación y la odometría ya están cerradas y escritas |
 | **Trabajos futuros** | La lista puede crecer con lo que arrojen las sesiones que faltan |
+
+> **Cambió el 5 de octubre.** El acta de directores declaró **G-2 (odometría)
+> ALCANZADA** con las medidas del 2 de octubre en el piso 4, y dejó **G-3
+> (precisión de llegada) abierta**. Antes de esa resolución el §4.2 entero
+> estaba sin redactar; ahora la mitad de odometría se reporta como resultado
+> cerrado y solo queda abierta la de llegada.
 
 Cada uno lleva en el PDF un bloque **«Apartado en curso»** que dice qué puede
 cambiar y qué no. Esos bloques **sí son texto del documento** mientras el
@@ -90,3 +96,7 @@ Conviene tenerlo claro para no volver a tocarlo:
 - La **banda muerta de tracción** (§3.2.6): es una característica de la
   plataforma medida al integrar, no un resultado de la campaña, y por eso está
   en el capítulo de desarrollo y no en el de resultados.
+- La **odometría del vehículo** (§4.2.1, compuerta G-2): declarada alcanzada por
+  los directores el 5 de octubre, con error entre −4,6 % y +3,3 % sobre
+  recorridos de 6,68 y 14,57 m en el piso 4. Era la única ruta crítica que el
+  proyecto se reconocía desde septiembre.
