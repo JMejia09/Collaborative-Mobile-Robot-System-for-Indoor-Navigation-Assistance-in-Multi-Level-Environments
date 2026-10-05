@@ -12,6 +12,28 @@ explica el que quedó.
 % ---------------------------------------------------------------------
 \section{Arquitectura funcional del sistema (OE1)}
 
+La figura~\ref{fig:arquitectura} resume el sistema completo: la interfaz por la
+que entra la solicitud, el coordinador que la reparte, los dos agentes con su
+pila de navegación y la zona de transición donde se produce el relevo. El
+protocolo de la parte inferior es la secuencia que el §3.1.2 implementa.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{imagenes/arquitectura_sistema.png}
+  \caption{Arquitectura funcional del sistema colaborativo, tal como quedó
+    modelada en el OE1. Ningún robot atraviesa la zona de transición: lo que la
+    cruza es el usuario, y lo que se traspasa entre agentes es la
+    responsabilidad de guiarlo.}
+  \label{fig:arquitectura}
+\end{figure}
+
+Dos casillas de la figura se concretaron más tarde, y conviene decirlo para que
+el lector no las lea como definitivas. La de planificación nombra los candidatos
+que se consideraron en el diseño; cuál quedó y por qué está en el §3.2.3. Y los
+niveles aparecen como pisos 1 y 2 porque así se planteó el escenario: al cambiar
+de sitio de pruebas pasaron a ser los pisos 3 y 4 (§3.2.5), sin que la
+arquitectura cambiara, que es justamente lo que se esperaba de ella.
+
 \subsection{El contrato de interfaces}
 
 Antes de escribir código se fijó un contrato: qué habla con qué y en qué formato.
@@ -58,7 +80,7 @@ Cada nivel tiene un robot asignado, y esa correspondencia es un dato de
 configuración, no una constante del código. El coordinador elige el agente al
 aceptar la solicitud, según el nivel del origen y del destino.
 
-En la taxonomía de Gerkey y Matarić \cite{gerkey2004taxonomy} es una asignación
+En la taxonomía de \textcite{gerkey2004taxonomy} es una asignación
 centralizada e instantánea. Con dos agentes y el nivel decidiendo cuál responde,
 un esquema de subasta añadiría complejidad sin dar flexibilidad.
 
@@ -69,6 +91,24 @@ dos la decisión se tome a la vista, y no en silencio.
 
 % ---------------------------------------------------------------------
 \section{Plataforma robótica (OE2)}
+
+\subsection{Por qué DeepRacer y no DonkeyCar}
+
+El OE2 habla de «dos vehículos tipo DonkeyCar». Los vehículos empleados son dos
+AWS DeepRacer, y el cambio conviene explicarlo porque el lector lo va a notar.
+
+DonkeyCar y DeepRacer son la misma clase de plataforma: un chasis de
+radiocontrol a escala 1:18 con dirección Ackermann, un computador a bordo y
+software abierto. Lo que el objetivo fija —cinemática tipo automóvil, bajo costo,
+código modificable— se cumple igual con una que con otra. La diferencia es que la
+universidad ya tenía los dos DeepRacer, de modo que usarlos evitó construir
+hardware y dejó ese tiempo para el problema que el proyecto declara como suyo,
+que es la coordinación.
+
+El cambio no sale gratis y hay que decirlo. El DeepRacer trae su propia pila de
+software, pensada para conducción autónoma por visión y para competencia, y buena
+parte del trabajo del §3.2.3 consistió en convivir con ella. Un DonkeyCar partiría
+de menos capas, pero habría que montarlo.
 
 \subsection{Nav2 sobre un vehículo que no gira sobre su eje}
 
@@ -84,6 +124,25 @@ pasó a un controlador de persecución pura regulada, con marcha atrás habilita
 Del árbol de comportamiento se quitó la recuperación que gira sobre el propio
 eje, porque el vehículo no puede hacerla.
 
+\subsection{El orden de puesta en marcha}
+
+Cada pieza de la cadena de navegación solo se puede diagnosticar si la anterior
+funciona. La guía oficial de puesta en marcha de Nav2 \autocite{nav2setup} lo
+plantea como una escalera de siete peldaños: transformaciones entre marcos,
+odometría, barrido del láser, mapa, localización, mapas de costos y, al final,
+planificador y controlador.
+
+El proyecto la siguió en ese orden, y fue lo que permitió aislar el fallo del
+apartado siguiente. Sin la escalera, una odometría que no mide se confunde con un
+planificador que no planifica, porque los dos se manifiestan igual: el vehículo no
+llega. Con ella, el problema queda acotado a un peldaño.
+
+El orden importa además en la ejecución. Los mapas de costos leen el mapa al
+configurarse, así que si el servidor de mapas no está activo en ese instante la
+capa estática queda vacía y el planificador rechaza cualquier meta diciendo que el
+punto de partida está ocupado. El mensaje señala el origen, y la causa está tres
+peldaños más abajo.
+
 \subsection{La odometría, que fue el cuello de botella}
 
 El vehículo no tiene encoders de rueda. Su única fuente de odometría es la
@@ -96,6 +155,23 @@ del eje del corredor. El estimador devuelve un desplazamiento cercano a cero y
 \emph{acierta}: desde el sensor no ha cambiado nada. Se midió sobre el edificio y
 el resultado fue contundente: en los pasillos disponibles la odometría registraba
 entre el 5~\% y el 73~\% del avance real.
+
+La figura~\ref{fig:hall} muestra lo que eso produce. Las tres trayectorias son
+del mismo vehículo en el mismo hall. La localización se desplaza hasta más de dos
+metros respecto de donde el vehículo estaba de verdad, medido con flexómetro, y
+en una de las corridas salta fuera del recinto. La línea a trazos marca otro
+hallazgo de esa misma sesión: la pared norte estaba modelada 0,84~m más al norte
+de lo que está.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.78\textwidth]{imagenes/recorridos_hall_piso2.png}
+  \caption{Tres recorridos en el hall del piso 2. El círculo es la pose que
+    reporta la localización al terminar; el cuadrado, la posición real medida con
+    flexómetro. La separación entre los dos es el error, y su causa está en la
+    odometría, no en el algoritmo de localización.}
+  \label{fig:hall}
+\end{figure}
 
 La solución no fue afinar el algoritmo, porque no había nada que afinar. Fue
 cambiar de entorno. El criterio para elegirlo salió de la misma medida: hace
@@ -124,10 +200,31 @@ un pasillo mide lo mismo por sus dos lados, así que suma las dos paredes y avis
 si no cierran dentro del 2~\%. Esa comprobación encontró cinco errores antes de
 generar nada. Las dos plantas cierran al 0,32~\% y al 0,62~\%.
 
+La figura~\ref{fig:mapa4} es el resultado para una de ellas. Lo que se ve no es
+un plano dibujado sino el mapa de ocupación con el que navega el vehículo,
+generado a partir de las medidas. Los entrantes de los salones, los lockers, el
+ascensor y la escalera son los ocho cambios de perfil que hacen observable el
+avance.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{imagenes/mapa_piso4.png}
+  \caption{Mapa de navegación del piso 4, derivado del levantamiento con
+    flexómetro. El pasillo corre 25~m del extremo norte al sur; los salones
+    quedan al este, y el ascensor y la escalera al oeste.}
+  \label{fig:mapa4}
+\end{figure}
+
 % ---------------------------------------------------------------------
 \section{Interfaz humano-robot (OE3)}
 
 \subsection{Una página web, no una aplicación}
+
+El OE3 pide «una interfaz móvil». Lo que se construyó es una página web que se
+abre en el navegador del teléfono. Cumple el objetivo: es móvil porque se usa
+desde el teléfono del usuario, y lo cumple mejor que una aplicación nativa,
+porque un visitante ocasional —que es el usuario que el proyecto declara— no va a
+instalar nada para preguntar por un salón.
 
 El requisito pedía que el usuario no instalara nada. La interfaz es una página
 web que se abre desde el navegador del teléfono. No usa recursos externos,

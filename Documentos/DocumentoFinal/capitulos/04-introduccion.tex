@@ -2,6 +2,11 @@
 %  INTRODUCCIÓN  —  párrafos continuos, sin subsecciones (lo pide la plantilla)
 %  Fuentes: anteproyecto cap. 1 (introducción) y cap. 3 (justificación).
 %  Registro: frases cortas, una idea por frase. Mediana objetivo ~15 palabras.
+%
+%  CITAS: se usa \textcite, que NOMBRA al autor dentro de la frase y deja el
+%  numero como localizador. La forma «segun Fulano, tal cosa» es la que pidio el
+%  director: una cita que solo es un numero entre corchetes no dice de quien es
+%  la idea, y obliga al lector a irse al final del documento para saberlo.
 % =====================================================================
 \chapter*{Introducción}
 \addcontentsline{toc}{chapter}{INTRODUCCIÓN}
@@ -11,15 +16,24 @@ Quien llega por primera vez construye un mapa mental a partir de información
 parcial, y lo va corrigiendo mientras camina. Ese esfuerzo crece cuando el
 espacio tiene pasillos repetidos, pocos puntos de referencia o señalización
 escasa. Y crece más cuando hay que cambiar de piso, porque la escalera corta la
-continuidad de lo que la persona lleva recorrido \cite{jimenez2024arquitectura}.
+continuidad de lo que la persona lleva recorrido. Jiménez Muñoz, al construir una
+arquitectura cognitiva que integra al usuario dentro de un sistema de mapas de
+varios niveles, describe esa discontinuidad como el punto donde la representación
+mental del recorrido deja de servir \autocite{jimenez2024arquitectura}.
 
-La robótica móvil colaborativa lleva años resolviendo tareas parecidas. Hay
-sistemas multi-robot que exploran, reparten trabajo y cubren áreas de forma
-coordinada \cite{gerkey2004taxonomy, varghese2023multirobot}. Casi todos operan,
-sin embargo, en una sola planta. El cambio de nivel se ha abordado sobre todo
-dotando al robot de hardware para subir escaleras, o conectándolo al ascensor del
-edificio \cite{kim2024indoor, song2024elevator}. Las dos vías son caras y exigen
-intervenir la infraestructura.
+La robótica móvil colaborativa lleva años resolviendo tareas parecidas. El
+reparto de trabajo entre varios robots tiene una base teórica consolidada desde
+que \textcite{gerkey2004taxonomy} formalizaron la asignación de tareas en
+sistemas multi-robot, y \textcite{varghese2023multirobot} muestran que varios
+agentes pueden mapear y localizarse de forma cooperativa. Casi todos esos
+sistemas operan, sin embargo, en una sola planta.
+
+El cambio de nivel se ha abordado por dos caminos, y los dos pasan por el
+hardware. \textcite{kim2024indoor} combinan un mapa por piso con un grafo
+topológico y hacen que el robot use el ascensor; \textcite{song2024elevator} van
+más lejos y automatizan ese uso instalando dispositivos conectados en el
+edificio. La otra opción es dotar al robot de mecanismos para subir escaleras.
+Ambas encarecen la plataforma y exigen intervenir la infraestructura.
 
 Este trabajo propone otra. En vez de un robot que cruza de piso, se usan
 \textbf{dos robots, cada uno dedicado a un nivel}. El usuario sube por su cuenta
@@ -36,8 +50,10 @@ experimental como a la implementación.
 
 El sistema se construyó sobre dos vehículos AWS DeepRacer y software libre. La
 coordinación corre en un nodo central que habla con cada agente a través de
-ROS~2 \cite{macenski2022ros2}. El usuario pide el servicio desde una página web
-que funciona en cualquier teléfono, sin instalar nada y sin salida a internet.
+ROS~2, el middleware que \textcite{macenski2022ros2} describen como un rediseño
+sobre DDS y no como una actualización de su antecesor. El usuario pide el
+servicio desde una página web que funciona en cualquier teléfono, sin instalar
+nada y sin salida a internet.
 La evaluación se hizo primero en simulación, con una campaña de treinta misiones
 sorteadas, y después sobre los vehículos reales en los pasillos del edificio.
 

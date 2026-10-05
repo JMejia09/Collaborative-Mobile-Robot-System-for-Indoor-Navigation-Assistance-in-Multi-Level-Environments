@@ -42,7 +42,9 @@
 \ustagrupo{GED — Grupo de Estudio y Desarrollo en Robótica}
 \ustalinea{Robótica y Sistemas Autónomos}   % CONFIRMAR el nombre exacto de la línea
 \ustadirector{Ing. Armando Mateus Rojas, MSc.}
-\ustacodirector{Ing. Néstor Iván Ospina, MSc.\\ Ing. Óscar Mauricio Gélvez Lizarazo, MSc.}
+% Sin codirectores: no han participado en el proyecto. El bloque no se imprime
+% si queda vacio (ver \ustacontraportada en el .sty).
+\ustacodirector{}
 \ustaasesor{}                        % vacío = no se imprime el bloque
 \ustaanio{2026}
 \ustames{octubre}
@@ -70,16 +72,22 @@
 \ustaseccion{Lista de figuras}
 \listoffigures
 
-% Gráficas: tipo flotante propio, definido en el .sty. La plantilla las
-% distingue de las figuras («una gráfica contiene ejes coordenados»).
-\ustaseccion{Lista de gráficas}
-\listofgraficas
+% La plantilla declara OPCIONALES las listas de graficas y de codigos, y pide
+% ademas distinguir GRAFICA de FIGURA («una grafica contiene ejes coordenados
+% para expresar comportamiento de datos»). No se imprimen porque saldrian
+% vacias: las cinco ilustraciones del documento van todas como figura, incluidas
+% las que llevan ejes, porque cada una se apoya sobre el plano del edificio y se
+% lee como tal. Para devolver cualquiera de las dos listas basta descomentar su
+% par de lineas.
+%
+% \ustaseccion{Lista de gráficas}
+% \listofgraficas
+%
+% \ustaseccion{Lista de códigos}
+% \lstlistoflistings
 
 \ustaseccion{Lista de tablas}
 \listoftables
-
-\ustaseccion{Lista de códigos}
-\lstlistoflistings
 
 % =====================================================================
 %  CUERPO

@@ -93,6 +93,16 @@ cae tres órdenes de magnitud por debajo de un tic del reloj, se caracterizó
 aparte en banco: mediana entre 154 y 175~\textmu s, máximo 306~\textmu s.
 
 % ---------------------------------------------------------------------
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{imagenes/corrida_simulacion.png}
+  \caption{Una misión de la campaña en simulación. Se superponen el primer plan
+    que calcula el navegador, la pose estimada a lo largo del recorrido y la
+    odometría cruda. La separación creciente entre las dos últimas es la deriva
+    que la localización corrige contra el mapa.}
+  \label{fig:simulacion}
+\end{figure}
+
 \section{Evaluación sobre hardware}
 
 \subsection{La odometría del vehículo}
@@ -157,6 +167,23 @@ cumple}, y el mecanismo está identificado:
 Esto no se arregla afinando el controlador. Las dos vías son decisiones, no
 ajustes: bajar el umbral de arranque del vehículo —mecánico o de calibración de
 servos— o subir la tolerancia con justificación previa.
+
+La figura~\ref{fig:piso4} muestra dos de esas llegadas sobre el mapa del piso 4.
+Conviene mirar la distancia entre el círculo y el cuadrado, que es lo que el
+vehículo cree frente a lo que el flexómetro midió, y la distancia entre el
+cuadrado y la estrella, que es el error de llegada propiamente dicho. La primera
+es pequeña: la localización sabe dónde está. La segunda es la que no cumple, y
+por el motivo que se acaba de explicar.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{imagenes/corridas_piso4.png}
+  \caption{Dos misiones sobre hardware en el pasillo del piso 4, una por cada
+    vehículo. La estrella es el destino del catálogo; el cuadrado, la posición
+    final medida con flexómetro. El tramo a trazos de la corrida naranja es la
+    parte final que la grabación perdió, no un salto del vehículo.}
+  \label{fig:piso4}
+\end{figure}
 
 El dato es coherente con la simulación, y la coincidencia es informativa: allí
 los cuatro fallos quedaron entre 0,284 y 0,347~m contra una tolerancia de

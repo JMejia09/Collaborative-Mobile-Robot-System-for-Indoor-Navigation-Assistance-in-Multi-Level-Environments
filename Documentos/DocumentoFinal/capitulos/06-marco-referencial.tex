@@ -12,11 +12,169 @@
 % =====================================================================
 \chapter{Marco referencial}
 
-Este capítulo reúne cuatro marcos. El conceptual fija qué significa cada término
-técnico del documento. El teórico explica las decisiones de arquitectura y por
-qué se tomaron. El legal sitúa el trabajo frente a la normativa que le aplica.
-El ambiental recoge las consideraciones de consumo y de ciclo de vida del
-hardware.
+Este capítulo reúne cinco secciones. Los antecedentes revisan qué se ha hecho
+antes y dónde queda el hueco que este trabajo ocupa. El marco conceptual fija qué
+significa cada término técnico del documento. El teórico explica las decisiones de
+arquitectura y por qué se tomaron. El legal sitúa el trabajo frente a la
+normativa que le aplica. El ambiental recoge las consideraciones de consumo y de
+ciclo de vida del hardware.
+
+% =====================================================================
+\section{Antecedentes}
+% =====================================================================
+% Esta seccion viene del capitulo 5 del anteproyecto (Revision del estado del
+% arte), reescrita con citas de autor: se nombra a quien hizo el trabajo en
+% lugar de dejar solo el numero entre corchetes. El numero sigue ahi, porque la
+% norma IEEE lo exige, pero ya no carga solo con la referencia.
+%
+% El anteproyecto la tenia como capitulo aparte. Aqui va dentro del marco
+% referencial, que es su lugar natural y es donde la plantilla la admite: su
+% instruccion para la introduccion pide «desarrollo de los antecedentes», y el
+% marco referencial es el unico capitulo donde cabe desarrollarlos.
+% =====================================================================
+
+La revisión se ordena en cuatro líneas: navegación autónoma en interiores,
+coordinación entre varios robots, movilidad entre pisos e interacción con el
+usuario. Cada una resuelve bien una parte del problema. Al final se señala lo
+que ninguna resuelve, que es donde entra este trabajo.
+
+\subsection{Navegación autónoma en interiores}
+
+\textcite{sojan2025autonomous} integran percepción, localización y planificación
+sobre ROS~2 para desplazamiento autónomo en interiores dinámicos. Su aporte es
+consolidar el flujo completo —mapa, localización por filtro de partículas y
+planificación— sobre una representación plana del espacio. Es la arquitectura
+que este proyecto toma como punto de partida en cada agente.
+
+\textcite{varghese2023multirobot} llevan ese mismo problema a un escenario
+cooperativo: varios agentes construyen un mapa compartido y mantienen
+consistente su localización. El énfasis se desplaza de la autonomía individual a
+la construcción colectiva del entorno. La diferencia con el trabajo anterior está
+en el alcance, no en la técnica: las dos propuestas usan representaciones
+bidimensionales y se apoyan en ROS.
+
+Existe una línea distinta que resuelve la navegación con aprendizaje en lugar de
+con planificación explícita. \textcite{bojarski2016end} mostraron que una red
+neuronal entrenada de extremo a extremo, solo con imágenes de cámara y el ángulo
+de dirección del conductor, aprende a conducir sin que nadie programe el
+seguimiento de carril. \textcite{zain2025obstacle} aplica una idea parecida a la
+evasión de obstáculos, fusionando sensores con una red convolucional, y
+\textcite{lopez2024enhancing} combinan aprendizaje profundo con lógica difusa
+para obtener autonomía reactiva.
+
+\textbf{Este proyecto no sigue esa vía, y conviene decir por qué.} Entrenar
+cualquiera de esos modelos exige un conjunto de datos etiquetados del edificio
+concreto, que no existe y que habría que levantar. Además, el aporte declarado
+aquí no está en la percepción sino en la coordinación: dos agentes que se
+reparten un recorrido. Con planificación clásica cada decisión del robot es
+inspeccionable, y eso importa cuando hay que explicar un fallo. Una red
+entrenada daría mejor desempeño reactivo a cambio de no poder decir por qué hizo
+lo que hizo.
+
+\subsection{Coordinación entre varios robots}
+
+Las estrategias de coordinación de la literatura revisada se diferencian por el
+nivel en el que cooperan. \textcite{nair2024collaborative} funda la cooperación
+en el intercambio de información sensorial: los robots comparten lo que perciben
+para mejorar el desempeño del conjunto. \textcite{roszkowska2023multilevel}
+proponen en cambio una estructura jerárquica que supervisa el desplazamiento
+simultáneo de varios agentes, con el fin de prevenir conflictos.
+\textcite{rudrusamy2022broadcast} resuelven el problema desde el canal de
+comunicación, con un esquema de control por difusión y seguimiento visual.
+
+\textcite{xu2025modular} aportan una arquitectura modular sobre ROS para
+asignación cooperativa de tareas, y \textcite{zhan2025kubernetes} atacan la
+resiliencia del sistema cuando un nodo falla. El marco teórico de la asignación
+de tareas lo fija \textcite{gerkey2004taxonomy}, cuya taxonomía permite
+clasificar cualquier esquema de reparto según cuántas tareas acepta un robot,
+cuántos robots requiere una tarea y con cuánta anticipación se decide. En el
+§2.3.1 se usa esa taxonomía para situar el esquema de este trabajo.
+
+El antecedente más cercano a la propuesta de este proyecto es
+\textcite{srivastava2025deliver}, que coordinan recogida y entrega entre varios
+robots mediante planificación con relevos. Allí lo que se traspasa de un agente a
+otro es un paquete. Aquí es una persona, y esa diferencia no es menor: un paquete
+espera indefinidamente en el punto de transferencia, y una persona no.
+
+Un antecedente de alcance comparable al de este trabajo, por tratarse también de
+un proyecto de grado de ingeniería, es \textcite{piguave2023multirobot}, que
+implementan un sistema multi-robot de código abierto sobre ROS~2 para ambientes
+colaborativos.
+
+Lo que comparten todos estos trabajos es el escenario: operan en un solo nivel
+físico, sin segmentación vertical.
+
+\subsection{Movilidad entre pisos}
+
+El cambio de nivel se ha abordado sobre todo desde la logística y la
+exploración. \textcite{kim2024indoor} resuelven la planificación tridimensional
+combinando un mapa por cada piso con un grafo topológico que los conecta, e
+integran además la interacción con el ascensor. \textcite{song2024elevator} se
+concentran justamente en eso último: automatizar el uso del elevador mediante
+dispositivos conectados instalados en el edificio.
+
+\textcite{luo2025elevator} plantean la pregunta un paso antes —ascensor o
+escalera— y la resuelven con aprendizaje por refuerzo jerárquico, de modo que el
+robot elige el medio de transición según el tránsito que encuentra. En otra
+dirección, \textcite{chen2025lite} estructuran el entorno con una descomposición
+piso-escalera que extiende las técnicas bidimensionales a configuraciones de
+varios niveles, y \textcite{gong2026stairway} incorporan conciencia de piso a la
+navegación hacia objetos sin entrenamiento previo del escenario.
+
+Las cuatro propuestas resuelven la movilidad entre pisos desde ángulos
+complementarios: la infraestructura física, el modelado topológico y la decisión
+adaptativa. Las cuatro comparten un supuesto: que el robot cruza. Todas dotan al
+agente de la capacidad de cambiar de nivel, sea subiendo o sea accionando el
+ascensor, y todas se orientan a entrega o exploración antes que a asistencia a
+personas.
+
+\subsection{Interacción con el usuario}
+
+\textcite{jimenez2024arquitectura} integra al usuario dentro del propio sistema
+de mapas, combinando representaciones semánticas con reconocimiento de personas
+para localizar y seguir a quien acompaña, en una plataforma asistencial de varios
+niveles. Es el antecedente más próximo en intención: trata al humano como parte
+del problema de navegación y no como un destinatario externo.
+
+\textcite{li2023bug} abordan la otra cara, la seguridad: modifican el algoritmo
+Bug con sensores de proximidad para reducir las colisiones entre un robot
+colaborativo y las personas que comparten su espacio.
+
+En cuanto a dónde debe ejecutarse el cómputo, \textcite{kehoe2015cloud} revisan
+las arquitecturas que delegan procesamiento a servidores remotos, y
+\textcite{tahir2025edge} las que lo acercan al borde de la red.
+\textcite{malavolta2023offloading} miden el costo real de esa delegación sobre
+WiFi en robots terrestres, que es el caso de este proyecto. Sus resultados
+pesaron en una decisión de diseño concreta: aquí la navegación corre completa a
+bordo de cada vehículo, y lo único centralizado es la coordinación, que mueve
+mensajes pequeños. La interfaz, además, debe funcionar sin salida a internet,
+porque la red del edificio no siempre la tiene.
+
+\subsection{El hueco que ocupa este trabajo}
+
+La literatura cubre bien cada componente por separado. Hay flujos de navegación
+completos sobre ROS, hay esquemas de coordinación multi-robot a distintos
+niveles, hay soluciones de movilidad vertical y hay trabajo sobre la integración
+del usuario. Lo que no aparece es la combinación que aquí se propone:
+\textbf{resolver la discontinuidad entre pisos sin que ningún robot la
+atraviese}, repartiendo el recorrido entre dos agentes dedicados y traspasando a
+la persona en la zona de transición.
+
+La diferencia es económica antes que algorítmica. Los trabajos de movilidad
+vertical compran la continuidad con hardware —mecanismos de locomoción o
+intervención del ascensor—. Este proyecto la compra con comunicación, que es lo
+que los trabajos de coordinación ya saben hacer, aplicada a un problema donde
+nadie la había puesto.
+
+\begin{notarevisor}
+El anteproyecto menciona un antecedente interno de la Universidad Santo Tomás:
+un trabajo de asistencia a personas invidentes en la primera planta, atribuido a
+Parra Buitrago (2021), que allí se cita por nombre y año pero no figura en la
+bibliografía. No se incluye en el texto anterior porque no se ha podido
+localizar la referencia completa. Es el antecedente más próximo en contexto
+institucional y merece quedar bien citado: se solicita la referencia o el dato
+que permita completarla.
+\end{notarevisor}
 
 % =====================================================================
 \section{Marco conceptual}
@@ -183,10 +341,12 @@ aparecieron durante la implementación.
 
 El sistema lo forman dos robots móviles terrestres. Cada uno atiende un nivel del
 edificio y los dos colaboran, de modo que juntos constituyen un sistema
-multi-robot \cite{varghese2023multirobot}. La tarea que ejecutan es guiar a una
+multi-robot, en el sentido que le dan \textcite{varghese2023multirobot}. La
+tarea que ejecutan es guiar a una
 persona desde un origen hasta un destino, y esa persona elige el destino en una
-interfaz móvil. Eso convierte al sistema en un caso de interacción humano-robot
-\cite{jimenez2024arquitectura}.
+interfaz móvil. Eso convierte al sistema en un caso de interacción humano-robot,
+el campo en el que \textcite{jimenez2024arquitectura} sitúa al usuario dentro del
+propio sistema de mapas en lugar de tratarlo como un destinatario externo.
 
 La navegación de cada agente se apoya en tres pilares. La localización determina
 dónde está el robot y hacia dónde mira. La planificación de trayectorias calcula
@@ -196,7 +356,8 @@ aquí aporta un sensor láser de barrido plano.
 
 \subsection{ROS 2 como capa de integración, en dos distribuciones}
 
-Todos los componentes se comunican mediante ROS 2 \cite{macenski2022ros2}. El
+Todos los componentes se comunican mediante ROS 2, cuyo diseño y arquitectura
+documentan \textcite{macenski2022ros2}. El
 sistema usa dos distribuciones a la vez. La simulación corre sobre una porque el
 paquete que integra física y simulación no está liberado para versiones
 posteriores. Los vehículos corren sobre otra, la que soporta el sistema operativo
@@ -213,7 +374,7 @@ configuración por distribución, derivada de una base común.
 
 Sobre esa capa, la coordinación es centralizada. Un solo nodo coordinador actúa
 como cliente de acción frente a cada agente y como servidor de acción frente a la
-interfaz. En la taxonomía de Gerkey y Matarić \cite{gerkey2004taxonomy} eso
+interfaz. En la taxonomía de \textcite{gerkey2004taxonomy} eso
 corresponde a una asignación centralizada e instantánea. El coordinador elige el
 agente al aceptar la solicitud, según el nivel del origen y del destino, y los
 agentes no negocian entre sí. Con solo dos agentes, y con el nivel decidiendo
@@ -222,7 +383,8 @@ cuál responde, un esquema de subasta añadiría complejidad sin dar flexibilida
 \subsection{Navegación autónoma sobre cinemática tipo automóvil}
 
 Cada agente navega con el marco de navegación estándar de ROS 2
-\cite{sojan2025autonomous}. La plataforma empleada sigue un modelo cinemático
+que es el flujo que \textcite{sojan2025autonomous} integran para interiores
+dinámicos. La plataforma empleada sigue un modelo cinemático
 tipo automóvil: no es holonómica y no puede girar sobre su propio eje. El
 problema es que la configuración por omisión de ese marco asume tracción
 diferencial, o sea un robot que sí gira en el sitio. Por eso se sustituyen dos de

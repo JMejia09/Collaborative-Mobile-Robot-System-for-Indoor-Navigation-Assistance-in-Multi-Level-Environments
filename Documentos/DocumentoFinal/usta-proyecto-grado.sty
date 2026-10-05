@@ -114,7 +114,20 @@
 
 % La plantilla pide formato IEEE. Se usa biblatex+biber con estilo ieee.
 % Overleaf lo trae; si se compila en local hace falta 'biber', no 'bibtex'.
-\RequirePackage[backend=biber,style=ieee,sorting=none]{biblatex}
+%
+% maxcitenames=2 / mincitenames=1 reproduce la regla IEEE dentro del TEXTO:
+% dos autores se nombran los dos («Gerkey y Mataric [2]»), tres o mas se
+% abrevian al primero con «et al.» («Xu et al. [15]»). Sin esto \textcite
+% escribe los tres nombres completos, que es correcto en la lista de
+% referencias pero ilegible dentro de una frase.
+% maxbibnames alto: en la LISTA de referencias siguen apareciendo todos.
+\RequirePackage[backend=biber,style=ieee,sorting=none,
+                maxcitenames=2,mincitenames=1,maxbibnames=99]{biblatex}
+
+% babel-spanish traduce «et al.» como «y col.». Se vuelve a «et al.» porque es
+% la forma que usa IEEE -el formato que la plantilla exige- y la que ya traen la
+% bibliografia del anteproyecto y los entregables anteriores.
+\DefineBibliographyStrings{spanish}{andothers={et\addabbrvspace al\adddot}}
 
 % ------------------------------------------------------------- hipervínculos ---
 \RequirePackage[hidelinks]{hyperref}
@@ -185,22 +198,31 @@
   \end{titlepage}}
 
 % --------------------------------------------------- nota de aceptación ---
+% Toda la hoja va CENTRADA: el titulo, el bloque de rayas y las firmas. Antes
+% iba alineada a la derecha, que es como la trae la plantilla de Word, pero ahi
+% queda descolgada del resto del documento.
 \newcommand{\ustanotaaceptacion}{%
   \clearpage
-  {\centering\bfseries\large Nota de aceptación:\par}
+  \begin{center}
+  {\bfseries\large Nota de aceptación:\par}
   \vspace{1cm}
-  \begin{flushright}\begin{minipage}{0.62\textwidth}
+  \begin{minipage}{0.62\textwidth}
     \rule{\linewidth}{0.4pt}\\[0.9cm]
     \rule{\linewidth}{0.4pt}\\[0.9cm]
     \rule{\linewidth}{0.4pt}\\[0.9cm]
     \rule{\linewidth}{0.4pt}\\[2cm]
     \rule{\linewidth}{0.4pt}\\ \centering Firma del Director\\[1.2cm]
-    \rule{\linewidth}{0.4pt}\\ \centering Firma del Co-Director\\[1.2cm]
+    % La plantilla trae aqui una raya para el codirector. Se quita: el proyecto
+    % no tuvo codirector, y una firma que nadie va a estampar no debe aparecer.
+    % Si llegara a nombrarse uno, se devuelve esta linea y se rellena
+    % \ustacodirector en main.tex, que es lo que imprime su nombre en la
+    % contraportada.
     \rule{\linewidth}{0.4pt}\\ \centering Firma del Jurado 1\\[1.2cm]
     \rule{\linewidth}{0.4pt}\\ \centering Firma del Jurado 2
-  \end{minipage}\end{flushright}
+  \end{minipage}
   \vfill
-  {\centering Bogotá D.C., Colombia\\ \@ustames\ de \@ustaanio\par}
+  Bogotá D.C., Colombia\\ \@ustames\ de \@ustaanio
+  \end{center}
   \clearpage}
 
 % ------------------------------------------------------------ advertencia ---
