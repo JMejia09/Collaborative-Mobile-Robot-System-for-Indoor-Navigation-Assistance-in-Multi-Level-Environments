@@ -107,6 +107,11 @@ sensor, que en el BMI160 vale `0xd1`, sin instalar nada en el vehículo.
 | Si falla | Probar a mano la dirección `0x69` y los otros buses de la lista, con la orden de la función `imu` del guion. Si ninguno responde `0xd1`, la tarjeta no tiene ese sensor accesible: la IMU pasa a trabajos futuros y el martes se dedica a G-5 |
 | Cierre | `0xd1` en los dos vehículos, con el bus y la dirección anotados |
 
+> Estado, 5-oct: hecho. Los dos vehículos tienen la BMI160 (`0xd1` en I2C 1, 0x68) y pasaron las
+> pruebas de [`PRUEBAS_IMU.md`](PRUEBAS_IMU.md); solo el módulo de la aceleración de `amss-jgm9` queda
+> fuera de su criterio, sin efecto en el giroscopio
+> ([`S26_pruebas_imu.md`](Evidencia/S26_pruebas_imu.md)).
+
 Si responde `0xd1`, se comprueba que el sensor mide bien con las siete pruebas de
 [`PRUEBAS_IMU.md`](PRUEBAS_IMU.md) (identidad, gravedad, ruido, orientación de los ejes, giros de
 90° y 360° y deriva), antes de integrarlo en la navegación.
