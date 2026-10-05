@@ -421,8 +421,18 @@ def leer_bag(ruta):
     from rosidl_runtime_py.utilities import get_message
 
     lector = rosbag2_py.SequentialReader()
-    lector.open(rosbag2_py.StorageOptions(uri=ruta, storage_id="sqlite3"),
-                rosbag2_py.ConverterOptions("", ""))
+    try:
+        lector.open(rosbag2_py.StorageOptions(uri=ruta, storage_id=_almacenamiento(ruta)),
+                    rosbag2_py.ConverterOptions("", ""))
+    except RuntimeError as e:
+        # La metadata que escribe Jazzy (version 9) no la lee el rosbag2 de
+        # Humble, y el error no lo dice (ver adaptar_bag_jazzy.py).
+        # RuntimeError y no SystemExit: el contrato de arriba es levantar una
+        # excepcion, y prueba_componer_registro.py lo comprueba.
+        raise RuntimeError(
+            f"No se puede abrir {ruta} ({e}).\n"
+            f"Si la grabacion es del vehiculo (Jazzy), pasarla antes por\n"
+            f"  python3 herramientas/adaptar_bag_jazzy.py {ruta} -o <copia>") from e
     tipos = {t.name: t.type for t in lector.get_all_topics_and_types()}
 
     salida = {}
@@ -444,6 +454,21 @@ def leer_bag(ruta):
         msg = rclpy.serialization.deserialize_message(datos, clase)
         salida.setdefault(topico, []).append((t_ns * 1e-9, msg))
     return salida
+
+
+def _almacenamiento(ruta):
+    """Formato del bag, segun su metadata.yaml: 'sqlite3' o 'mcap'.
+
+    Los bags de la simulacion (Humble) son sqlite3; los del vehiculo, mcap
+    ('ros2 bag record -s mcap' en lanzar_bag.inc). Sin metadata se supone
+    sqlite3, como hasta el 2026-10-05.
+    """
+    try:
+        import yaml
+        with open(os.path.join(ruta, "metadata.yaml"), encoding="utf-8") as f:
+            return yaml.safe_load(f)["rosbag2_bagfile_information"]["storage_identifier"]
+    except (OSError, KeyError, TypeError):
+        return "sqlite3"
 
 
 def _condicion(nivel_origen, nivel_destino, etapas):
@@ -475,7 +500,8 @@ def componer(ruta_bag, banco, campana, error_posicion_m=None, rtf=None,
         raise SystemExit(
             f"{ruta_bag} no contiene /coordinacion/estado_mision. Sin el no hay "
             f"marcas, y un registro con marcas en null seria indistinguible de "
-            f"una mision que fallo. Grabar con herramientas/grabar_mision.sh.")
+            f"una mision que fallo. Grabar con herramientas/grabar_mision.sh "
+            f"(simulacion) o grabar_mision_vehiculo.sh (vehiculo).")
 
     # --- De que mision es este bag ------------------------------------------
     # Un bag puede traer mensajes de DOS misiones sin que el procedimiento se
@@ -708,9 +734,14 @@ def _escenario_de(robots):
     return escenario
 
 
+# Con --catalogo. Por omision, el de la simulacion (pisos 1 y 2); los pisos 3 y
+# 4 del vehiculo estan en puntos_interes_pisos34.yaml.
+CATALOGO = None
+
+
 def _catalogo():
-    return os.path.join(_raiz(), "Robot", "aws-deepracer", "deepracer_bringup",
-                        "config", "puntos_interes.yaml")
+    return CATALOGO or os.path.join(_raiz(), "Robot", "aws-deepracer", "deepracer_bringup",
+                                    "config", "puntos_interes.yaml")
 
 
 def _relativa(ruta):
@@ -1134,8 +1165,14 @@ def main():
                    help="ANULACION del mapa, como --mundo. Del sistema vivo "
                         "sale con 'ros2 param get /<ns>/map_server "
                         "yaml_filename'.")
+    p.add_argument("--catalogo", default=None,
+                   help="Catalogo de puntos con el que corrio el coordinador. "
+                        "Por omision, puntos_interes.yaml (pisos 1 y 2); en el "
+                        "vehiculo, config/puntos_interes_pisos34.yaml.")
     p.add_argument("--salida", required=True)
     a = p.parse_args()
+    global CATALOGO
+    CATALOGO = a.catalogo
 
     # El RTF sale del bag si esta ahi. Se prefiere lo medido durante la mision
     # sobre lo que se escriba en la linea de ordenes: el numero de rtf.json

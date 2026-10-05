@@ -55,6 +55,7 @@ ARCHIVOS=(
   "$B/maps/mundo_definitivo_piso2.yaml" "$B/maps/mundo_definitivo_piso2.pgm"
   "herramientas/corrida_nav2.py"
   "herramientas/correr_corrida_nav2.sh"
+  "herramientas/grabar_mision_vehiculo.sh"
   "herramientas/lanzar_bag.inc"
   "herramientas/zona_libre_mapa.py"
   "herramientas/mapear_conduciendo.sh"

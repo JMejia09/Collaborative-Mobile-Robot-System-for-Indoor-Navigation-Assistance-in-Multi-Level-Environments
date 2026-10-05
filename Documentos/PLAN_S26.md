@@ -320,7 +320,23 @@ corre en racey. El paso 3 comprueba que el portátil reciba los mensajes de los 
 |---|---|
 | Qué | Desde el teléfono, una misión en el piso 4: de las escaleras al Salón 402. El vehículo sale de donde quedó, sin reubicarlo: el coordinador primero lo manda al origen («El robot va hacia… Espere allí») |
 | Esperado | racey llega; la interfaz muestra el avance y el final |
-| Cierre | El registro de la misión, compuesto con `componer_registro.py --banco fisico` |
+| Cierre | El registro de la misión, compuesto como dice la tabla de abajo |
+
+Cada misión coordinada se graba en racey, que lleva el coordinador: así todas las marcas salen de un
+mismo reloj, porque las tarjetas no tienen la hora sincronizada. `grabar_mision.sh` no sirve en el
+vehículo, porque exige `/clock`.
+
+| Paso | Comando | Esperado |
+|---|---|---|
+| 1. Antes de pedir la misión | `ssh -t deepracer@192.168.0.104 "sudo -n bash /home/deepracer/tesis/grabar_mision_vehiculo.sh P4_01"` (ruta fija del vehículo) | `== grabando /home/deepracer/mision_P4_01 (19 topicos)`. Si dice `ABORTA: nadie publica /coordinacion/estado_mision`, el coordinador no está vivo (§4.2, paso 4) |
+| 2. Pedir la misión desde el teléfono y, al terminar, pulsar Enter en esa terminal | — | `== listo` |
+| 3. Medir la llegada con flexómetro, desde la marca en el piso | — | La distancia al destino, anotada |
+| 4. Copiar al portátil | `scp -r deepracer@192.168.0.104:mision_P4_01 ~/tesis_evidencia/` | La carpeta con el `.mcap` y `metadata.yaml` |
+| 5. Hacerla legible en Humble | `python3 herramientas/adaptar_bag_jazzy.py ~/tesis_evidencia/mision_P4_01 -o ~/tesis_evidencia/mision_P4_01_humble` | La copia adaptada |
+| 6. Componer el registro | `python3 herramientas/componer_registro.py ~/tesis_evidencia/mision_P4_01_humble --banco fisico --campana S26 --distro jazzy --catalogo Robot/aws-deepracer/deepracer_bringup/config/puntos_interes_pisos34.yaml --error-posicion-m <medida> --medido-por Santiago --salida Documentos/Evidencia/registros/P4_01.json` | `Registro escrito en ...` |
+
+La cadena se probó el 5-oct con una grabación hecha en racey en un dominio aislado: el registro sale
+con la condición B, los niveles 3 y 4 y la verdad de terreno de la cinta.
 
 ---
 
@@ -342,9 +358,9 @@ hay dos variantes, y la que se corre depende del resultado del miércoles (§3.3
 | Misión | Desde el teléfono: origen el Salón 302 y destino el Salón 402 |
 | Esperado | deepy va al origen y guía hasta las escaleras del piso 3; la interfaz pide subir y confirmar la llegada al piso 4; racey guía desde las escaleras del piso 4 hasta el Salón 402 |
 | Segunda misión | Sin tocar los vehículos, otra misión desde el teléfono; cada robot sale de donde quedó (§6.2 del acta). En la variante B, una que no pide media vuelta: en el piso 4, del Salón 402 al Salón 401. En la variante A, la que el equipo elija con lo medido el miércoles |
-| Medidas | Llegada de cada vehículo con flexómetro, desde marcas en el piso; la grabación de los dos |
+| Medidas | Llegada de cada vehículo con flexómetro, desde marcas en el piso; una grabación por misión con `grabar_mision_vehiculo.sh` en racey (§4.3) |
 | Si falla | Anotar en qué fase falló y por qué; se repite el lunes 12 |
-| Cierre | Los registros de las dos misiones compuestos y validados: G-5 alcanzada |
+| Cierre | Los registros de las dos misiones compuestos como en la §4.3 y validados: G-5 alcanzada |
 
 ### 5.2 · Corte semanal (noche)
 

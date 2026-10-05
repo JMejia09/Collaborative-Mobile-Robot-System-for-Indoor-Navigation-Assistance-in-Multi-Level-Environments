@@ -826,6 +826,96 @@ def pruebas_de_condicion_inicial(esquema):
           not valida(r, esquema))
 
 
+def bag_del_vehiculo(ruta):
+    """Una mision entre los pisos 3 y 4 grabada como en el vehiculo: mcap y sin /clock.
+
+    Es lo que deja grabar_mision_vehiculo.sh en racey, ya pasado por
+    adaptar_bag_jazzy.py. Los ids son del catalogo de los pisos 3 y 4, que no
+    esta en el catalogo por omision del compositor.
+    """
+    import rclpy.serialization
+    import rosbag2_py
+    from coordinacion_msgs.msg import EstadoMision
+    from nav_msgs.msg import Odometry
+
+    escritor = rosbag2_py.SequentialWriter()
+    escritor.open(rosbag2_py.StorageOptions(uri=ruta, storage_id="mcap"),
+                  rosbag2_py.ConverterOptions("", ""))
+    for nombre, tipo in [("/coordinacion/estado_mision", "coordinacion_msgs/msg/EstadoMision"),
+                         ("/robot1/odom", "nav_msgs/msg/Odometry"),
+                         ("/robot2/odom", "nav_msgs/msg/Odometry")]:
+        escritor.create_topic(rosbag2_py.TopicMetadata(
+            name=nombre, type=tipo, serialization_format="cdr"))
+
+    def estado(t, etapa, robot):
+        m = EstadoMision()
+        m.mision_id, m.etapa, m.robot_activo = "G5_prueba", etapa, robot
+        m.origen_id, m.destino_id = "piso3_salon_302", "piso4_salon_402"
+        escritor.write("/coordinacion/estado_mision",
+                       rclpy.serialization.serialize_message(m), int(t * 1e9))
+
+    def odom(topico, t, vx):
+        m = Odometry()
+        m.twist.twist.linear.x = vx
+        escritor.write(topico, rclpy.serialization.serialize_message(m), int(t * 1e9))
+
+    estado(10.0, INACTIVA, "")
+    estado(10.2, TRAMO_1, "robot1")
+    for i in range(6):
+        odom("/robot1/odom", 10.3 + i * 0.1, 0.0 if i < 3 else 0.5)
+    estado(60.0, TRANSFERENCIA, "robot2")
+    estado(90.0, TRAMO_2, "robot2")
+    for i in range(3):
+        odom("/robot2/odom", 90.5 + i * 0.1, 0.5)
+    estado(130.0, COMPLETADA, "robot2")
+    del escritor
+
+
+def pruebas_del_vehiculo(esquema):
+    import shutil
+    import tempfile
+    import componer_registro
+    from componer_registro import _almacenamiento, componer
+
+    tmp = tempfile.mkdtemp(prefix="prueba_rf25_vehiculo_")
+    try:
+        ruta = os.path.join(tmp, "mision_G5_prueba")
+        bag_del_vehiculo(ruta)
+        check("el formato del bag sale de su metadata: mcap",
+              _almacenamiento(ruta) == "mcap", f"-> {_almacenamiento(ruta)}")
+        check("sin metadata se supone sqlite3, como antes",
+              _almacenamiento(tmp) == "sqlite3")
+
+        sin = componer(ruta, banco="fisico", campana="prueba", error_posicion_m=0.30,
+                       distro="jazzy")
+        check("con el catalogo por omision (pisos 1 y 2) los niveles no se conocen",
+              sin["solicitud"]["nivel_origen"] is None)
+
+        componer_registro.CATALOGO = os.path.join(
+            RAIZ, "Robot", "aws-deepracer", "deepracer_bringup", "config",
+            "puntos_interes_pisos34.yaml")
+        reg = componer(ruta, banco="fisico", campana="prueba", error_posicion_m=0.30,
+                       distro="jazzy")
+        check("el registro del vehiculo valida contra el esquema",
+              valida(reg, esquema), _por_que(reg, esquema))
+        check("con --catalogo de los pisos 3 y 4: niveles 3 y 4 y condicion B",
+              reg["solicitud"]["nivel_origen"] == 3 and reg["solicitud"]["nivel_destino"] == 4
+              and reg["mision"]["condicion"] == "B",
+              f"-> {reg['solicitud']['nivel_origen']}, {reg['solicitud']['nivel_destino']}, "
+              f"{reg['mision']['condicion']}")
+        check("la verdad de terreno es la cinta, y 0,30 m cumple los 0,5 m del vehiculo",
+              reg["verdad_de_terreno"]["fuente"] == "cinta_metrica"
+              and reg["veredicto"]["c1_posicion"] is True,
+              f"-> {reg['verdad_de_terreno']['fuente']}, {reg['veredicto']['c1_posicion']}")
+        check("t_inicio_tramo2 sale del odom de robot2",
+              reg["marcas"]["t_inicio_tramo2"] is not None
+              and abs(reg["marcas"]["t_inicio_tramo2"] - 90.5) < 1e-6,
+              f"-> {reg['marcas']['t_inicio_tramo2']}")
+    finally:
+        componer_registro.CATALOGO = None
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
 def pruebas_de_bag(esquema):
     import shutil
     import tempfile
@@ -1235,6 +1325,8 @@ def main():
     pruebas_de_tolerancia()
     print("Lectura del bag y ensamblado (necesita el workspace sourceado)")
     pruebas_de_bag(esquema)
+    print("Bag del vehiculo: mcap, sin /clock y con los pisos 3 y 4")
+    pruebas_del_vehiculo(esquema)
     print(f"\n{len(fallos)} fallo(s).")
     return 1 if fallos else 0
 
