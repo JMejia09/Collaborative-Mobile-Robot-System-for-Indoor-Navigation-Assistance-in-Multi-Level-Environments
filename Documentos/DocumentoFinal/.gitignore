@@ -1,5 +1,6 @@
-# Artefactos de compilación de LaTeX. El PDF tampoco se versiona: se regenera
-# con 'pdflatex main && biber main && pdflatex main && pdflatex main'.
+# Artefactos de compilación de LaTeX: se regeneran con
+# 'pdflatex main && biber main && pdflatex main && pdflatex main'.
+# OJO: el PDF NO está en esta lista. Ver la nota del final.
 *.aux
 *.bbl
 *.bcf
