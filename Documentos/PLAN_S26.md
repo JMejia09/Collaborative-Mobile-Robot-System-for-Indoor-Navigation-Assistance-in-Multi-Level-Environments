@@ -285,6 +285,25 @@ equipo lo aprueba, y la decisión queda en la bitácora de `ESTADO.md`.
 | Prueba | `prueba_planificador.py` y `prueba_agente.py`, más las 90 combinaciones del catálogo `puntos_interes_pisos34.yaml` con la asignación `{3: robot1, 4: robot2}` |
 | Cierre | Todas las pruebas pasan y el coordinador está copiado y compilado en los dos vehículos |
 
+Hay un segundo cambio pendiente en el mismo archivo, encontrado el 5-oct al preparar la IMU. El
+coordinador compara las coordenadas del catálogo, que están en el marco del mapa, con la posición de
+`/robotN/odom`. Lo hace al elegir el rumbo de llegada (`_yaw_de_llegada`) y al verificar la llegada
+(`_distancia`). En la simulación funciona, porque el `/odom` del plugin de Gazebo es la pose del
+vehículo en el mundo, que coincide con el mapa. En el vehículo, rf2o y el EKF empiezan en (0, 0)
+mirando a +x. La salida del piso 4 es, en el mapa, (24,45, 1,21) mirando a −x. Un vehículo que sale
+de ahí y llega al Salón 403 queda en `/odom` cerca de (7,2, −0,9), a unos 10 m de las coordenadas
+del salón en el catálogo. El coordinador rechazaría esa llegada aunque el vehículo estuviera en la meta.
+
+| Opción | Qué cambia | A favor | En contra |
+|---|---|---|---|
+| A. La odometría arranca en la salida del mapa | rf2o con `init_pose_from_topic` y el EKF con `initial_state`; el coordinador no se toca | No toca el código congelado | La llegada se juzga con la odometría, que deriva: +3,3 % en 14,57 m son 0,48 m, casi toda la tolerancia de 0,5 m. En misiones encadenadas el error se acumula y el coordinador rechazaría llegadas buenas |
+| B. El coordinador lee la pose en el marco del mapa en el vehículo | Con `condicion:=hardware`, `_distancia` y `_yaw_de_llegada` leen la TF `robotN/map → robotN/base_link`, que mantiene AMCL; en simulación sigue `/odom` | Sirve en misiones encadenadas; es la pose con la que navega Nav2 | Toca el código congelado (pocas líneas, con sus pruebas). La llegada se juzga con AMCL, que el 2-oct erró 0,42 y 0,43 m; la llegada real se sigue midiendo con flexómetro |
+
+Se recomienda la opción B. El §4 del acta pide verificar la llegada contra `/odom` porque en la
+simulación `/odom` es la pose real. En el vehículo es una estimación más, y la medida real es el
+flexómetro.
+La decisión es del equipo, junto con la de los niveles 3 y 4, y hace falta antes de la §4.3.
+
 ### 4.2 · Coordinador, agentes e interfaz en los vehículos
 
 | Paso | Qué | Comando | Esperado |
@@ -350,6 +369,7 @@ push.
 | Si pasa | Qué se hace |
 |---|---|
 | La IMU o el EKF no funcionan en un vehículo el martes | Se sigue sin ella (`IMU=false`) y el martes pasa a preparar G-5 |
+| El coordinador rechaza llegadas buenas en el vehículo (§4.1, segundo cambio) | Decidir la opción A o B antes del jueves; sin eso, la §4.3 y G-5 no pueden cerrar |
 | La red no cubre los dos pisos | Rutas dentro de la cobertura; el coordinador sigue en racey |
 | La media vuelta no sale ni con la meta intermedia | G-5 en la variante B; el regreso automático queda como limitación declarada |
 | G-5 no sale el viernes | Se repite el lunes 12. Si tampoco sale, el cronograma prevé bajar a un vehículo real y uno simulado (sección 9 de [`CRONOGRAMA_S17_S32.md`](CRONOGRAMA_S17_S32.md)) |
