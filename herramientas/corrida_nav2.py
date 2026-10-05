@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
 """Una corrida de una campana de navegacion: pose inicial, meta, espera, registro.
 
-    corrida_nav2.py --avance D [--salida X Y YAW] [opciones]
-    corrida_nav2.py --meta X Y YAW [--salida X Y YAW] [opciones]
+    corrida_nav2.py --avance D [--salida X Y YAW | --sin-pose-inicial] [opciones]
+    corrida_nav2.py --meta X Y YAW [--salida X Y YAW | --sin-pose-inicial] [opciones]
 
 Se corre en el VEHICULO y como root, con 'nav2_hardware.launch.py mapa:=...
 nav:=true' ya activo. Tambien corre en la simulacion, con --ns y --marco.
 
 QUE HACE, EN ORDEN
 ------------------
-1. Si se da --salida, publica '/initialpose' ahi. HACE FALTA EN CADA CORRIDA
-   MENOS LA PRIMERA: al devolver el carro a la marca de salida a mano, AMCL
-   sigue creyendo que esta donde paro la corrida anterior.
+1. Si se da --salida, publica '/initialpose' ahi. Hace falta cuando el carro se
+   coloca a mano en una marca: AMCL sigue creyendo que esta donde paro la
+   corrida anterior. Con --sin-pose-inicial no publica nada y parte de donde
+   AMCL cree que esta el carro, como en la operacion real: es el modo de las
+   misiones encadenadas sin tocar el vehiculo (PLAN_S26.md §3.2).
 2. Espera a que AMCL publique una pose con incertidumbre por debajo de
    --sigma-max. Si no converge, NO manda la meta: una localizacion mala se
    manifiesta como «Nav2 no planifica», que es indistinguible de otros cinco
-   fallos.
+   fallos. Con --sin-pose-inicial primero fuerza a AMCL a corregirse en
+   reposo, y si sigue por encima solo avisa: en operacion nadie para el
+   sistema por eso, y la cifra queda en el CSV.
 3. Toma esa pose como salida real y fija la meta:
      --avance D     meta = D metros por delante en el eje x del mapa, con la
                     misma y que la salida... salvo que se de --y-meta. Es el
@@ -24,9 +28,15 @@ QUE HACE, EN ORDEN
      --meta X Y YAW meta absoluta en el marco del mapa.
 4. Comprueba, si se da --mapa, que la meta cae en celda LIBRE. El 2026-09-24
    una meta a x = 8,0 cayo en lo desconocido y Nav2 aborto sin decir por que.
-5. Manda la meta a NavigateToPose y espera, con tope de --tope segundos.
-6. Con el vehiculo parado, fuerza a AMCL a actualizarse, lee AMCL y /odom y
-   escribe una fila en --csv.
+5. Manda la meta a NavigateToPose. Si Nav2 no confirma la meta en
+   PLAZO_CONFIRMACION_S, aborta y cancela todas las metas: el 30-sep y el 2-oct
+   la corrida se quedo esperando esa confirmacion diez minutos. Con la meta
+   confirmada espera, con tope de --tope segundos.
+6. Guarda la pose de AMCL en el instante en que Nav2 termina. Despues, con el
+   vehiculo parado, fuerza a AMCL a actualizarse, lee AMCL y /odom y escribe
+   una fila en --csv con las dos poses de llegada. El 30-sep, con AMCL ya
+   perdido, el refresco hizo saltar la pose 7,5 m y la llegada del informe no
+   era la del carro: si el salto pasa de SALTO_SOSPECHOSO_M, avisa.
 
 POR QUE SE FUERZA A AMCL AL LLEGAR
 ----------------------------------
@@ -59,31 +69,41 @@ servidor de acciones y no recibiria nada, sin dar error.
 
 PARADA GARANTIZADA
 ------------------
-Si el proceso se interrumpe o supera el tope, cancela la meta y publica ceros
-en /cmd_vel. El puente al servo conserva el ultimo valor recibido: sin esto, el
-carro seguiria con la ultima orden de Nav2.
+Si el proceso se interrumpe (Ctrl-C, kill -INT o kill -TERM) o supera el tope,
+cancela la meta y publica ceros en /cmd_vel. El puente al servo conserva el
+ultimo valor recibido: sin esto, el carro seguiria con la ultima orden de Nav2.
+Las senales las atiende este programa y no rclpy: con el manejador de rclpy, la
+interrupcion cerraba el contexto antes de llegar a 'parar()', y los ceros no
+salian ('publisher's context is invalid', 30-sep).
 """
 import argparse
 import csv
 import math
 import os
+import signal
 import sys
 import time
 
 import rclpy
 from action_msgs.msg import GoalStatus
+from action_msgs.srv import CancelGoal
 from geometry_msgs.msg import PoseWithCovarianceStamped, Twist
 from nav2_msgs.action import NavigateToPose
 from nav_msgs.msg import Odometry
 from rclpy.action import ActionClient
 from rclpy.node import Node
 from rclpy.qos import QoSDurabilityPolicy, QoSProfile, QoSReliabilityPolicy
+from rclpy.signals import SignalHandlerOptions
 from std_srvs.srv import Empty
 
 # Media longitud del vehiculo: la huella del YAML de Nav2 va de -0,140 a +0,140
 # en x, centrada en base_link. La defensa delantera esta 0,14 m por delante del
 # punto que Nav2 lleva a la meta.
 DEFENSA_A_BASE = 0.14
+# Lo que se espera a que Nav2 confirme la meta antes de abortar (paso 5).
+PLAZO_CONFIRMACION_S = 30.0
+# Un refresco de AMCL que mueve la pose mas que esto delata un AMCL perdido.
+SALTO_SOSPECHOSO_M = 0.5
 
 ESTADOS = {
     GoalStatus.STATUS_SUCCEEDED: 'SUCCEEDED',
@@ -91,11 +111,15 @@ ESTADOS = {
     GoalStatus.STATUS_CANCELED: 'CANCELED',
 }
 
+# Version de octubre de 2026: anade 'pose_inicial' y la pose de AMCL al terminar
+# Nav2 ('amcl_fin_*'), antes del refresco. Un CSV de la version anterior se
+# rechaza (codigo 7): cada serie nueva va en su propio fichero.
 COLUMNAS = [
-    'corrida', 'hora', 'estado', 'tiempo_s', 'recuperaciones',
+    'corrida', 'hora', 'estado', 'tiempo_s', 'recuperaciones', 'pose_inicial',
     'salida_amcl_x', 'salida_amcl_y', 'salida_amcl_yaw', 'sigma_salida_m',
     'meta_x', 'meta_y', 'meta_yaw', 'avance_pedido_m',
-    'llegada_amcl_x', 'llegada_amcl_y', 'error_llegada_amcl_m',
+    'amcl_fin_x', 'amcl_fin_y', 'error_llegada_amcl_fin_m',
+    'llegada_amcl_x', 'llegada_amcl_y', 'error_llegada_amcl_m', 'salto_refresco_m',
     'avance_amcl_m', 'avance_odom_m', 'error_long_odom_m',
     'cmdvel_n', 'cmdvel_bajo_040_n', 'linx_max', 'angz_min', 'angz_max',
     # Las tres ultimas las rellena la persona, con flexometro.
@@ -145,6 +169,7 @@ class Corrida(Node):
         self.cmd = []
         self.recuperaciones = 0
         self.meta_en_curso = None      # meta en curso, para poder cancelarla
+        self.meta_sin_confirmar = False  # enviada sin confirmacion de Nav2
 
         # AMCL publica /amcl_pose con durabilidad TRANSIENT_LOCAL: sin pedirla
         # asi, un suscriptor que llega tarde no recibe la ultima pose.
@@ -160,6 +185,10 @@ class Corrida(Node):
         self.pub_cmd = self.create_publisher(Twist, pre + '/cmd_vel', 10)
         self.cliente = ActionClient(self, NavigateToPose, pre + '/navigate_to_pose')
         self.nomotion = self.create_client(Empty, pre + '/request_nomotion_update')
+        # Cancelar todas las metas: sirve cuando se envio una y Nav2 no la
+        # confirmo, asi que no hay 'handle' con el que cancelarla.
+        self.cancelar = self.create_client(
+            CancelGoal, pre + '/navigate_to_pose/_action/cancel_goal')
 
     def on_amcl(self, m):
         p = m.pose.pose
@@ -220,19 +249,43 @@ class Corrida(Node):
             self.girar(0.5)
         return True
 
+    def cancelar_todas(self):
+        """Cancela todas las metas de NavigateToPose (identificador y marca a cero)."""
+        if not self.cancelar.wait_for_service(timeout_sec=2.0):
+            return
+        f = self.cancelar.call_async(CancelGoal.Request())
+        fin = time.time() + 3.0
+        while not f.done() and time.time() < fin:
+            rclpy.spin_once(self, timeout_sec=0.1)
+
     def parar(self):
         # Primero cancelar: mientras la meta siga viva, el controlador de Nav2
-        # vuelve a publicar velocidad encima de los ceros de abajo.
-        if self.meta_en_curso is not None:
-            c = self.meta_en_curso.cancel_goal_async()
-            fin = time.time() + 3.0
-            while not c.done() and time.time() < fin:
-                rclpy.spin_once(self, timeout_sec=0.1)
-            self.meta_en_curso = None
+        # vuelve a publicar velocidad encima de los ceros de abajo. Cada paso va
+        # aparte: si uno falla, los ceros tienen que salir igual.
+        try:
+            if self.meta_en_curso is not None:
+                c = self.meta_en_curso.cancel_goal_async()
+                fin = time.time() + 3.0
+                while not c.done() and time.time() < fin:
+                    rclpy.spin_once(self, timeout_sec=0.1)
+                self.meta_en_curso = None
+            elif self.meta_sin_confirmar:
+                self.cancelar_todas()
+                self.meta_sin_confirmar = False
+        except Exception as e:  # noqa: BLE001 - parar es lo ultimo que se hace
+            print('   AVISO: no se pudo cancelar la meta (%s)' % e)
         cero = Twist()
-        for _ in range(40):
-            self.pub_cmd.publish(cero)
-            time.sleep(0.025)
+        try:
+            for _ in range(40):
+                self.pub_cmd.publish(cero)
+                time.sleep(0.025)
+        except Exception as e:  # noqa: BLE001
+            print('   AVISO: no se pudieron publicar los ceros (%s). DETEN EL CARRO A MANO' % e)
+
+
+def interrumpir(signum, frame):
+    """SIGINT, SIGTERM y SIGHUP acaban en el 'finally' de main(), que para el carro."""
+    raise KeyboardInterrupt
 
 
 def main():
@@ -242,8 +295,12 @@ def main():
                    help='meta D metros por delante de la salida, en el eje x del mapa')
     g.add_argument('--meta', type=float, nargs=3, metavar=('X', 'Y', 'YAW'),
                    help='meta absoluta en el marco del mapa')
-    ap.add_argument('--salida', type=float, nargs=3, metavar=('X', 'Y', 'YAW'),
-                    help='publica /initialpose ahi antes de empezar')
+    p = ap.add_mutually_exclusive_group()
+    p.add_argument('--salida', type=float, nargs=3, metavar=('X', 'Y', 'YAW'),
+                   help='publica /initialpose ahi antes de empezar')
+    p.add_argument('--sin-pose-inicial', action='store_true',
+                   help='no publica /initialpose: parte de donde AMCL cree que esta '
+                        'el carro, como en la operacion real (misiones encadenadas)')
     ap.add_argument('--y-meta', type=float, default=None,
                     help='con --avance: y de la meta (por defecto, la de la salida)')
     ap.add_argument('--mapa', help='YAML del mapa, para comprobar que la meta es libre')
@@ -274,7 +331,10 @@ def main():
             print('        Usa otro --csv para esta campana. Nada se ha movido.')
             return 7
 
-    rclpy.init(args=sys.argv)
+    # Las senales las atiende este programa, no rclpy (ver PARADA GARANTIZADA).
+    rclpy.init(args=sys.argv, signal_handler_options=SignalHandlerOptions.NO)
+    for s in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
+        signal.signal(s, interrumpir)
     n = Corrida(a.ns, a.marco)
     try:
         return correr(n, a)
@@ -292,6 +352,9 @@ def correr(n, a):
         print('== pose inicial: x=%.2f y=%.2f yaw=%.2f ==' % tuple(a.salida))
         n.amcl = None
         n.poner_salida(*a.salida)
+    elif a.sin_pose_inicial:
+        print('== sin pose inicial: parte de donde AMCL cree que esta el carro ==')
+        n.refrescar_amcl(3)
 
     print('== esperando a AMCL (sigma < %.2f m) y a /odom ==' % a.sigma_max)
     # Se espera a LAS DOS cosas en el mismo bucle. La primera version salia en
@@ -308,7 +371,11 @@ def correr(n, a):
     if n.amcl is None:
         print('ABORTA: AMCL no publica %s/amcl_pose. ¿Esta el launch con mapa:=?' % a.ns)
         return 3
-    if n.sigma >= a.sigma_max:
+    if n.sigma >= a.sigma_max and a.sin_pose_inicial:
+        print('   AVISO: incertidumbre de AMCL %.2f m, por encima de %.2f. Se sigue:'
+              % (n.sigma, a.sigma_max))
+        print('   en operacion nadie para el sistema por eso; queda en el CSV.')
+    elif n.sigma >= a.sigma_max:
         print('ABORTA: AMCL no converge: sigma %.2f m, maximo %.2f.' % (n.sigma, a.sigma_max))
         print('        Revisa en RViz que el barrido encaje con el mapa, o pasa')
         print('        --salida con una pose mas cercana a la real.')
@@ -359,8 +426,15 @@ def correr(n, a):
     n.cmd = []
     t0 = time.time()
     fut = n.cliente.send_goal_async(meta, feedback_callback=al_feedback)
-    while not fut.done():
+    n.meta_sin_confirmar = True
+    while not fut.done() and time.time() - t0 < PLAZO_CONFIRMACION_S:
         rclpy.spin_once(n, timeout_sec=0.1)
+    if not fut.done():
+        print('ABORTA: Nav2 no confirmo la meta en %.0f s. Se cancelan todas las metas.'
+              % PLAZO_CONFIRMACION_S)
+        print('        Mira «Failed to send goal response» en /tmp/nav2_campo/launch.log.')
+        return 8
+    n.meta_sin_confirmar = False
     handle = fut.result()
     if not handle.accepted:
         print('ABORTA: Nav2 rechazo la meta.')
@@ -380,6 +454,8 @@ def correr(n, a):
     else:
         n.meta_en_curso = None         # terminada: no hay nada que cancelar
     tiempo = time.time() - t0
+    # La pose de AMCL al terminar Nav2, antes de parar y de refrescarla (paso 6).
+    fin_x, fin_y, _ = n.amcl
     # Copia ANTES de parar: la herramienta escucha /cmd_vel y oiria sus propios
     # cuarenta ceros, que no son ordenes de Nav2.
     cmd = list(n.cmd)
@@ -403,6 +479,11 @@ def correr(n, a):
         print('   estar atrasada hasta 0,25 m. Fiate de /odom y de la cinta.')
     lx, ly, _ = n.amcl
     err = math.hypot(lx - mx, ly - my)
+    err_fin = math.hypot(fin_x - mx, fin_y - my)
+    salto = math.hypot(lx - fin_x, ly - fin_y)
+    if salto > SALTO_SOSPECHOSO_M:
+        print('   AVISO: al refrescarla, la pose de AMCL salto %.2f m. AMCL estaba perdido:' % salto)
+        print('   la llegada que vale es la del flexometro, no la de AMCL.')
     av_amcl = math.hypot(lx - sx, ly - sy)
     av_odom = math.hypot(n.odom[0] - odom0[0], n.odom[1] - odom0[1])
     err_odom = av_odom - pedido
@@ -414,12 +495,15 @@ def correr(n, a):
     fila = {
         'corrida': a.corrida, 'hora': time.strftime('%H:%M:%S'), 'estado': estado,
         'tiempo_s': '%.1f' % tiempo, 'recuperaciones': n.recuperaciones,
+        'pose_inicial': 'si' if a.salida else 'no',
         'salida_amcl_x': '%.3f' % sx, 'salida_amcl_y': '%.3f' % sy,
         'salida_amcl_yaw': '%.3f' % syaw, 'sigma_salida_m': '%.3f' % sigma0,
         'meta_x': '%.3f' % mx, 'meta_y': '%.3f' % my, 'meta_yaw': '%.3f' % myaw,
         'avance_pedido_m': '%.3f' % pedido,
+        'amcl_fin_x': '%.3f' % fin_x, 'amcl_fin_y': '%.3f' % fin_y,
+        'error_llegada_amcl_fin_m': '%.3f' % err_fin,
         'llegada_amcl_x': '%.3f' % lx, 'llegada_amcl_y': '%.3f' % ly,
-        'error_llegada_amcl_m': '%.3f' % err,
+        'error_llegada_amcl_m': '%.3f' % err, 'salto_refresco_m': '%.3f' % salto,
         'avance_amcl_m': '%.3f' % av_amcl, 'avance_odom_m': '%.3f' % av_odom,
         'error_long_odom_m': '%+.3f' % err_odom,
         'cmdvel_n': len(cmd), 'cmdvel_bajo_040_n': bajos,
@@ -441,7 +525,8 @@ def correr(n, a):
     print('avance pedido        : %.3f m' % pedido)
     print('avance segun AMCL    : %.3f m' % av_amcl)
     print('avance segun /odom   : %.3f m' % av_odom)
-    print('error de llegada AMCL: %.3f m   (tolerancia de Nav2: 0,25)' % err)
+    print('error de llegada AMCL: %.3f m al terminar Nav2, %.3f m tras refrescarla'
+          % (err_fin, err))
     print('error longitudinal segun /odom: %+.3f m   (+ se paso, - se quedo corto)'
           % err_odom)
     print('/cmd_vel             : %d mensajes, %d de avance por debajo de 0,40, '
@@ -450,13 +535,13 @@ def correr(n, a):
     print('fila escrita en      : %s' % a.csv)
     print()
     print('AHORA, CON FLEXOMETRO Y SIN MOVER EL CARRO:')
-    print('  1. avance real: de la linea de salida a la defensa delantera')
-    print('  2. error longitudinal: de la defensa a la linea de meta')
-    print('     (positivo si la paso, negativo si se quedo corto)')
-    print('  3. desvio lateral: del centro del carro a la linea central')
+    print('  1. marcar en el piso, junto al carro, la altura de su centro')
+    print('  2. avance real: de la marca de salida (o de la llegada anterior) a esta,')
+    print('     a lo largo del pasillo')
+    print('  3. lateral: del centro del carro a la pared de referencia')
     print('  Anotalo en las columnas CINTA_* de la fila de esta corrida.')
-    print('  La defensa esta %.2f m por delante del punto que Nav2 lleva a la meta.'
-          % DEFENSA_A_BASE)
+    print('  El centro del carro es el punto que Nav2 lleva a la meta; la defensa')
+    print('  delantera esta %.2f m por delante.' % DEFENSA_A_BASE)
     return 0
 
 

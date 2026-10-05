@@ -12,8 +12,10 @@
 # El orden que este guion impone, y que no es negociable:
 #   1. puente cmdvel_to_servo   (el launch NO lo arranca; sin el, Nav2
 #                                planifica y el carro no se mueve, sin error)
-#   2. set_max_speed 0.9        (con 0.68 de fabrica, linear.x 0.50 sale a
-#                                throttle 0.4247 y el carro no arranca)
+#   2. set_max_speed $ESCALA    (0.9 por defecto; con 0.68 de fabrica, linear.x
+#                                0.50 sale a throttle 0.4247 y el carro no
+#                                arranca. Va por vehiculo: el 2-oct, con 0.9,
+#                                amss-jgm9 no arranco y amss-ez9n llego a 1,58 m/s)
 #   3. map_server + ACTIVAR     (antes del paso 5, o el paso 5 no sirve)
 #   4. amcl + ACTIVAR + pose
 #   5. el launch con slam:=false nav:=true
@@ -38,6 +40,11 @@
 #     NS=robot2 CARRO=192.168.0.102 MAPA=... bash nav2_mapa_guardado.sh   (bloque C: todo bajo /robot2)
 #     POSE_X=24.45 POSE_Y=1.21 POSE_YAW=3.1416 CARRO=... MAPA=... bash nav2_mapa_guardado.sh
 #         (salida del vehiculo en el mapa; POSE_YAW en radianes, 0 por defecto)
+#     ESCALA=1.0 CARRO=... MAPA=... bash nav2_mapa_guardado.sh   (escala del puente; 0.9 por defecto)
+#
+# Antes de arrancar apaga la camara y la fusion de sensores del fabricante, que
+# el proyecto no usa: con las dos encendidas la tarjeta llego a carga 22 y el
+# gestor desactivo Nav2 (amss-jgm9, 2-oct).
 #     bash nav2_mapa_guardado.sh --estado
 #     bash nav2_mapa_guardado.sh --parar
 #
@@ -53,6 +60,7 @@ D=/home/deepracer/tesis   # ruta fija del vehiculo
 MAPA="${MAPA:-/home/deepracer/mapeo_235028/mapa.yaml}"   # ruta fija del vehiculo
 POSE_X="${POSE_X:-1.0}"
 POSE_Y="${POSE_Y:-0.0}"
+ESCALA="${ESCALA:-0.9}"
 # Rumbo de la salida en radianes (3.1416 = mirando hacia -x). Va en la pose
 # inicial como cuaternion; sin el, AMCL arranca mirando a +x.
 POSE_YAW="${POSE_YAW:-0.0}"
@@ -145,6 +153,9 @@ encender_lifecycle() {
 arrancar() {
   info "0/6 · limpiando restos"
   en_carro "for p in cmdvel_to_serv rf2o_laser_odom sync_slam_toolb robot_state_pub controller_serv planner_server bt_navigator behavior_server waypoint_follow lifecycle_manag map_server amcl; do pkill -9 \$p 2>/dev/null; done; pkill -9 -f nav2_hardware.launch 2>/dev/null; true" >/dev/null
+  # Camara y fusion fuera: el proyecto no las usa y cargan la tarjeta. Por nombre
+  # de proceso (15 caracteres), nunca con 'pkill -f'.
+  en_carro "pkill -x camera_node; pkill -x sensor_fusion_n; true" >/dev/null
   sleep 3
 
   info "1/6 · el laser publica?"
@@ -162,8 +173,8 @@ arrancar() {
   lanzar_en_carro puente "$FUENTES_PUENTE && ros2 run cmdvel_to_servo_pkg cmdvel_to_servo_node${NS:+ --ros-args $ARGS_NS -r /cmd_vel:=$P/cmd_vel}"
   sleep 6
   local esc
-  esc=$(en_carro "$FUENTES_PUENTE && timeout 20 ros2 service call $P/set_max_speed deepracer_interfaces_pkg/srv/NavThrottleSrv \"{throttle: 0.9}\" 2>/dev/null | tail -2")
-  echo "$esc" | grep -q "error=0" && verde "   escala 0.9 puesta" || rojo "   la escala NO se puso; el carro no arrancara"
+  esc=$(en_carro "$FUENTES_PUENTE && timeout 20 ros2 service call $P/set_max_speed deepracer_interfaces_pkg/srv/NavThrottleSrv \"{throttle: $ESCALA}\" 2>/dev/null | tail -2")
+  echo "$esc" | grep -q "error=0" && verde "   escala $ESCALA puesta" || rojo "   la escala NO se puso; el carro no arrancara"
 
   info "3/6 · map_server con $MAPA (use_sim_time=false)"
   en_carro "test -f $MAPA" >/dev/null 2>&1 || { rojo "   el mapa no existe en el carro: $MAPA"; exit 1; }

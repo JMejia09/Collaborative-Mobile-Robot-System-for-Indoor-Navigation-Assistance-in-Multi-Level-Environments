@@ -47,12 +47,25 @@ arrancar_bag() {
 
 cerrar_bag() {
     [ -n "${BAG_PID:-}" ] || return 0
-    kill -INT "$BAG_PID" 2>/dev/null
+    # Primero SIGINT, que es el cierre limpio. Si en 25 s no aparece
+    # 'metadata.yaml', SIGTERM, que rosbag2 tambien atiende cerrando el fichero,
+    # y 10 s mas. Solo despues SIGKILL: con el, el .mcap pierde el ultimo bloque
+    # que tenia en memoria, y las grabaciones del 2-oct terminaban metros antes
+    # que la corrida. Se envia al grupo (el grabador lo encabeza por 'set -m').
+    kill -INT -- "-$BAG_PID" 2>/dev/null || kill -INT "$BAG_PID" 2>/dev/null
     local i
     for i in $(seq 25); do
         [ -f "$BAG_DESTINO/metadata.yaml" ] && break
         sleep 1
     done
+    if [ ! -f "$BAG_DESTINO/metadata.yaml" ] && kill -0 "$BAG_PID" 2>/dev/null; then
+        echo "AVISO: el grabador no cerro con SIGINT; se le manda SIGTERM"
+        kill -TERM -- "-$BAG_PID" 2>/dev/null || kill -TERM "$BAG_PID" 2>/dev/null
+        for i in $(seq 10); do
+            [ -f "$BAG_DESTINO/metadata.yaml" ] && break
+            sleep 1
+        done
+    fi
     chown -R deepracer:deepracer "$BAG_DESTINO" 2>/dev/null
     if [ -f "$BAG_DESTINO/metadata.yaml" ]; then
         # Se imprime la CUENTA y no solo el nombre del fichero. Un bag con

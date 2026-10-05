@@ -62,10 +62,14 @@ atómicas y el trabajo pasa al análisis y a la presentación. En ese caso se pa
 | f | `nav2_mapa_guardado.sh` admite `ESCALA` (por defecto 0,9) y apaga `camera_node` y `sensor_fusion_node` antes de Nav2 | Con 0,9 racey no arranca y deepy va a 1,58 m/s; con la cámara y la fusión encendidas Nav2 se cayó (2-oct) |
 | g | `corrida_nav2.py --sin-pose-inicial`: no publica la pose inicial y toma como salida la pose actual de AMCL | Para encadenar misiones sin volver a decirle a AMCL dónde está el vehículo, como en la operación real |
 
-Prueba de cierre: el ensayo en simulación de la §9 de
-[`GUIA_CAMPANA_NAV2_HARDWARE.md`](GUIA_CAMPANA_NAV2_HARDWARE.md), interrumpiendo una corrida a la
-mitad. Esperado: el vehículo simulado se detiene y la grabación se abre completa. Si falla, no se
-copian las herramientas a los vehículos y se corre con las de la semana pasada.
+Prueba de cierre: `python3 herramientas/prueba_corrida_nav2.py`, que corre la herramienta contra un
+Nav2 de mentira, sin Gazebo (el ensayo en Gazebo tumbó el portátil el 5-oct). Comprueba la corrida
+normal, la encadenada, la interrupción con `SIGINT` y con `SIGTERM` y el límite de la confirmación.
+
+> Estado, 5-oct: hecho. Las siete correcciones están en las herramientas, la prueba da 21 de 21 con la
+> versión nueva y 15 fallos con la anterior (la interrupción reproduce el defecto del 30-sep), y el
+> grabador cierra limpio con la interrupción. La versión nueva del CSV añade columnas: cada serie va
+> en un fichero nuevo, `campana_s26_racey.csv` y `campana_s26_deepy.csv`.
 
 ### 1.3 · Desconectar las cámaras (tarde, en los dos vehículos)
 
@@ -186,10 +190,10 @@ siguiente.
 | 1 | Colocar el vehículo | Centro a 1,00 m de la pared sur y a 1,25 m de la pared este, mirando al norte | — | Vehículo en la salida |
 | 2 | Arrancar Nav2 en racey, con IMU si quedó lista el martes | `CARRO=192.168.0.104 MAPA=/home/deepracer/tesis/piso4.yaml POSE_X=24.45 POSE_Y=1.21 POSE_YAW=3.1416 ESCALA=1.0 bash herramientas/nav2_mapa_guardado.sh   # ruta fija del vehiculo` | `Managed nodes are active` en 3 a 5 min | Nav2 activo |
 | 3 | Comprobar las rutas sin mover el vehículo | `compute_path_to_pose` a los tres salones (§4.3 de [`GUIA_PISOS_3_Y_4.md`](GUIA_PISOS_3_Y_4.md)) | `SUCCEEDED` | Tres rutas |
-| 4 | Tramo 1, con la pose inicial | `ssh deepracer@192.168.0.104 "sudo -n bash ~deepracer/tesis/correr_corrida_nav2.sh p4r_04 --salida 24.45 1.21 3.1416 --meta 17.22 2.06 3.1416 --mapa /home/deepracer/tesis/piso4.yaml --csv ~deepracer/campana_p4_racey.csv"` (ruta fija del vehículo) | Fila en el CSV | Marca en el piso junto al centro del vehículo; avance desde la salida y distancia a la pared oeste |
+| 4 | Tramo 1, con la pose inicial | `ssh deepracer@192.168.0.104 "sudo -n bash ~deepracer/tesis/correr_corrida_nav2.sh p4r_04 --salida 24.45 1.21 3.1416 --meta 17.22 2.06 3.1416 --mapa /home/deepracer/tesis/piso4.yaml --csv ~deepracer/campana_s26_racey.csv"` (ruta fija del vehículo) | Fila en el CSV | Marca en el piso junto al centro del vehículo; avance desde la salida y distancia a la pared oeste |
 | 5 | Tramo 2, sin pose inicial | La misma orden con `p4r_05`, `--sin-pose-inicial` en lugar de `--salida` y `--meta 9.31 2.15 3.1416` | Fila en el CSV; AMCL no se reinicia | Marca nueva; avance medido de marca a marca y distancia a la pared oeste |
 | 6 | Tramo 3, sin pose inicial | Igual, `p4r_06` y `--meta 6.20 2.03 3.1416` | Igual | Igual |
-| 7 | La misma cadena con deepy | `CARRO=192.168.0.102`, `ESCALA=0.85`, ids `p4d_03` a `p4d_05` y su CSV | Igual | Igual |
+| 7 | La misma cadena con deepy | `CARRO=192.168.0.102`, `ESCALA=0.85`, ids `p4d_03` a `p4d_05` y `campana_s26_deepy.csv` | Igual | Igual |
 
 Si la IMU quedó lista, cada vehículo hace la cadena dos veces: primero sin IMU y con margen de 1,0 m,
 y después con IMU y margen de 0,5 m. El margen se cambia en `nav2_hardware.launch.py` (ajuste 8).
