@@ -1,0 +1,4 @@
+# Proyecto de grado (2026-10-05): las camaras del DeepRacer quedan conectadas pero
+# desactivadas, para no cargar la tarjeta. GEO Semi Condor, 29fe:4d53.
+# Para volver a activarlas: borrar este archivo y reiniciar el vehiculo.
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="29fe", ATTR{idProduct}=="4d53", ATTR{authorized}="0"

@@ -17,7 +17,7 @@ desde la raíz del repositorio en el portátil.
 | Día | Qué se hace | Quién | Vehículos | Al terminar el día |
 |---|---|---|---|---|
 | Lun 5, mañana | Acta: cambio de sitio y corte C-1. Correcciones de las herramientas de campo | Santiago y Claude | no | Acta al día; herramientas corregidas y probadas en simulación |
-| Lun 5, tarde | Cámaras fuera, comprobar la IMU, copiar grabaciones, nivelar los dos vehículos | Santiago y Jonny | los dos | Se sabe si hay IMU; vehículos nivelados |
+| Lun 5, tarde | Desactivar las cámaras, comprobar la IMU, copiar grabaciones, nivelar los dos vehículos | Santiago y Jonny | los dos | Se sabe si hay IMU; vehículos nivelados |
 | Mar 6 | IMU funcionando y combinada con rf2o (si existe). Red entre los pisos 3 y 4 | Santiago y Claude; Jonny la red | los dos | La IMU publica en los dos vehículos; la red llega a los dos pisos |
 | Mié 7 | Radio de giro. Misiones encadenadas en el piso 4 sin tocar el vehículo, con y sin IMU. Media vuelta y regreso a la escalera | Santiago y Jonny | uno cada vez | G-2 cerrada; G-3 evaluada; se sabe si el vehículo vuelve solo a su escalera |
 | Jue 8 | Coordinador en el vehículo, agentes en los dos, interfaz desde el teléfono; una misión en un solo piso | los dos | los dos | Misión en un piso pedida desde el teléfono, con registro |
@@ -71,15 +71,28 @@ normal, la encadenada, la interrupción con `SIGINT` y con `SIGTERM` y el límit
 > grabador cierra limpio con la interrupción. La versión nueva del CSV añade columnas: cada serie va
 > en un fichero nuevo, `campana_s26_racey.csv` y `campana_s26_deepy.csv`.
 
-### 1.3 · Desconectar las cámaras (tarde, en los dos vehículos)
+### 1.3 · Desactivar las cámaras (tarde, en los dos vehículos)
 
-| | |
-|---|---|
-| Acción | Retirar las dos cámaras de los puertos USB de cada vehículo |
-| Comprobación | `ssh deepracer@192.168.0.102 "ls /dev/video* 2>&1"`, y lo mismo con la .104 |
-| Esperado | `No such file or directory` en los dos |
-| Si falla | Si sigue apareciendo un `/dev/video`, hay otra cámara conectada: revisar los puertos |
-| Cierre | Ningún `/dev/video` en los dos vehículos |
+Las cámaras se quedan conectadas, porque sin ellas el vehículo pierde su aspecto, y se desactivan por
+software con una regla de `udev`: el sistema no autoriza los dispositivos `29fe:4d53` (GEO Semi
+Condor), así que no crea los `/dev/video*` y la pila de AWS no las abre. La regla está en
+[`config/90-tesis-camaras-desactivadas.rules`](../Robot/aws-deepracer/deepracer_bringup/config/90-tesis-camaras-desactivadas.rules),
+sobrevive a los reinicios y se deshace borrando el archivo y reiniciando.
+
+| Paso | Comando | Esperado |
+|---|---|---|
+| 1. Identificar | `ssh deepracer@192.168.0.104 "lsusb"` | Dos `29fe:4d53 GEO Semi Condor` (cámaras) y un `10c4:ea60 Silicon Labs CP210x` (LiDAR) |
+| 2. Instalar la regla | `scp Robot/aws-deepracer/deepracer_bringup/config/90-tesis-camaras-desactivadas.rules deepracer@192.168.0.104:/tmp/` y `ssh deepracer@192.168.0.104 "sudo -n cp /tmp/90-tesis-camaras-desactivadas.rules /etc/udev/rules.d/"` | Sin salida |
+| 3. Aplicarla sin reiniciar | `ssh deepracer@192.168.0.104 "sudo -n udevadm control --reload-rules && sudo -n udevadm trigger --action=add --subsystem-match=usb --attr-match=idVendor=29fe"` | Sin salida |
+| 4. Comprobar | `ssh deepracer@192.168.0.104 "ls /dev/video*"` y la autorización en `/sys/bus/usb/devices/<puerto>/authorized` | Ningún `/dev/video`; `0` en los puertos de las cámaras y `1` en el del LiDAR |
+| 5. El LiDAR sigue | `ros2 topic hz /rplidar_ros/scan`, como root y con la partición | Unos 7 Hz |
+
+`lsusb` sigue mostrando las cámaras: están conectadas, pero sin autorizar. `nivelar_carros.sh`
+informa del estado en cada vehículo.
+
+> Estado, 5-oct: hecho en `amss-ez9n`. Antes, `/dev/video0` a `/dev/video7`; después, ninguno;
+> autorización `0 0 1` (cámaras en los puertos 1-4 y 1-6, LiDAR en el 1-3); LiDAR a 6,90 Hz.
+> `amss-jgm9`, pendiente.
 
 ### 1.4 · Comprobar la IMU (tarde, en los dos vehículos)
 

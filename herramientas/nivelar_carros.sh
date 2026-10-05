@@ -18,8 +18,11 @@
 # Compara, en cada vehiculo, los archivos de ~/tesis que usan los guiones de
 # campo (lista ARCHIVOS, abajo), el fuente de rf2o con el parche del proyecto
 # (herramientas/parches/LEEME.md) y la particion instalada en /etc contra la del
-# repositorio. La particion y el parche solo se informan: se instalan con su
-# propio procedimiento (DISENO_AISLAMIENTO_DOS_CARROS.md y parches/LEEME.md).
+# repositorio, y si las camaras estan desactivadas por la regla de udev
+# config/90-tesis-camaras-desactivadas.rules (conectadas, sin /dev/video). La
+# particion, el parche y la regla solo se informan: se instalan con su propio
+# procedimiento (DISENO_AISLAMIENTO_DOS_CARROS.md, parches/LEEME.md y la §1.3 de
+# PLAN_S26.md).
 #
 # Los vehiculos se toman de CARROS, «IP:nombre» separados por espacios; el
 # nombre se comprueba contra 'hostname' antes de tocar nada.
@@ -76,7 +79,7 @@ comparar() {
   local ip="$1" nombre="$2" remoto lista distintos=0 f d esperado actual
   lista=""
   for f in "${ARCHIVOS[@]}"; do lista+=" ~/tesis/$(destino "$f")"; done
-  remoto=$(en_carro "$ip" "md5sum $lista 2>/dev/null; echo RF2O \$(md5sum ~/nav_ws/src/rf2o_laser_odometry/src/CLaserOdometry2DNode.cpp 2>/dev/null | cut -c1-12); echo PART \$(sudo -n md5sum /etc/deepracer-tesis/particion.xml 2>/dev/null | cut -c1-32)")
+  remoto=$(en_carro "$ip" "md5sum $lista 2>/dev/null; echo RF2O \$(md5sum ~/nav_ws/src/rf2o_laser_odometry/src/CLaserOdometry2DNode.cpp 2>/dev/null | cut -c1-12); echo PART \$(sudo -n md5sum /etc/deepracer-tesis/particion.xml 2>/dev/null | cut -c1-32); echo CAMS \$(md5sum /etc/udev/rules.d/90-tesis-camaras-desactivadas.rules 2>/dev/null | cut -c1-32) \$(ls /dev/video* 2>/dev/null | wc -l)")
   FALTAN=()
   for f in "${ARCHIVOS[@]}"; do
     d=$(destino "$f")
@@ -97,6 +100,11 @@ comparar() {
   actual=$(echo "$remoto" | awk '$1 == "PART" {print $2}')
   if [ "$actual" = "$esperado" ]; then verde "   particion en /etc: igual a particion_$nombre.xml"
   else rojo "   particion en /etc: DISTINTA de particion_$nombre.xml (${actual:-no se pudo leer})"; AVISOS=$((AVISOS + 1)); fi
+  # Camaras conectadas pero desactivadas por la regla de udev del repositorio.
+  esperado=$(md5sum "$REPO/$B/config/90-tesis-camaras-desactivadas.rules" | cut -d' ' -f1)
+  actual=$(echo "$remoto" | awk '$1 == "CAMS" {print $2, $3}')
+  if [ "$actual" = "$esperado 0" ]; then verde "   camaras: desactivadas por la regla de udev (ningun /dev/video)"
+  else rojo "   camaras: regla de udev ausente o distinta, o hay /dev/video (${actual:-no se pudo leer})"; AVISOS=$((AVISOS + 1)); fi
   return "$distintos"
 }
 
