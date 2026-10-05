@@ -91,8 +91,8 @@ sobrevive a los reinicios y se deshace borrando el archivo y reiniciando.
 informa del estado en cada vehículo.
 
 > Estado, 5-oct: hecho en `amss-ez9n`. Antes, `/dev/video0` a `/dev/video7`; después, ninguno;
-> autorización `0 0 1` (cámaras en los puertos 1-4 y 1-6, LiDAR en el 1-3); LiDAR a 6,90 Hz.
-> `amss-jgm9`, pendiente.
+> autorización `0 0 1` (cámaras en los puertos 1-4 y 1-6, LiDAR en el 1-3); LiDAR a 6,90 Hz. En
+> `amss-jgm9`, lo mismo: las cámaras en los mismos puertos, `0 0 1` y LiDAR a 6,82 Hz.
 
 ### 1.4 · Comprobar la IMU (tarde, en los dos vehículos)
 
