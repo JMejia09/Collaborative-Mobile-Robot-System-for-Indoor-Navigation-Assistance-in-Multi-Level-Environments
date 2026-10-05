@@ -5,18 +5,22 @@
 \chapter*{Conclusiones}
 \addcontentsline{toc}{chapter}{CONCLUSIONES}
 
-\begin{notaavance}[conclusiones parciales mientras el proyecto siga abierto]
+\begin{notaavance}[conclusiones parciales: dos de los cuatro objetivos siguen
+abiertos]
 Estas conclusiones se emiten el \textbf{5 de octubre de 2026}, con el proyecto
-todavía en curso. Las de OE1 y OE3 son definitivas: esos dos objetivos están
-cerrados y verificados. Las de \textbf{OE2} y \textbf{OE4} son
-\textbf{parciales en su mitad de hardware}, porque dependen de la campaña
-física que cierra el 16 de octubre. Si esas sesiones cambian las cifras, estas
-conclusiones se reescriben: se prefiere decirlo ahora a tener que corregirlo
-después sin avisar.
+todavía en curso, y por eso \textbf{no están todas}. Se escriben solo las que
+descansan sobre algo cerrado:
 
-El juicio sobre el \textbf{objetivo general} no depende de ese cierre, y por eso
-se enuncia sin reservas: descansa en la campaña de simulación, que ya está
-cerrada.
+\begin{itemize}[leftmargin=*,nosep]
+  \item \textbf{OE1} y \textbf{OE3} están verificados, así que sus
+    conclusiones son definitivas.
+  \item \textbf{OE2} y \textbf{OE4} dependen de la campaña física, que cierra
+    el \textbf{16 de octubre}. Sus conclusiones quedan abiertas, y aquí se dice
+    qué falta para poder escribirlas.
+  \item El \textbf{objetivo general} se enuncia, porque descansa en la campaña
+    de simulación, que ya cerró. Lo que falta no es el esquema sino su
+    verificación sobre hardware.
+\end{itemize}
 \end{notaavance}
 
 \textbf{Sobre OE1, la arquitectura funcional.} El objetivo se cumplió. El sistema
@@ -27,14 +31,13 @@ de lo previsto. Permite verificar 930 combinaciones de origen y destino en
 milisegundos. Y encontró defectos que una corrida en el simulador no habría
 delatado, como planes que mandaban al mismo robot dos veces a la misma pose.
 
-\textbf{Sobre OE2, la plataforma robótica.} El objetivo se cumplió
-parcialmente. Los dos vehículos navegan con Nav2 reconfigurado para cinemática
-Ackermann, y la cadena completa —transformadas, odometría, mapa, localización,
-costmaps, planificador y controlador— funciona sobre hardware. Lo que no se
-alcanzó es la precisión de llegada. El vehículo tiene una banda muerta de
-tracción que no le deja aproximarse a menos de 0,40~m/s, y por eso no puede
-detenerse dentro de la tolerancia fijada. El límite es de la plataforma, no del software, y
-está medido.
+\textbf{Sobre OE2, la plataforma robótica. Conclusión abierta.} Lo que sí se
+puede afirmar hoy es de construcción, no de desempeño: los dos vehículos están
+integrados y Nav2 quedó reconfigurado para cinemática tipo automóvil, con el
+planificador, el controlador y el árbol de comportamiento sustituidos por los que
+esa cinemática admite (§3.2). El juicio sobre si el objetivo se cumple
+\textbf{queda pendiente} del cierre de la campaña física, el 16 de octubre, y se
+decidirá sobre las compuertas G-2 y G-3 del acta de directores.
 
 \textbf{Sobre OE3, la interfaz humano-robot.} El objetivo se cumplió. La interfaz
 funciona desde el navegador de un teléfono, sin instalación y sin salida a
@@ -44,20 +47,20 @@ de cambio de piso, que impide dar por completada una misión con el usuario en e
 nivel equivocado. La otra es la cancelación, que no funcionaba: el servidor de
 acción rechazaba las solicitudes en silencio.
 
-\textbf{Sobre OE4, la evaluación.} El objetivo se cumplió en simulación y queda
-parcial sobre hardware. La campaña de treinta misiones sorteadas dio veredicto
-válido con cero descartes, y permite afirmar que \textbf{la tasa de éxito supera
-el 70~\%} con 95~\% de confianza. Sobre hardware, la odometría cumple su criterio, con error entre $-4{,}6$~\% y
-$+3{,}3$~\% sobre recorridos de 6,7 y 14,6~m. La llegada, en cambio, no alcanza la
-tolerancia.
+\textbf{Sobre OE4, la evaluación. Cumplido en simulación; abierto sobre
+hardware.} La campaña de treinta misiones sorteadas dio veredicto válido con cero
+descartes, y permite afirmar que \textbf{la tasa de éxito supera el 70~\%} con
+95~\% de confianza. Esa mitad del objetivo está cerrada y sus cifras no van a
+cambiar. La otra mitad, la evaluación sobre los vehículos reales, sigue tomando
+datos hasta el 16 de octubre y se concluye entonces (§4.2).
 
 \textbf{Sobre el objetivo general.} El esquema de relevo \textbf{es viable}. Dos
 robots dedicados cada uno a un nivel pueden repartirse el guiado de una persona
 que cambia de piso. Ninguno atraviesa la zona de transición vertical, y el
-edificio no se modifica. Eso quedó demostrado en simulación con una campaña
-medida, y la cadena de navegación que lo sostiene funciona sobre los vehículos
-reales. Lo que queda abierto no es el esquema sino su precisión, y el límite está
-localizado en una característica concreta y medida de la plataforma.
+edificio no se modifica. Eso quedó demostrado en simulación, con una campaña
+medida y con veredicto válido. \textbf{Lo que queda abierto no es el esquema sino
+su verificación sobre hardware}, que es de lo que se ocupa la campaña física en
+curso. El esquema de relevo, en cambio, ya no está a prueba.
 
 \textbf{Una conclusión de método, que el trabajo defiende con el mismo peso.} La
 parte más costosa del proyecto no fue construir el sistema sino averiguar qué
