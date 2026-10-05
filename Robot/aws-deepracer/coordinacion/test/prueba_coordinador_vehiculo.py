@@ -48,11 +48,16 @@ QUE COMPRUEBA
 
 Con la ruta de otro coordinador.py como argumento se comprueba que la prueba
 no es vacia: la version anterior al 2026-10-05 tiene que fallar.
+
+En el vehiculo, donde el catalogo esta en ~/tesis y no en el repositorio:
+
+    CATALOGO=/home/deepracer/tesis/puntos_interes_pisos34.yaml ROS_DOMAIN_ID=93 ROS_LOCALHOST_ONLY=1 python3 ~/coordinacion_ws/src/coordinacion/test/prueba_coordinador_vehiculo.py   # ruta fija del vehiculo
 """
 
 import importlib.util
 import json
 import math
+import os
 import sys
 import tempfile
 import threading
@@ -62,7 +67,8 @@ from pathlib import Path
 PAQUETE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PAQUETE))
 RAIZ = PAQUETE.parents[2]
-CATALOGO = RAIZ / "Robot/aws-deepracer/deepracer_bringup/config/puntos_interes_pisos34.yaml"
+CATALOGO = Path(os.environ.get(
+    "CATALOGO", RAIZ / "Robot/aws-deepracer/deepracer_bringup/config/puntos_interes_pisos34.yaml"))
 
 import rclpy  # noqa: E402
 from action_msgs.msg import GoalStatus  # noqa: E402
