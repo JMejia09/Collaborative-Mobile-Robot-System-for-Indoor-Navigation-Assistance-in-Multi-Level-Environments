@@ -38,6 +38,7 @@ verde y revienta a mitad con FileNotFoundError. Al copiarla a otra maquina hay
 que llevarse tambien ese YAML, dos niveles por encima de coordinacion_msgs/test/.
 """
 import os
+import sys
 import threading
 import time
 
@@ -277,13 +278,27 @@ def main():
               and feedbacks[0].feedback.estado.destino_actual.id == "piso2_escalera",
               f"{len(feedbacks)} feedback(s)")
 
+    # Cierre ordenado. Hasta el 2026-10-06 solo se llamaba a ex.shutdown(): el
+    # hilo del ejecutor no se esperaba, los nodos no se destruian y rclpy no se
+    # apagaba, asi que el interprete salia con ese hilo todavia dentro de codigo
+    # C++ y, segun donde lo pillara, abortaba con «terminate called without an
+    # active exception» DESPUES de imprimir que todo pasaba (1 de cada 6 corridas).
     ex.shutdown(timeout_sec=1.0)
+    hilo.join(timeout=2.0)
+    servidor_node.destroy_node()
+    n.destroy_node()
+    rclpy.shutdown()
+
     print("\n" + "=" * 60)
     if fallos:
         print(f"FALLAN {len(fallos)}: {fallos}")
     else:
         print("Todas las comprobaciones pasan.")
     print("=" * 60)
+    # El codigo de salida es lo que lee la bateria. Antes del 2026-10-06 esta
+    # prueba salia con 0 aunque fallara una comprobacion: imprimia «FALLAN» y la
+    # bateria la contaba como aprobada. Era la unica de las 32 con ese defecto.
+    return 1 if fallos else 0
 
 
-main()
+sys.exit(main())

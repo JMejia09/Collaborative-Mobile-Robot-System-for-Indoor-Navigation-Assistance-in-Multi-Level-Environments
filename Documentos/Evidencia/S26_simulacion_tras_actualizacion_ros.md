@@ -122,9 +122,19 @@ A/B, con la misma guía y el mismo código:
   `GUIA_ARRANQUE.md` lo usa para la interfaz del teléfono, y como la interfaz no es un paquete ROS,
   `rosdep` nunca lo instalaba. Se añadió al README junto con `rosbag2-storage-mcap`, por la misma
   razón, y el verificador comprueba ahora las dos.
-- **Dos pruebas de DDS son intermitentes.** De la batería de 32, `prueba_round_trip.py` abortó una vez
-  dentro de la batería y pasó tres de tres sola; `prueba_dos_dominios_accion.py` falló una de tres.
-  No hay línea base anterior a la actualización para saber si ya lo eran.
+- **Dos pruebas de DDS fallaban de forma intermitente, y las dos en el cierre, no en lo que verifican.**
+  Corregidas el mismo día:
+  - `prueba_round_trip.py` abortaba con «terminate called without an active exception» **después**
+    de imprimir que todo pasaba, en 1 de cada 6 corridas: nunca esperaba al hilo del ejecutor ni
+    destruía los nodos. Es la lección que `prueba_dos_dominios_accion.py` ya tenía escrita en su
+    cierre. **Y había un defecto peor: salía con código 0 aunque fallara una comprobación**, así que
+    la batería la habría contado como aprobada. Era la única de las 32 con ese defecto. Comprobado
+    con mutación: con una comprobación forzada a fallar, antes salía con 0 y ahora con 1. Después
+    del arreglo, 20 de 20 corridas limpias.
+  - `prueba_dos_dominios_accion.py` convertía en fallo un veredicto PASA cuando su servidor auxiliar
+    no terminaba en 5 s con SIGTERM. Ahora, si no se va por las buenas, se mata. Comprobado con un
+    servidor que ignora SIGTERM: el código anterior reproduce exactamente el `TimeoutExpired` del día
+    y sale con 1; el nuevo pasa y sale con 0.
 - **El grabador detectó el problema por sí solo.** En `PRUEBA_B_02` avisó al empezar: «el criterio 1
   del §8 NO se cumple (AMCL no sabe donde esta)». La instrumentación funcionó; lo que no hay es una
   compuerta que impida lanzar la misión en ese caso.

@@ -179,7 +179,15 @@ def main():
         for p in procesos:
             p.terminate()
         for p in procesos:
-            p.wait(timeout=5)
+            # El servidor auxiliar a veces no termina en 5 s con SIGTERM. Hasta
+            # el 2026-10-06 el TimeoutExpired escapaba de aqui y convertia en
+            # fallo una prueba cuyo veredicto ya era PASA (1 de 3 corridas ese
+            # dia). Es andamiaje de la prueba: si no se va por las buenas, se mata.
+            try:
+                p.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                p.kill()
+                p.wait(timeout=5)
         os.unlink(ruta_servidor)
 
     print("\n--- veredicto P1b ---")
