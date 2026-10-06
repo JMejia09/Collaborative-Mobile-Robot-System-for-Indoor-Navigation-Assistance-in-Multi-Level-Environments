@@ -246,6 +246,19 @@ preparar_entorno() {
     echo "       compila con: cd $WS && colcon build --symlink-install" >&2
     exit 1
   }
+  # Que exista un workspace compilado no dice que corresponda al codigo de hoy.
+  # El 2026-10-06, tras un 'git pull', 'robot1 nav2' murio dentro del launch con
+  # «executable 'agente' not found», acusando a un ejecutable en vez de a la
+  # compilacion: el agente entro el 7-sep y el workspace era del 4-sep. Se corta
+  # aqui, antes de levantar Gazebo, con el motivo y la orden que lo arregla.
+  # SIN_COMPROBAR_WORKSPACE=1 lo salta, para el caso en que la comprobacion
+  # misma estorbe; no deberia hacer falta.
+  if [[ -z "${SIN_COMPROBAR_WORKSPACE:-}" ]] \
+     && ! python3 "$REPO/herramientas/comprobar_workspace.py" --ws "$WS" --silencioso; then
+    echo "" >&2
+    echo "No se lanza nada: se ejecutaria un codigo distinto del que hay en el repositorio." >&2
+    exit 1
+  fi
   source "$WS/install/setup.bash"
   export GAZEBO_MODEL_PATH="$GAZEBO_MODEL_PATH:$REPO"
   export ROS_DOMAIN_ID="$DOMINIO"

@@ -18,7 +18,11 @@
 #     porque grep sale al primer acierto y el productor recibe SIGPIPE.
 # Un verificador debe llegar hasta el final y contar los fallos, no abortar.
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# 'pwd -P' y no 'pwd': la ruta FISICA, sin enlaces. Desde el 2026-10-06 el
+# repositorio se abre tambien por una segunda ruta que es un enlace a la primera, y
+# con la ruta logica cada comparacion de abajo daba por distintas dos rutas que
+# son la misma carpeta.
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 WS="${1:-$HOME/deepracer_sim_ws}"
 
 OK=0
@@ -58,11 +62,33 @@ cmd()    { printf '         Ejecutar:\n           %s\n' "$1"; }
 #     el verificador seguiria fallando sin que nada de lo que dice lo explique.
 CMD_GZP="grep -v '^[[:space:]]*#' ~/.bashrc 2>/dev/null | grep -F GAZEBO_MODEL_PATH | grep -qF '$REPO' || echo 'export GAZEBO_MODEL_PATH=\"\$GAZEBO_MODEL_PATH:$REPO\"' >> ~/.bashrc"
 
-# La misma pregunta que hace la guarda de CMD_GZP, para que el consejo y la orden
-# no puedan discrepar.
+# ¿Alguna ruta de esta lista (separada por ':') es la raiz del repositorio?
+# Compara rutas RESUELTAS, no texto: '$HOME/<clon>', la misma ruta escrita entera y un
+# enlace que apunte ahi son la misma carpeta. Comparar texto dio el 2026-10-06 un
+# fallo falso con la variable bien puesta, y un consejo que habria anadido una
+# cuarta linea duplicada a un ~/.bashrc que ya tenia tres.
+contiene_repo() {
+  local IFS=':' p
+  for p in $1; do
+    [[ -n "$p" && "$(readlink -f "$p" 2>/dev/null)" == "$REPO" ]] && return 0
+  done
+  return 1
+}
+
+# ¿Alguna linea activa de ~/.bashrc mete ya esta raiz en GAZEBO_MODEL_PATH? Se
+# expanden $HOME, ${HOME} y ~ antes de resolver, que es lo que hara bash al abrir
+# la terminal. Si dice que si, consejo_gzp no muestra CMD_GZP (aconseja recargar),
+# asi que la guarda literal de CMD_GZP solo actua cuando la linea no existe en
+# ninguna forma y no puede duplicarla.
 bashrc_declara_raiz() {
-  grep -v '^[[:space:]]*#' "$HOME/.bashrc" 2>/dev/null \
-    | grep -F GAZEBO_MODEL_PATH | grep -qF "$REPO"
+  local linea
+  while IFS= read -r linea; do
+    linea="${linea//\$\{HOME\}/$HOME}"; linea="${linea//\$HOME/$HOME}"
+    linea="${linea//\~/$HOME}"; linea="${linea//\"/}"; linea="${linea//\'/}"
+    linea="${linea#*GAZEBO_MODEL_PATH=}"
+    contiene_repo "$linea" && return 0
+  done < <(grep -v '^[[:space:]]*#' "$HOME/.bashrc" 2>/dev/null | grep -F 'GAZEBO_MODEL_PATH=')
+  return 1
 }
 
 # Que falte la variable tiene dos causas distintas, con arreglos distintos, y el
@@ -119,11 +145,32 @@ else
   echo; echo "Sin workspace compilado no se puede seguir."; exit 1
 fi
 
-paso 'src/aws-deepracer es un enlace al repositorio'
-if [ -L "$WS/src/aws-deepracer" ]; then bien
+paso 'src/aws-deepracer es un enlace a ESTE repositorio'
+# Ser un enlace no basta: uno que apunte a otro clon -una descarga vieja, otra
+# carpeta- pasa '-L' y compila un codigo distinto del que se esta editando. Es el
+# incidente R7 por otra puerta.
+if [ -L "$WS/src/aws-deepracer" ] \
+   && [ "$(readlink -f "$WS/src/aws-deepracer")" == "$REPO/Robot/aws-deepracer" ]; then bien
+elif [ -L "$WS/src/aws-deepracer" ]; then
+  mal "es un enlace, pero a OTRA carpeta: $(readlink -f "$WS/src/aws-deepracer"). Se compila un codigo distinto del de este repositorio"
+  cmd "rm $WS/src/aws-deepracer && ln -s $REPO/Robot/aws-deepracer $WS/src/aws-deepracer && cd $WS && colcon build --symlink-install"
 else
   mal "es una COPIA, no un enlace. El codigo que se ejecuta dejara de ser el versionado y divergiran en silencio"
   cmd "rm -rf $WS/src/aws-deepracer && ln -s $REPO/Robot/aws-deepracer $WS/src/aws-deepracer && cd $WS && colcon build --symlink-install"
+fi
+
+paso 'el workspace esta al dia con el codigo'
+# Que exista un workspace compilado no dice que corresponda al codigo de hoy. El
+# 2026-10-06, tras un 'git pull', 'robot.sh robot1 nav2' murio con «executable
+# 'agente' not found»: el ejecutable entro el 7-sep y el workspace era del 4-sep.
+# Todas las comprobaciones de este script pasaban.
+if DESFASE=$(python3 "$REPO/herramientas/comprobar_workspace.py" --ws "$WS" --silencioso 2>&1); then bien
+else
+  mal "hay que recompilar; el codigo cambio despues de la ultima compilacion:"
+  # Solo los paquetes y sus motivos: la orden va aparte, bajo 'Ejecutar', como en
+  # el resto del script.
+  printf '%s\n' "$DESFASE" | grep -E '^  ([A-Za-z0-9_]+:|  - )' | sed 's/^/       /'
+  cmd "cd $WS && colcon build --symlink-install"
 fi
 
 # shellcheck disable=SC1090,SC1091
@@ -131,9 +178,17 @@ source /opt/ros/humble/setup.bash >/dev/null 2>&1
 # shellcheck disable=SC1090,SC1091
 source "$WS/install/setup.bash" >/dev/null 2>&1
 
-titulo '3. Los seis paquetes'
-for p in deepracer_bringup deepracer_description deepracer_drive_plugin \
-         deepracer_interfaces_pkg cmdvel_to_servo_pkg enable_deepracer_nav_pkg; do
+# Los paquetes se DESCUBREN en el repositorio, no se escriben a mano. La lista fija
+# decia «los seis paquetes» y el proyecto tiene ocho desde que entraron
+# coordinacion y coordinacion_msgs: los dos que llevan el aporte del proyecto eran
+# justo los que este script no miraba. Es la misma regla que ya sigue la seccion 7
+# con los mundos.
+PAQUETES=$(python3 -c "
+import sys; sys.path.insert(0, '$REPO/herramientas')
+from comprobar_workspace import paquetes, PAQUETES_DIR
+print(' '.join(sorted(n for n, _, _ in paquetes(PAQUETES_DIR))))")
+titulo "3. Los $(wc -w <<< "$PAQUETES") paquetes del repositorio"
+for p in $PAQUETES; do
   paso "$p"
   if ros2 pkg prefix "$p" >/dev/null 2>&1; then bien
   else
@@ -141,6 +196,26 @@ for p in deepracer_bringup deepracer_description deepracer_drive_plugin \
     cmd "cd $WS && colcon build --symlink-install"
   fi
 done
+
+# Dos dependencias que 'rosdep install' NO trae, porque ningun package.xml puede
+# declararlas: la interfaz web no es un paquete ROS, y el formato de los bags es
+# del sistema, no de un nodo. Las dos se descubrieron faltando en un equipo con el
+# resto en verde (2026-10-06): sin rosbridge, el §4 de GUIA_ARRANQUE.md no arranca
+# la interfaz del telefono; sin mcap, componer_registro.py no lee los bags que
+# graban los vehiculos en Jazzy.
+paso 'rosbridge_server (interfaz web, OE3)'
+if ros2 pkg prefix rosbridge_server >/dev/null 2>&1; then bien
+else
+  mal "sin el, la interfaz del telefono no puede hablar con el coordinador (GUIA_ARRANQUE.md §4)"
+  cmd 'sudo apt install ros-humble-rosbridge-suite'
+fi
+
+paso 'lectura de bags mcap (los que graban los vehiculos)'
+if ros2 bag list storage 2>/dev/null | grep -qx mcap; then bien
+else
+  mal "componer_registro.py no podra leer los bags grabados en los vehiculos"
+  cmd 'sudo apt install ros-humble-rosbag2-storage-mcap'
+fi
 
 # ------------------------------------------------------------ 4. contenido
 titulo '4. Recursos instalados'
@@ -199,7 +274,7 @@ done
 titulo '7. Mundos y modelos de Gazebo'
 
 paso 'GAZEBO_MODEL_PATH incluye la raiz del repositorio'
-if [[ ":${GAZEBO_MODEL_PATH:-}:" == *":$REPO:"* ]]; then bien
+if contiene_repo "${GAZEBO_MODEL_PATH:-}"; then bien
 else
   mal "sin esto, todo mundo que use model:// carga vacio y sin dar error"
   consejo_gzp

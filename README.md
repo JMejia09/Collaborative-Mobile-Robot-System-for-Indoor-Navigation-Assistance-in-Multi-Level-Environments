@@ -34,8 +34,14 @@ sudo apt update && sudo apt install -y \
   ros-humble-ros2-control ros-humble-ros2-controllers \
   ros-humble-slam-toolbox ros-humble-navigation2 ros-humble-nav2-bringup \
   ros-humble-teleop-twist-keyboard ros-humble-xacro ros-humble-rviz2 \
+  ros-humble-rosbridge-suite ros-humble-rosbag2-storage-mcap \
   python3-colcon-common-extensions python3-rosdep python3-pil
 ```
+
+Las dos de la penúltima línea no las trae `rosdep`, porque ningún paquete del proyecto puede
+declararlas: `rosbridge-suite` conecta la interfaz del teléfono con el coordinador
+([`GUIA_ARRANQUE.md`](Documentos/GUIA_ARRANQUE.md) §4), y `rosbag2-storage-mcap` permite leer en
+el portátil los bags que graban los vehículos, que en Jazzy salen en formato `mcap`.
 
 ---
 
@@ -152,8 +158,17 @@ avisa y no pasa nada.
 colcon build --symlink-install
 ```
 
-Esperado: `Summary: 6 packages finished`, en algo menos de un minuto y sin ninguna
+Esperado: `Summary: 8 packages finished`, en algo menos de un minuto y sin ninguna
 advertencia. Si aparece cualquier paquete en `failed`, no seguir al paso siguiente.
+
+**Después de cada `git pull`, volver a compilar.** Con `--symlink-install` los cambios en
+archivos `.py`, `.yaml` y *launch* ya instalados se ven sin recompilar, pero un ejecutable nuevo,
+un mensaje nuevo o un archivo nuevo no existen hasta que se compila. Si se olvida,
+`herramientas/robot.sh` se niega a lanzar y dice qué paquete quedó atrás; para comprobarlo a mano:
+
+```bash
+python3 herramientas/comprobar_workspace.py
+```
 
 ### 5. Variables de entorno
 
@@ -233,14 +248,18 @@ Desde la raíz del repositorio, donde terminó el paso 5:
 herramientas/verificar_instalacion.sh
 ```
 
-Comprueba entorno, workspace, los seis paquetes, los recursos instalados, el URDF y sus
-mallas, el parseo de los seis launch files y las variables de entorno —**sin levantar Gazebo
-ni ningún nodo**—, y explica junto a cada fallo qué hacer; cuando existe un comando exacto
-que lo corrige, lo imprime solo en su línea, listo para copiar. Debe terminar en:
+Comprueba entorno, workspace —que sea un enlace a este repositorio y que esté compilado al día
+con el código—, los paquetes del repositorio (los descubre solo: hoy son ocho), las dos
+dependencias que `rosdep` no trae, los recursos instalados, el URDF y sus mallas, el parseo de
+los launch files y las variables de entorno —**sin levantar Gazebo ni ningún nodo**—, y explica
+junto a cada fallo qué hacer; cuando existe un comando exacto que lo corrige, lo imprime solo en
+su línea, listo para copiar. Debe terminar en:
 
 ```
-  32 comprobaciones pasan, 0 fallan.
+  N comprobaciones pasan, 0 fallan.
 ```
+
+El número de comprobaciones crece con el proyecto; lo que tiene que valer es el cero.
 
 Mientras haya fallos no tiene sentido lanzar la simulación. El script existe porque unas
 instrucciones de instalación se prueban una sola vez, en el equipo de quien las escribió,
