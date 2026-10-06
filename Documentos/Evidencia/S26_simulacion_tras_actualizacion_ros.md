@@ -18,7 +18,8 @@ el desarrollo, para comprobar que la simulación sigue funcionando con los cambi
 3. **Pero hoy, en este equipo, la misión con relevo no se completa.** En las cuatro corridas con las
    dos pilas, tres fallaron porque **Nav2 de robot1 deja de aceptar la transformada `map → odom`
    aunque AMCL la sigue publicando**, y la cuarta llegó hasta el último tramo de robot2. Con robot1
-   solo, la misión intra-nivel salió bien (§2 y §3).
+   solo salió bien una vez y falló otra con la misma firma (§2 y §3), así que no depende de que haya
+   dos pilas.
 4. **La causa no está demostrada.** La sospecha principal, con datos, es la actualización de 452
    paquetes de ROS que se instaló ese mismo día a las 12:16, que incluye `rclcpp`, `tf2`, `tf2_ros`
    y `message_filters` (§4). Falta la prueba que la confirme o la descarte.
@@ -59,6 +60,7 @@ misión `piso1_representacion → piso2_ieee` de la guía (§5.2 b), salvo la de
 | `PRUEBA_B_01` | dos | unos 2 min después de la compuerta | **Colgada**: 400 s sin avanzar, hasta cancelarla a mano | robot1, tramo 1 |
 | `PRUEBA_B_02` | dos | unos 4 min después de la compuerta | Nav2 abortó tras 157,4 s | robot1, tramo 1 |
 | aislada | **solo robot1** | inmediatamente | ✅ **Completada** en 52,9 s, llegadas a 0,106 m | — |
+| aislada 2, tras el depurado | **solo robot1** | inmediatamente | Nav2 abortó tras 158,4 s, con 2.818 `Transform data too old` y 0 errores de modelo | robot1, tramo 1 |
 | `PRUEBA_B_03` | dos | inmediatamente | Tramos 1, 2 y 3 bien (0,178, 0,169 y 0,099 m) y confirmación de piso a los 2,8 s; Nav2 abortó en el tramo 4 | robot2, tramo 4 |
 | `PRUEBA_B_04` | dos | inmediatamente | Nav2 abortó tras 158,6 s | robot1, tramo 1 |
 

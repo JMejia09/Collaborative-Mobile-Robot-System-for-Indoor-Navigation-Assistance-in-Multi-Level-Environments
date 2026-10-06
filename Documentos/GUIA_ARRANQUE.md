@@ -37,7 +37,8 @@ compilación.
 > **Estado conocido al 2026-10-06 (riesgo R16).** En el equipo de escritorio, después de una
 > actualización de paquetes de ROS ese mismo día, la misión con relevo **no se completa**: en 3 de 4
 > corridas con las dos pilas, Nav2 de `robot1` dejó de aceptar `map → odom` aunque AMCL lo seguía
-> publicando. Con `robot1` solo, la misión sale bien. La causa no está aislada. Se reconoce en la
+> publicando. Con `robot1` solo pasó lo mismo en 1 de 2 corridas, así que no depende de que haya
+> dos pilas. La causa no está aislada. Se reconoce en la
 > terminal 1 por una de estas dos líneas, repetida (las dos aparecieron, en corridas distintas):
 >
 > `Transform data too old when converting from robot1/map to robot1/odom`

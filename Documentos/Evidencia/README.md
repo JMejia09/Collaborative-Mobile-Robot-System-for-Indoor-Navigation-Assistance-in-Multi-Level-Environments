@@ -241,6 +241,35 @@ Mientras `map` estuvo sin prefijar, ninguna misión del coordinador podía compl
 hito no era alcanzable aunque todo lo demás estuviera en su sitio. El tercero repite la pregunta del
 segundo a la escala de la campaña: H3 la respondió sobre 1,7 m, y las rutas reales son de 90.
 
+## Semana 25 — los pisos 3 y 4, levantados con flexómetro (octubre 2026)
+
+El sitio de pruebas de los vehículos desde el 5-oct. Primero se midió el pasillo y después se
+modeló, al revés que en los pisos 1 y 2; el porqué está en
+[`GUIA_PISOS_3_Y_4.md`](../GUIA_PISOS_3_Y_4.md).
+
+![Plano del piso 4 levantado con flexómetro](S25_plano_piso4_flexometro.png)
+
+`S25_plano_piso4_flexometro.png` — el plano del piso 4 que dibuja el generador a partir del
+levantamiento del 2-oct: cotas de cada tramo de la pared oeste, vanos de los salones 401 a 403 en
+rojo, y ascensor y escalera en azul. Sostiene que el modelo sale de medidas y no de un plano
+supuesto. **Las cotas del dibujo son las buenas** —suman 25,615 m, como la pared oeste del
+generador—, **pero el subtítulo no**: dice «este 25,77 m · cierre 16 cm (0,6 %)», y ninguna versión
+de `generar_piso_desde_medidas.py` da eso. Las cuatro versiones del 2-oct dan este 25,534 m y cierre
+de 8,1 cm (0,32 %), que son las cifras de la guía. Se citan las del generador.
+
+`S25_mapa_piso3_anotado.png` y `S25_mapa_piso4_anotado.png` — el mapa de navegación de cada piso
+con los elementos del levantamiento marcados sobre las paredes: salones, *lockers*, ascensor,
+papelera y escalera, y en el piso 3 además un muro y un saliente, con sus cotas. Sostienen que el
+mapa reproduce la geometría medida. No son los destinos del catálogo: esos van desplazados hacia el
+centro del pasillo. El del piso 3 lleva en el encabezado su cierre, 15,9 cm (0,62 %), que coincide
+con el generador.
+
+## Documentos de planificación en PDF
+
+`CRONOGRAMA_ACTIVIDADES_PG2.pdf` — el cronograma de las semanas 17 a 32 (Proyecto de Grado 2,
+Fase 5), en 11 páginas, generado el 5-ago-2026. Es la versión en PDF de la planificación de esa
+fecha; la que se mantiene al día es [`CRONOGRAMA_S17_S32.md`](../CRONOGRAMA_S17_S32.md).
+
 ## Diagrama
 
 | Archivo | Qué muestra | Dónde se cita |
