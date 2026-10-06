@@ -19,7 +19,7 @@ desde la raíz del repositorio en el portátil.
 |---|---|---|---|---|
 | Lun 5, mañana | Acta: cambio de sitio y corte C-1. Correcciones de las herramientas de campo | Santiago y Claude | no | Acta al día; herramientas corregidas y probadas en simulación |
 | Lun 5, tarde | Desactivar las cámaras, comprobar la IMU, copiar grabaciones, nivelar los dos vehículos | Santiago y Jonny | los dos | Se sabe si hay IMU; vehículos nivelados |
-| Mar 6 | IMU y EKF en los dos vehículos (el código ya está probado en el portátil). Red entre los pisos 3 y 4 | Santiago y Claude; Jonny la red | los dos | La IMU publica y el EKF gira bien en los dos vehículos; la red llega a los dos pisos |
+| Mar 6 | IMU y EKF en los dos vehículos (hecho el 5-oct en la noche; queda la posición de deepy, §2.3). Red entre los pisos 3 y 4 | Santiago y Claude; Jonny la red | los dos | La IMU publica y el EKF gira bien en los dos vehículos; la red llega a los dos pisos |
 | Mié 7 | Radio de giro. Misiones encadenadas en el piso 4 sin tocar el vehículo, con y sin IMU. Media vuelta para ir a recoger a un usuario | Santiago y Jonny | uno cada vez | G-3 evaluada; se sabe si el vehículo da media vuelta solo |
 | Jue 8 | Coordinador en el vehículo, agentes en los dos, interfaz desde el teléfono; una misión en un solo piso | los dos | los dos | Misión en un piso pedida desde el teléfono, con registro |
 | Vie 9 | G-5: misión del piso 3 al piso 4 con relevo, y una segunda misión encadenada sin tocar los vehículos. Corte semanal en la noche | los dos | los dos | G-5 intentada con registro; entregable de S26 |
@@ -148,7 +148,7 @@ habría que instalar sin internet. El filtro es el EKF de `robot_localization` 3
 
 | Pieza | Archivo | Prueba en el portátil |
 |---|---|---|
-| Nodo de la IMU: publica `imu/data` a 50 Hz con el sesgo medido al arrancar | `deepracer_bringup/scripts/imu_bmi160.py` | [`prueba_imu_bmi160.py`](../herramientas/prueba_imu_bmi160.py), 18 de 18 |
+| Nodo de la IMU: publica `imu/data` a 25 Hz con el sesgo medido al arrancar (a 50 Hz cargaba demasiado la tarjeta, §2.3) | `deepracer_bringup/scripts/imu_bmi160.py` | [`prueba_imu_bmi160.py`](../herramientas/prueba_imu_bmi160.py), 18 de 18 |
 | Marco `imu_link` con la orientación medida | `deepracer_hardware.urdf` | `prueba_nav2_hardware_ns.py`, parte 3 |
 | `imu:=true` en el lanzador: IMU, EKF, y rf2o en `odom_rf2o` sin TF | `nav2_hardware.launch.py` | `prueba_nav2_hardware_ns.py`, 102 de 102; sin IMU, igual que antes |
 | El EKF toma el avance de rf2o y el rumbo de la IMU | `parametros_ekf` en el lanzador | [`prueba_ekf_imu.py`](../herramientas/prueba_ekf_imu.py), 9 de 9: con rf2o diciendo «recta» y la IMU un giro de 90°, el filtro da 89,4° a 90,0° |
@@ -165,7 +165,24 @@ Está en [`S26_pruebas_imu.md`](Evidencia/S26_pruebas_imu.md). Los ejes del sens
 izquierda, y hacia adelante y z hacia abajo, igual en los dos vehículos. El sesgo en z es de
 0,65 °/s en `amss-ez9n` y 0,47 °/s en `amss-jgm9`, estable en la sesión. El nodo lo mide en cada arranque.
 
-### 2.3 · La IMU y el EKF en los vehículos
+### 2.3 · La IMU y el EKF en los vehículos (hecho el 5-oct en la noche)
+
+Resultado, en [`S26_integracion_imu_vehiculos.md`](Evidencia/S26_integracion_imu_vehiculos.md): la
+IMU queda aprobada para el rumbo en los dos. En el giro de 90° contra una línea del piso, el filtro
+midió +90,17° en racey y +88,38° en deepy; quieto, el rumbo se mueve 0,3° o menos por minuto,
+mientras rf2o solo deriva hasta 5,9°. Por la carga de la tarjeta, la IMU quedó a 25 Hz y el filtro
+a 15 Hz. La posición quieta deriva como la de rf2o, y el criterio de 1 cm del paso 6 estaba mal
+puesto, porque la IMU no corrige la posición. Queda abierto que en deepy la posición del filtro se
+movió 12,5 cm en 90 s, frente a 2,1 cm de rf2o: lo decide la cadena del miércoles (§3.2).
+
+Para repetir las mediciones de los pasos 5 a 7 se usa
+`python3 /home/deepracer/tesis/medir_odom_imu.py 60 --ns robotN` en el vehículo (ruta fija del vehículo), que mide filtro, rf2o e
+IMU en un solo proceso; `ros2 topic echo` y `ros2 topic hz` cargan la tarjeta y fallan si el
+tópico aún no está descubierto. Con los dos vehículos encendidos, la cadena se arranca siempre con
+`namespace:=robot1` o `namespace:=robot2`: sin espacio de nombres, `/odom` e `/imu/data` de los dos
+se mezclan.
+
+Los pasos, tal como se escribieron antes de correrlos:
 
 Se hace en los dos, con el vehículo en el suelo y sin Nav2 (sin mapa, en cualquier sitio). Las
 órdenes son para racey; para deepy se cambia `192.168.0.104` por `192.168.0.102`. Santiago las corre y
@@ -299,6 +316,14 @@ misiones coordinadas (§4.3 y G-5) necesitan `MARGEN=0.5`, que es lo que se prue
 la IMU (§3.2).
 
 ### 4.2 · Coordinador, agentes e interfaz en los vehículos
+
+Ensayado el 5-oct en la noche con deepy, sin Nav2
+([`S26_integracion_imu_vehiculos.md`](Evidencia/S26_integracion_imu_vehiculos.md) §5): el portátil
+recibe el estado de los agentes y pide misiones al coordinador por acción, y la interfaz conecta con
+`rosbridge` en el portátil. Falta verlo desde el teléfono. Para el paso 3, `ros2 topic echo` necesita
+el tipo: `ros2 topic echo --once /robot2/estado coordinacion_msgs/msg/EstadoRobot`; sin él abandona si
+aún no descubrió el tópico. Cada mensaje de Jazzy imprime en el portátil `sequence size exceeds
+remaining buffer`, sin perderse ninguno.
 
 `rosbridge_server` no está instalado en los vehículos, y sin internet no se puede instalar allí. Va
 en el portátil, que lo tiene (Humble). Según el estudio de S19, los mensajes de `coordinacion_msgs` son los mismos
