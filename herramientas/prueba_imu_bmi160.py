@@ -16,7 +16,7 @@ QUE COMPRUEBA
   2. Calibracion: el sesgo es la media en reposo; un vehiculo que se mueve no
      pasa por quieto; la varianza no baja de su minimo.
   3. El nodo, con el sensor falso: calibra, publica `imu/data` en `imu_link` a
-     unos 50 Hz, con el sesgo restado (un giro de -10 grados/s sale -10), sin
+     unos 25 Hz, con el sesgo restado (un giro de -10 grados/s sale -10), sin
      orientacion y con covarianzas positivas.
   4. Si el sensor deja de responder, el nodo no publica y no se cae; al volver,
      publica otra vez.
@@ -132,7 +132,7 @@ def main():
         recibidos.clear()
         girar(1.0)
         n = len(recibidos)
-        exigir(40 <= n <= 60, '%d mensajes en 1 s (se esperan unos 50)' % n)
+        exigir(20 <= n <= 30, '%d mensajes en 1 s (se esperan unos 25)' % n)
         if n:
             m = recibidos[-1]
             z = statistics.fmean([math.degrees(r.angular_velocity.z) for r in recibidos])
@@ -157,7 +157,7 @@ def main():
         exigir(not recibidos, 'sin respuesta del sensor no se publica (%d mensajes)' % len(recibidos))
         falso.fase = 'girar'
         girar(0.5)
-        exigir(len(recibidos) >= 15, 'al volver el sensor se publica otra vez (%d en 0,5 s)'
+        exigir(len(recibidos) >= 8, 'al volver el sensor se publica otra vez (%d en 0,5 s)'
                % len(recibidos))
         ejecutor.shutdown()
         nodo.destroy_node()

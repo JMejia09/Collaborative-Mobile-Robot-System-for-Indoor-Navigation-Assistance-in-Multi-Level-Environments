@@ -56,8 +56,8 @@ RAIZ = pathlib.Path(__file__).resolve().parents[1]
 LAUNCH = RAIZ / 'Robot/aws-deepracer/deepracer_bringup/launch/nav2_hardware.launch.py'
 URDF = RAIZ / 'Robot/aws-deepracer/deepracer_description/models/urdf/deepracer_hardware.urdf'
 NS = 'robot2'
-PASO = 0.02                  # 50 Hz, la frecuencia de la IMU
-CADA_RF2O = 5                # rf2o a 10 Hz
+PASO = 0.04                  # 25 Hz, la frecuencia de la IMU
+CADA_RF2O = 3                # rf2o a unos 8 Hz, como el laser (7,5 Hz)
 FASES = (('A', 3.0, 0.0, 0.0), ('B', 4.0, 0.5, 0.0),
          ('C', 3.0, 0.3, math.radians(30.0)), ('D0', 1.0, 0.0, 0.0), ('D', 3.0, 0.0, 0.0))
 

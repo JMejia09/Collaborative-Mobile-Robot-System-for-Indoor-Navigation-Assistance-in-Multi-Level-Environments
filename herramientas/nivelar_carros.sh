@@ -62,6 +62,7 @@ ARCHIVOS=(
   "herramientas/avanzar_y_detener.py"
   "herramientas/extraer_mapa.py"
   "herramientas/probar_imu.py"
+  "herramientas/medir_odom_imu.py"
   "$B/scripts/imu_bmi160.py"
 )
 

@@ -185,10 +185,12 @@ PLAZO_SERVIDOR_MS = 1000
 
 TOPICO_SCAN = '/rplidar_ros/scan'
 
-# Con imu:=true (ver la cabecera). El EKF corre a 20 Hz: rf2o publica al ritmo
-# del laser, de 7 a 15 Hz, y la IMU a 50.
+# Con imu:=true (ver la cabecera). El EKF corre a 15 Hz: rf2o publica al ritmo
+# del laser, unos 7,5 Hz, la IMU a 25 y el controlador de Nav2 va a 10. A 20 Hz,
+# el 2026-10-05 en amss-jgm9, el filtro no llegaba a tiempo cada vez que otro
+# proceso arrancaba ('Failed to meet update rate', hasta 0,30 s por ciclo).
 TOPICO_ODOM_RF2O = 'odom_rf2o'
-FRECUENCIA_EKF = 20.0
+FRECUENCIA_EKF = 15.0
 NODO_IMU = 'imu_bmi160.py'
 
 # Parametros de Nav2 para Jazzy. El de Humble ('nav2_params.yaml') no arranca en
@@ -298,6 +300,8 @@ def parametros_ekf(prefijo, ns):
         'frequency': FRECUENCIA_EKF,
         'two_d_mode': True,
         'publish_tf': True,
+        # Los diagnosticos son un topico mas que nadie lee, en una tarjeta justa.
+        'print_diagnostics': False,
         'map_frame': f'{prefijo}map',
         'odom_frame': f'{prefijo}odom',
         'base_link_frame': f'{prefijo}base_link',

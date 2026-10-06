@@ -143,7 +143,10 @@ def crear_nodo(sensor=None):
         def __init__(self):
             super().__init__('imu_bmi160')
             self.frame_id = self.declare_parameter('frame_id', 'imu_link').value
-            frecuencia = float(self.declare_parameter('frecuencia', 50.0).value)
+            # 25 Hz y no 50: el 2026-10-05, a 50 Hz, el nodo ocupaba el 12 % de un
+            # nucleo de la tarjeta y no pasaba de 31 Hz. El vehiculo gira a unas
+            # decenas de grados/s, y el filtro corre a 15 Hz: 25 muestras sobran.
+            frecuencia = float(self.declare_parameter('frecuencia', 25.0).value)
             self.calibracion_s = float(self.declare_parameter('calibracion_s', 3.0).value)
             self.umbral_quieto = math.radians(
                 float(self.declare_parameter('umbral_quieto', 0.5).value))
@@ -187,8 +190,14 @@ def crear_nodo(sensor=None):
                     '%.2f grados/s); se repite. No lo toque.'
                     % (intento, math.degrees(self.umbral_quieto)))
             self.sesgo = sesgo
-            self.cov_giro = diagonal(var_giro)
-            self.cov_acel = diagonal(var_acel)
+            # El mensaje se arma una vez y en cada publicacion solo se cambian el
+            # sello y las lecturas: crearlo y convertir las covarianzas en cada
+            # ciclo era la mayor parte del costo del nodo en la tarjeta.
+            self.msg = Imu()
+            self.msg.header.frame_id = self.frame_id
+            self.msg.orientation_covariance[0] = -1.0
+            self.msg.angular_velocity_covariance = diagonal(var_giro)
+            self.msg.linear_acceleration_covariance = diagonal(var_acel)
             self.calibrado = True
             self.get_logger().info(
                 'sesgo del giroscopio x=%.3f y=%.3f z=%.3f grados/s con %d lecturas; publicando '
@@ -210,15 +219,11 @@ def crear_nodo(sensor=None):
             if self.fallos >= FALLOS_PARA_ERROR:
                 self.get_logger().info('el BMI160 vuelve a responder')
             self.fallos = 0
-            m = Imu()
+            m, s = self.msg, self.sesgo
             m.header.stamp = self.get_clock().now().to_msg()
-            m.header.frame_id = self.frame_id
-            m.orientation_covariance[0] = -1.0
-            (m.angular_velocity.x, m.angular_velocity.y,
-             m.angular_velocity.z) = (g - s for g, s in zip(giro, self.sesgo))
-            m.angular_velocity_covariance = self.cov_giro
-            m.linear_acceleration.x, m.linear_acceleration.y, m.linear_acceleration.z = acel
-            m.linear_acceleration_covariance = self.cov_acel
+            w, a = m.angular_velocity, m.linear_acceleration
+            w.x, w.y, w.z = giro[0] - s[0], giro[1] - s[1], giro[2] - s[2]
+            a.x, a.y, a.z = acel
             self.pub.publish(m)
 
     return NodoImu()
