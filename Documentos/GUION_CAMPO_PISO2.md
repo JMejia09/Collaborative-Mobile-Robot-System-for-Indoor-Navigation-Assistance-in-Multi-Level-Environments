@@ -1,5 +1,7 @@
 # Guion de campo — piso 2, recorrido propio y mapa
 
+> **Estado al 2026-10-06:** Histórica: escrita el 24-sep para el piso 2, y sustituida para G-2 el 25-sep, como explica más abajo. Qué seguir para cada tarea: [`INDICE_GUIAS.md`](INDICE_GUIAS.md).
+
 **Fecha de redacción:** 2026-09-24, noche
 **Para quién:** ejecutable por cualquiera de los dos. Escrito pensando en que lo
 corra **Jonny** sin haber estado en la sesión donde se armó.

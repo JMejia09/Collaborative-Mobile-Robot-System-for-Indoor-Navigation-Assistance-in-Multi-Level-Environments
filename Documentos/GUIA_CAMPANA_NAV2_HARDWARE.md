@@ -1,5 +1,7 @@
 # Guía — sesión de compuertas G-2 y G-3: navegación con Nav2 sobre el vehículo real
 
+> **Estado al 2026-10-06:** Histórica: escrita para G-2 y G-3 del 29-sep al 2-oct. Para G-3 en los pisos 3 y 4 se sigue [`PLAN_S26.md`](PLAN_S26.md) §3.2. **Su escala de 0,9 no sirve para racey** (con 0,9 no arranca): hoy es 1,0 en racey y 0,85 en deepy. Qué seguir para cada tarea: [`INDICE_GUIAS.md`](INDICE_GUIAS.md).
+
 **Redactada:** 2026-09-25 (S24).
 **Para quién:** cualquiera que clone el repositorio. No hace falta haber estado en ninguna sesión
 anterior: todo lo que se necesita está aquí o enlazado desde aquí.

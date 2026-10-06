@@ -29,6 +29,24 @@ Se da por hecho que la instalación del [`README.md`](../README.md) está hecha:
 clonado, workspace en `~/deepracer_sim_ws` con los paquetes enlazados, `colcon build` sin errores
 y `herramientas/verificar_instalacion.sh` en verde. Si algo de eso falta, esta guía no es el sitio.
 
+**Después de cada `git pull`, recompilar.** Si el workspace quedó atrás, `herramientas/robot.sh`
+se niega a lanzar y dice qué paquete y por qué. Antes del 2026-10-06 no lo hacía, y el síntoma era
+un `executable 'agente' not found` dentro del launch, que acusaba al ejecutable y no a la
+compilación.
+
+> **Estado conocido al 2026-10-06 (riesgo R16).** En el equipo de escritorio, después de una
+> actualización de paquetes de ROS ese mismo día, la misión con relevo **no se completa**: en 3 de 4
+> corridas con las dos pilas, Nav2 de `robot1` dejó de aceptar `map → odom` aunque AMCL lo seguía
+> publicando. Con `robot1` solo, la misión sale bien. La causa no está aislada. Se reconoce en la
+> terminal 1 por una de estas dos líneas, repetida (las dos aparecieron, en corridas distintas):
+>
+> `Transform data too old when converting from robot1/map to robot1/odom`
+>
+> `Lookup would require extrapolation into the past`, con `robot1/map` en el mensaje
+>
+> Si aparece, la corrida no vale aunque la compuerta del §2 haya dicho `LISTA`. Detalle y el A/B
+> pendiente en [`S26_simulacion_tras_actualizacion_ros.md`](Evidencia/S26_simulacion_tras_actualizacion_ros.md).
+
 ### De dónde se ejecuta cada comando
 
 Hay **dos** sitios y solo dos:
@@ -126,6 +144,12 @@ source ~/deepracer_sim_ws/install/setup.bash && python3 herramientas/verificar_c
 > el criterio 1 del §8 pide los dos dentro, así que un solo robot fuera basta para descartar la
 > corrida. Encadenado con `&&`, el segundo ni se ejecutaría si el primero falla y no se vería
 > cuánto se salía.
+
+**Lo que esta compuerta no ve.** Compara `/amcl_pose` con `/odom`, y `/amcl_pose` no se republica
+mientras el robot está quieto. Por eso da `LISTA` aunque Nav2 haya dejado de aceptar `map → odom`,
+que es la forma en que falla la simulación desde el 6-oct (recuadro del principio). Antes de lanzar,
+mirar en la terminal de cada robot que no se repitan `Transform data too old` ni
+`extrapolation into the past`.
 
 **Si falla:** relanzar **solo** la pila que se sale, no las dos. No se corrige a mano y no se sigue
 igualmente. El detalle de los dos modos de fallo de Nav2 —el gestor de ciclo de vida bloqueado

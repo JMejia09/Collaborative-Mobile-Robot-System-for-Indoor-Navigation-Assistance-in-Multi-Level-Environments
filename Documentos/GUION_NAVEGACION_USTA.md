@@ -1,5 +1,7 @@
 # Guion de campo — navegación en el edificio de la USTA sobre mapa derivado del modelo
 
+> **Estado al 2026-10-06:** Histórica: escrita el 25-sep para el piso 1. El sitio de pruebas cambió a los pisos 3 y 4 el 5-oct: ver [`GUIA_PISOS_3_Y_4.md`](GUIA_PISOS_3_Y_4.md). Qué seguir para cada tarea: [`INDICE_GUIAS.md`](INDICE_GUIAS.md).
+
 **Fecha de redacción:** 2026-09-25
 **Para quién:** ejecutable por cualquiera de los dos, sin haber estado en la sesión
 del 24-sep por la noche.

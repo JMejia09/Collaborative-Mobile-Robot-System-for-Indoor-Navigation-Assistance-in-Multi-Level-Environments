@@ -319,6 +319,13 @@ ping -c 2 deepracer.local
 **Esperado:** dos respuestas, y en ellas la IP entre paréntesis. Anótala.
 **Si no responde:** busca la IP en la página de administración del router.
 
+> **Con los dos vehículos encendidos, `deepracer.local` no sirve:** puede contestar cualquiera de los
+> dos, y no dice cuál. Esta guía se escribió cuando había un solo vehículo en la red. Hoy las
+> direcciones de referencia son `192.168.0.102` para `amss-ez9n` (deepy) y `192.168.0.104` para
+> `amss-jgm9` (racey), y quedan fijas por MAC en el router con el paso 6 de
+> [`TOPOLOGIA_RED.md`](TOPOLOGIA_RED.md). Para comprobar a cuál se está hablando:
+> `ssh deepracer@<IP> hostname` debe contestar el nombre del vehículo.
+
 De aquí en adelante, donde ponga `<IP>` escribe esa dirección.
 
 ### Paso 3.2 — Copiar el programa

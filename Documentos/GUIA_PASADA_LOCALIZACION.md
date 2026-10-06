@@ -1,5 +1,7 @@
 # Medir M1 y M2: la pasada de localización, paso a paso
 
+> **Estado al 2026-10-06:** Histórica: escrita el 2-sep para M1 y M2 de aquel G2. Qué seguir para cada tarea: [`INDICE_GUIAS.md`](INDICE_GUIAS.md).
+
 Guía de principio a fin para producir las **dos cifras que deciden el G2**: M1 —cuánto
 desplazamiento registra la odometría frente al que mide la cinta— y M2 —cuánto se equivoca AMCL
 en la marca de llegada—.

@@ -1,5 +1,7 @@
 # Guion de la salida del 2026-09-23 — cuatro pruebas en una sesión
 
+> **Estado al 2026-10-06:** Histórica: escrita para la salida del 23-sep. Qué seguir para cada tarea: [`INDICE_GUIAS.md`](INDICE_GUIAS.md).
+
 **Este es el documento que se lleva al campo.** El razonamiento de por qué la
 recta se mide en dos sitios, qué umbrales usa el comprobador y de dónde salen,
 está en [`GUION_RECTA_PELDANO2.md`](GUION_RECTA_PELDANO2.md); aquí están las

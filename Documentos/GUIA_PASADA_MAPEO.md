@@ -1,5 +1,7 @@
 # Levantar el mapa del pasillo: la pasada de mapeo, paso a paso
 
+> **Estado al 2026-10-06:** Histórica: escrita el 1-sep para el mapa del pasillo de aquel G2. Qué seguir para cada tarea: [`INDICE_GUIAS.md`](INDICE_GUIAS.md).
+
 Guía de principio a fin para producir el **mapa del pasillo físico de ≥ 20 m** que el G2 necesita.
 Cada comando dice **en qué máquina** va. No te saltes pasos: están en este orden porque cada uno
 comprueba algo que el siguiente da por hecho.

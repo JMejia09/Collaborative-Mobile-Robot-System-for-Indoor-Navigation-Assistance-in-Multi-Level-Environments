@@ -1,5 +1,7 @@
 # Hoja de campo — la llegada del segundo DeepRacer
 
+> **Estado al 2026-10-06:** Histórica como hoja de la sesión del 11-sep. **Su §5, el procedimiento de RF-15, sigue vigente**: lo usa [`PLAN_S26.md`](PLAN_S26.md) §2.4 para medir la red entre los pisos 3 y 4. Qué seguir para cada tarea: [`INDICE_GUIAS.md`](INDICE_GUIAS.md).
+
 **Para la sesión con el segundo vehículo.** Escrita el **2026-09-11 por la mañana**, antes de que
 el codirector Néstor lo traiga, con todo lo que ya costó una sesión en las tres salidas anteriores
 de hardware ya incorporado.

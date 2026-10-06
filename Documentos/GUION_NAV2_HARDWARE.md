@@ -1,5 +1,7 @@
 # Guion de campo — Nav2 sobre el vehículo real
 
+> **Estado al 2026-10-06:** Histórica: escrita el 24-sep para subir los peldaños 4 a 7 de Nav2 sobre hardware, que ya están superados. Qué seguir para cada tarea: [`INDICE_GUIAS.md`](INDICE_GUIAS.md).
+
 **Fecha de redacción:** 2026-09-24
 **Qué aísla:** los peldaños 4 a 7 de la escalera de Nav2 sobre hardware —mapa,
 localización, planificador y control—, subiendo uno por uno.

@@ -11,7 +11,9 @@ de transición vertical. El usuario solicita su destino desde una interfaz móvi
 
 El aporte del proyecto es la **arquitectura de coordinación entre agentes**, no la locomoción.
 
-El estado de avance detallado se mantiene en [`ESTADO.md`](ESTADO.md).
+El estado de avance detallado se mantiene en [`ESTADO.md`](ESTADO.md). Qué documento seguir
+para cada tarea —y cuáles de las guías de campo siguen vigentes— está en
+[`Documentos/INDICE_GUIAS.md`](Documentos/INDICE_GUIAS.md).
 
 ---
 
@@ -189,7 +191,7 @@ ls pasillo_grande.world
 
 grep -v '^[[:space:]]*#' ~/.bashrc 2>/dev/null | grep -qF 'deepracer_sim_ws/install/setup.bash' || echo 'source ~/deepracer_sim_ws/install/setup.bash' >> ~/.bashrc
 
-grep -v '^[[:space:]]*#' ~/.bashrc 2>/dev/null | grep -F GAZEBO_MODEL_PATH | grep -qF "$PWD" || echo "export GAZEBO_MODEL_PATH=\"\$GAZEBO_MODEL_PATH:$PWD\"" >> ~/.bashrc
+R="$(pwd -P)"; grep -v '^[[:space:]]*#' ~/.bashrc 2>/dev/null | grep -F GAZEBO_MODEL_PATH | sed "s|\${HOME}|$HOME|g; s|\$HOME|$HOME|g; s|~|$HOME|g" | grep -qF "$R" || echo "export GAZEBO_MODEL_PATH=\"\$GAZEBO_MODEL_PATH:$R\"" >> ~/.bashrc
 
 exec bash
 ```
@@ -204,6 +206,13 @@ exec bash
 > y eso solo reconoce su propia forma exacta: una línea equivalente escrita a mano —sin las
 > comillas, con otro espaciado— no coincidía y la orden añadía una segunda copia de la misma
 > ruta. Pasó de verdad, en el equipo de desarrollo, con una línea puesta el 11 de agosto.
+>
+> Y la ruta se compara **ya expandida**: la orden cambia `$HOME`, `${HOME}` y `~` por su valor
+> antes de buscar, y usa `pwd -P`, la ruta física, sin enlaces. Hasta el 2026-10-06 buscaba el
+> texto literal de `$PWD`, así que una línea escrita como `$HOME/Tesis` —la forma más natural de
+> escribirla— no contaba como puesta, y cada repetición del paso añadía otra. El `~/.bashrc` del
+> equipo de desarrollo acumuló tres así, y abriendo el repositorio por un enlace habría sumado
+> una cuarta con otra ruta.
 >
 > El `grep -v '^[[:space:]]*#'` descarta las líneas comentadas, para que una línea desactivada
 > a propósito no cuente como puesta y deje la orden sin hacer nada. `-F` compara texto
@@ -328,12 +337,16 @@ ros2 launch deepracer_bringup nav_amcl_demo_sim.launch.py
 > en Y. La herramienta sabe separar niveles por altura (su tercer argumento), pero aquí los
 > dos pisos están a la misma z y separados en Y, y eso todavía no lo sabe expresar.
 
-Argumentos disponibles (`--show-args` los lista): `world`, `map`, `params`, `namespace`.
-El objetivo se envía desde RViz con la herramienta **2D Goal Pose**, o por línea de comandos:
+Argumentos disponibles (`--show-args` los lista): `world`, `map`, `params`, `namespace`,
+`clock_topic`, `x`, `y`, `yaw`, `z` y `nivel`. `herramientas/robot.sh` los rellena todos desde
+la misma tabla, y por eso es la forma recomendada de lanzar un robot.
+
+El objetivo se envía desde RViz con la herramienta **2D Goal Pose**, o por línea de comandos. El
+de abajo es `piso1_etm2`, un destino real del catálogo a unos 5,5 m de donde aparece el robot:
 
 ```bash
 ros2 action send_goal /navigate_to_pose nav2_msgs/action/NavigateToPose \
-  "{pose: {header: {frame_id: map}, pose: {position: {x: 2.0, y: 0.0}, orientation: {w: 1.0}}}}"
+  "{pose: {header: {frame_id: map}, pose: {position: {x: -14.75, y: 10.59}, orientation: {w: 1.0}}}}"
 ```
 
 ### Dos robots
@@ -442,23 +455,33 @@ la misma geometría. `generar_mapa_desde_mundo.py` acepta la misma opción como 
 | `Documentos/` | Anteproyecto, entregables semanales y guías operativas |
 | `Documentos/Evidencia/` | Capturas, registros de terminal e informes de sesión. Cada archivo con su pie de foto en [`Documentos/Evidencia/README.md`](Documentos/Evidencia/README.md): qué muestra, de cuándo es y qué afirmación sostiene |
 | `herramientas/` | Verificadores y utilidades (ver abajo) |
-| `*.world` | Mundos de Gazebo. El vigente es `mundo_definitivo_piso1.world` desde el 2026-08-23, y su par es `mundo_definitivo_piso2.world`: **un mundo por piso**, que juntos son el **entorno de evaluación de OE4**. Los dos pisos son pasillos distintos del mismo edificio —en la realidad, uno sobre el otro; dibujados en Gazebo uno al lado del otro en Y, piso 1 en y≈10,0 y piso 2 en y≈−4,5—, no una planta duplicada en altura. Sustituyen a `mundo_definitivo.world`, que los traía en la **misma escena** y se conserva solo como referencia histórica: ver el aviso sobre el cruce de LiDAR más abajo. `primer_piso_dos_niveles.world`, que sí los apila en altura, queda también como referencia |
+| `*.world` | Mundos de Gazebo. El vigente es `mundo_definitivo_piso1.world` desde el 2026-08-23, y su par es `mundo_definitivo_piso2.world`: **un mundo por piso**, que juntos son el **entorno de evaluación de OE4**. Los dos pisos son pasillos distintos del mismo edificio —en la realidad, uno sobre el otro; dibujados en Gazebo uno al lado del otro en Y, piso 1 en y≈10,0 y piso 2 en y≈−4,5—, no una planta duplicada en altura. Sustituyen a `mundo_definitivo.world`, que los traía en la **misma escena** y se conserva solo como referencia histórica: ver el aviso sobre el cruce de LiDAR más abajo. `primer_piso_dos_niveles.world`, que sí los apila en altura, queda también como referencia. **`piso3.world` y `piso4.world` son otra cosa**: los pisos del edificio donde corren los vehículos reales desde el 5-oct, levantados con flexómetro, con su mapa y su catálogo de destinos propios ([`Documentos/GUIA_PISOS_3_Y_4.md`](Documentos/GUIA_PISOS_3_Y_4.md)) |
 | `USTA_WORLD/`, `pasillo_grande/`, `pasillo_usta/` | Modelos SDF de entornos |
 | `ESTADO.md` | Tablero de avance, riesgos y decisiones |
 
 ### Las herramientas
 
-Ninguna levanta Gazebo ni ningún nodo, y todas devuelven código de salida distinto de
-cero cuando fallan, de modo que se pueden encadenar:
+Las que verifican no levantan Gazebo ni ningún nodo, y todas devuelven código de salida distinto
+de cero cuando fallan, de modo que se pueden encadenar:
 
 | Herramienta | Responde a |
 |---|---|
-| `verificar_instalacion.sh` | ¿el código compila y funciona **en este equipo**? (32 comprobaciones) |
-| `verificar_repositorio.sh` | ¿los documentos dicen la verdad y las rutas no son las de una máquina concreta? (11 comprobaciones) |
+| `verificar_instalacion.sh` | ¿el código compila y funciona **en este equipo**? |
+| `comprobar_workspace.py` | ¿el workspace compilado corresponde al código de hoy, o quedó atrás tras un `git pull`? |
+| `verificar_repositorio.sh` | ¿los documentos dicen la verdad y las rutas no son las de una máquina concreta? |
 | `verificar_mapa.py` | ¿este mapa representa de verdad la geometría de su `.world`? |
 | `verificar_contrato.py` | ¿la simulación cumple el contrato de interfaces? (requiere la simulación corriendo) |
 | `medir_rtf.py` | ¿a qué fracción del tiempo real corre la simulación? (requiere la simulación corriendo) |
-| `lanzar_sim.sh` | limpia procesos huérfanos de Gazebo y lanza la simulación |
+
+Y las que **lanzan** la simulación:
+
+| Herramienta | Qué hace |
+|---|---|
+| `robot.sh` | Levanta, inspecciona o para **una** pila de un robot (`sim`, `nav2`, `slam`, `rviz`, `teleop`, `lidar`, `estado`, `parar`). Es la que se usa a diario, también con dos robots: solo toca los procesos de ese robot |
+| `lanzar_sim.sh` | Limpia procesos huérfanos de Gazebo y lanza la simulación de un robot. **Mata todo lo que huela a ROS o Gazebo**, así que no se usa con dos robots: tumbaría al otro |
+
+Qué documento seguir para cada tarea, y cuáles guías siguen vigentes, está en
+[`Documentos/INDICE_GUIAS.md`](Documentos/INDICE_GUIAS.md).
 
 El segundo existe porque el primero no cubría nada de lo escrito: había 30 comprobaciones
 sobre el código y ninguna sobre la documentación, así que el código convergía y los

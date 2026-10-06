@@ -1,5 +1,7 @@
 # Hoja de campo del G2 — la mañana en el pasillo
 
+> **Estado al 2026-10-06:** Histórica: escrita el 3-sep para el G2 del pasillo, anterior al acta. No es la compuerta G-2 de [`ACTA_GO_NOGO.md`](ACTA_GO_NOGO.md). Qué seguir para cada tarea: [`INDICE_GUIAS.md`](INDICE_GUIAS.md).
+
 **Para quien va al pasillo.** Escrita el **2026-09-03 por la noche**, después de una salida de
 prueba que falló, y con lo que se aprendió en ella ya incorporado.
 

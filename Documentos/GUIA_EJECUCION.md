@@ -214,7 +214,8 @@ invisible o reducido a los ejes. El URDF publicado referencia cinco mallas
 bash herramientas/verificar_instalacion.sh
 ```
 
-**Esperado: `32 comprobaciones pasan, 0 fallan`.**
+**Esperado: `N comprobaciones pasan, 0 fallan`.** El número crece con el proyecto —eran 32 cuando
+se escribió esta línea y 39 el 6-oct—; lo que tiene que valer es el cero.
 
 Si salen 2 fallos de `GAZEBO_MODEL_PATH` y de `los model:// externos resuelven`, **no es un
 problema del modelo**: es que esa terminal no cargó `~/.bashrc`, donde está la línea. Se
