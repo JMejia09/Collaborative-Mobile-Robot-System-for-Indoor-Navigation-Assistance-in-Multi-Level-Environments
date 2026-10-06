@@ -34,3 +34,13 @@ Thumbs.db
 *.mcap
 *.db3
 mapas/bag_mapa_*/
+
+# Videos de las pruebas — no se versionan
+#
+# Un video de un minuto pesa decenas de MB, y git lo conserva para siempre aunque se borre
+# despues. Va en la carpeta compartida del equipo; en el informe, un fotograma y el enlace.
+# Convencion en Documentos/Evidencia/README.md, «Fotos de campo y videos».
+*.mp4
+*.mov
+*.webm
+*.mkv

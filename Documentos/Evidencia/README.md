@@ -261,6 +261,10 @@ absolutas van redactadas como `<repo>` para que no dependan de la máquina.
 | `S17_topicos_dominio0.txt` | Tópicos visibles en `ROS_DOMAIN_ID=0` |
 | `S17_topicos_dominio2.txt` | Tópicos visibles en `ROS_DOMAIN_ID=2` |
 | `S19_maniobra_metricas.txt` | Las cuatro corridas de la maniobra de retorno, antes y después de corregir la conversión de `cmd_vel` |
+| `S22_RF08_estado_2hz.txt` | RF-08 -- Cada agente publica su estado en /<ns>/estado a 2 Hz |
+| `S22_jazzy_round_trip.txt` | Tarea 5 de S22 -- coordinacion_msgs corre sobre la tarjeta del carro, bajo Jazzy |
+| `S23_RF15_carroB_portatil.txt` | RF-15, pareja 2 -- carro B (Jazzy) emisor  ->  portatil (Humble) eco |
+| `S26_simulacion_tf_robot1.txt` | Simulacion de dos robots tras la actualizacion de ROS del 2026-10-06 -- extractos de consola |
 
 Los dos últimos van en pareja: por separado no dicen nada, juntos demuestran que los dos
 dominios no se ven entre sí.
@@ -273,6 +277,68 @@ y por qué. `S17_nav2_namespaces.md`, `S17_aplicacion_contrato.md`, `S17_dos_sim
 `S19_spike_p1_p2_hardware.md`, `S19_conversion_cmdvel_ackermann.md`,
 `S19_lidar_original_evo.md`, `S20_marco_map_prefijado.md`, `S20_hito_h3_dos_agentes.md` y
 `S20_rutas_largas_y_concurrencia.md`.
+
+Desde la semana 20, cada informe con el título que le puso su autor, que es la afirmación
+que el propio documento sostiene:
+
+**Semana 20**
+
+- [`S20_asignacion_por_nivel.md`](S20_asignacion_por_nivel.md) — Asignación del agente por nivel — primera ejecución completa de RF-25
+- [`S20_frente_b_hardware.md`](S20_frente_b_hardware.md) — Frente B — el vehículo real: sensado bajo la pila, odometría láser, mapa del laboratorio y teleoperación
+
+**Semana 21**
+
+- [`S21_banco_tiempo_asignacion.md`](S21_banco_tiempo_asignacion.md) — Banco del tiempo de asignación (RF-22) — la cifra que el bag no puede dar
+- [`S21_bloqueo_dominios.md`](S21_bloqueo_dominios.md) — El bloqueo de dominios DDS: no es estructural, y hay dos salidas medidas
+- [`S21_preparacion_G2.md`](S21_preparacion_G2.md) — G2, tres días antes: lo que habría quemado la mañana del viernes
+- [`S21_relevo_ejecutado.md`](S21_relevo_ejecutado.md) — El relevo entre pisos, ejecutado — el aporte declarado deja de ser un plan
+
+**Semana 22**
+
+- [`S22_R12_85_cuspides.md`](S22_R12_85_cuspides.md) — R12 — La misión de 85 cúspides, explicada
+- [`S22_RF28_confirmacion.md`](S22_RF28_confirmacion.md) — RF-28 — Confirmación del usuario en la transición entre pisos
+- [`S22_barrido_criterios_infalsables.md`](S22_barrido_criterios_infalsables.md) — Barrido del protocolo: qué criterios no pueden fallar
+- [`S22_mapeo_pasillo_fallido.md`](S22_mapeo_pasillo_fallido.md) — El mapa del pasillo no sale, y la causa no es cómo se mueve el carro
+
+**Semana 23**
+
+- [`S23_campo_traccion_RF14.md`](S23_campo_traccion_RF14.md) — La escala de tracción, medida sobre el carro: dos defectos en vez de uno
+- [`S23_informacion_avance_piso1.md`](S23_informacion_avance_piso1.md) — El pasillo real no le da a rf2o de dónde sacar el avance: 5,1 % medido
+- [`S23_informacion_avance_piso2.md`](S23_informacion_avance_piso2.md) — El piso 2 tampoco: 5,9 % medido, y la predicción que lo esperaba mejor falló
+- [`S23_reproducibilidad_de_los_registros.md`](S23_reproducibilidad_de_los_registros.md) — Los 46 registros se rehacen desde los bags y dan lo mismo
+
+**Semana 24**
+
+- [`S24_RF16_compilacion_jazzy_hardware.md`](S24_RF16_compilacion_jazzy_hardware.md) — RF-16 sobre hardware: el mismo código fuente compila y corre en Humble y en Jazzy
+- [`S24_actuacion_bloqueada_servo.md`](S24_actuacion_bloqueada_servo.md) — RF-11 no se mide por `/cmd_vel`: el vehículo no tiene ese tópico, y `servo_pkg` dejó de atender
+- [`S24_analisis_previo_RF11.md`](S24_analisis_previo_RF11.md) — RF-11 · análisis previo al campo: la cadena `/cmd_vel` no puede mover el carro a las velocidades que Nav2 tiene configuradas
+- [`S24_campo_traccion_ez9n.md`](S24_campo_traccion_ez9n.md) — S24 · la rampa de tracción sobre el `amss-ez9n`: trece corridas, y el control que las invalida como velocidad
+- [`S24_compuerta_G4_dos_en_el_grafo.md`](S24_compuerta_G4_dos_en_el_grafo.md) — Compuerta G-4: los dos vehículos y el coordinador en el mismo grafo
+- [`S24_consolidacion_datos_oe4.md`](S24_consolidacion_datos_oe4.md) — El conjunto de datos de OE4, consolidado: 30 corridas que regeneran sus propias métricas
+- [`S24_desempate_camara_vehiculo.md`](S24_desempate_camara_vehiculo.md) — La tarjeta sí publica imagen, pero a 160 × 120 y sin calibrar
+- [`S24_dos_carros_listos.md`](S24_dos_carros_listos.md) — S24 — Dejar los dos carros listos para la pasada de odometría
+- [`S24_fe_de_erratas_S15.md`](S24_fe_de_erratas_S15.md) — Fe de erratas del informe de la semana 15, y cierre del riesgo R6
+- [`S24_mapas_cuarto_extintor.md`](S24_mapas_cuarto_extintor.md) — S24 · Los tres mapas del cuarto sobre hardware, y la medida que se sale del cuarto
+- [`S24_mapeo_6m_hardware.md`](S24_mapeo_6m_hardware.md) — El vehículo se conduce solo seis metros y construye el mapa mientras lo hace
+- [`S24_nav2_navegacion_mapa_guardado.md`](S24_nav2_navegacion_mapa_guardado.md) — Peldaños 6 y 7: Nav2 navega el vehículo sobre un mapa guardado
+- [`S24_peldano2_odometria_hardware.md`](S24_peldano2_odometria_hardware.md) — Peldaño 2 sobre hardware: la odometría publica Y mide
+- [`S24_sonda_actuacion_amss_ez9n.md`](S24_sonda_actuacion_amss_ez9n.md) — Sonda de actuación sobre `amss-ez9n`: ¿la avería del nodo de servos es de un vehículo o de la plataforma?
+- [`S24_tf_hardware_peldano_1.md`](S24_tf_hardware_peldano_1.md) — El vehículo publica TF por primera vez: `base_link → laser` medido contra flexómetro
+
+**Semana 25**
+
+- [`S25_aislamiento_dos_carros.md`](S25_aislamiento_dos_carros.md) — Aislamiento de los dos vehículos (bloque A, 28 de septiembre)
+- [`S25_campana_c1_deepy.md`](S25_campana_c1_deepy.md) — Sesión de compuertas G-2 y G-3 con `amss-ez9n` (29 de septiembre, noche)
+- [`S25_ensayo_laboratorio.md`](S25_ensayo_laboratorio.md) — Ensayo de B0 con `amss-jgm9` (29 de septiembre)
+- [`S25_pasillo_piso2_amss-jgm9.md`](S25_pasillo_piso2_amss-jgm9.md) — Sesión de G-2 y G-3 con `amss-jgm9` en el piso 2 (30 de septiembre, noche)
+- [`S25_pisos34_campo.md`](S25_pisos34_campo.md) — Primera sesión en los pisos 3 y 4 (2 de octubre)
+
+**Semana 26**
+
+- [`S26_integracion_imu_vehiculos.md`](S26_integracion_imu_vehiculos.md) — Integración de la IMU en los dos vehículos y ensayo del coordinador (5 de octubre, noche)
+- [`S26_pruebas_imu.md`](S26_pruebas_imu.md) — Pruebas de la IMU en los dos vehículos (5 de octubre)
+- [`S26_red_5ghz_regulatorio.md`](S26_red_5ghz_regulatorio.md) — La WiFi de los dos vehículos no podía transmitir en 5 GHz (5 de octubre)
+- [`S26_simulacion_tras_actualizacion_ros.md`](S26_simulacion_tras_actualizacion_ros.md) — La simulación de dos robots después de la actualización de ROS del 6 de octubre
 
 ---
 
@@ -311,3 +377,20 @@ PDF ya entregados—, salvo dos que se llamaban `Screenshot from 2026-04-29 19-4
 `Screenshot from 2026-04-30 11-33-07.png`. Esos nombres no decían nada y además llevaban
 espacios y paréntesis, que es exactamente lo que rompió cuatro enlaces del repositorio en
 agosto. Como no las citaba ningún documento, renombrarlas no rompió nada.
+
+### Fotos de campo y videos (desde el 6 de octubre)
+
+Las pruebas sobre los vehículos se defienden con lo que se vio en el pasillo, y eso no se puede
+reconstruir después: lo que no se capturó el día de la prueba no existe. Para que esa evidencia
+entre al repositorio igual que las capturas de pantalla:
+
+- **Fotos**: en esta carpeta, `SNN_<prueba>_<id>_<que>.jpg`, por ejemplo
+  `S26_G3_p4r_04_llegada.jpg`. En JPG y reducidas a unos 400 KB: una foto de teléfono pesa entre 3
+  y 5 MB, y el repositorio no la olvida aunque después se borre. Cada foto se cita en su informe.
+- **Videos**: **no se versionan** (regla de `.gitignore`). Se guardan en la carpeta compartida del
+  equipo, y en el informe va un fotograma como `.jpg` con el enlace al video al pie.
+- **Capturas de pantalla del PC** (RViz, terminal, interfaz web, teléfono): como hasta ahora,
+  `SNN_descripcion_corta.png`.
+
+Qué capturar en cada prueba de la semana 26 está en
+[`HOJA_CAPTURA_S26.md`](../HOJA_CAPTURA_S26.md).

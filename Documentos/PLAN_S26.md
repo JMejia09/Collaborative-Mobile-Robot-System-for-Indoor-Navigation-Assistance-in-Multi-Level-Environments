@@ -34,6 +34,11 @@ Reglas de toda la semana:
   marca en el piso, junto al vehículo, y se mide desde esa marca.
 - Cada llegada se mide con flexómetro antes de tocar el vehículo.
 - Las grabaciones y registros se copian al portátil, a `~/tesis_evidencia/`, al terminar cada corrida.
+- Cada prueba se fotografía y se graba según [`HOJA_CAPTURA_S26.md`](HOJA_CAPTURA_S26.md): la llegada
+  con la cinta en el cuadro, el id de la corrida en el primer cuadro de cada video.
+- No se actualizan los paquetes de ROS del portátil de campo antes del corte C-3. El 6-oct una
+  actualización de 452 paquetes coincidió con que la simulación dejara de completar el relevo, y la
+  causa no está aislada ([`S26_simulacion_tras_actualizacion_ros.md`](Evidencia/S26_simulacion_tras_actualizacion_ros.md)).
 
 ---
 
@@ -125,6 +130,12 @@ Si responde `0xd1`, se comprueba que el sensor mide bien con las siete pruebas d
 | Esperado | Un archivo de varios MB por vehículo, que se abre con `tar tzf` |
 | Cierre | Los dos archivos en `~/tesis_evidencia/` |
 
+> Estado, 5-oct (noche), según la bitácora de `ESTADO.md`: **racey hecho.** Sus 11 grabaciones
+> (p2r_01 a p2r_08 del 30-sep y p4r_01 a p4r_03 del 2-oct), los 2 CSV y los registros quedaron en
+> `~/tesis_evidencia/copia_carros_2026-10-05/` del portátil de campo. **De deepy no consta la
+> copia** de `campana_p4d_02` ni de `campana_p4_deepy.csv`: comprobar en ese portátil antes de dar
+> la tarea por cerrada.
+
 ### 1.6 · Nivelar los dos vehículos (tarde)
 
 | | |
@@ -134,6 +145,10 @@ Si responde `0xd1`, se comprueba que el sensor mide bien con las siete pruebas d
 | Comprobación | `Los vehiculos estan nivelados con el repositorio.` Si avisa de la partición en `/etc`, se reinstala con el procedimiento del bloque A ([`DISENO_AISLAMIENTO_DOS_CARROS.md`](DISENO_AISLAMIENTO_DOS_CARROS.md)), no copiándola a mano |
 | Si falla | Si un vehículo no responde, queda anotado y se cierra en cuanto vuelva a la red |
 | Cierre | Ningún archivo distinto del repositorio en ninguno de los dos |
+
+> Estado, 5-oct: **hecho en los dos.** `nivelar_carros.sh --copiar` dio 21 de 21 en racey, con el
+> parche de rf2o y la partición bien (bitácora de `ESTADO.md`, 5-oct noche), y esa misma noche los
+> dos quedaron nivelados también con el coordinador nuevo: 15 de 15 en Jazzy (`b40738f`).
 
 ---
 
@@ -207,11 +222,18 @@ futuro.
 
 | | |
 |---|---|
-| Montaje | Repetidores en modo punto de acceso, con cable al router; mismo nombre de red y contraseña; DHCP apagado en los repetidores; canales 1, 6 y 11 |
+| Montaje | El de [`TOPOLOGIA_RED.md`](TOPOLOGIA_RED.md), pasos 1 a 8: un punto de acceso de 5 GHz por piso (canal 44 en el 3 y 36 en el 4, ancho de 40 MHz), los dos en puente, con DHCP apagado y unidos por cable al router, que sigue de respaldo en 2,4 GHz. *Este renglón decía «repetidores… canales 1, 6 y 11», el diseño en 2,4 GHz que se descartó el 5-oct al encontrar que los vehículos no podían transmitir en 5 GHz ([`S26_red_5ghz_regulatorio.md`](Evidencia/S26_red_5ghz_regulatorio.md))* |
 | Prueba | El procedimiento de RF-15 de [`HOJA_CAMPO_SEGUNDO_DEEPRACER.md`](HOJA_CAMPO_SEGUNDO_DEEPRACER.md), con un vehículo en cada piso, en los puntos de salida |
 | Esperado | `CUMPLE` del medidor, y los dos vehículos responden al ping desde cualquier punto de su pasillo |
 | Si falla | Acercar o mover los repetidores; si no hay cobertura en todo el pasillo, se eligen rutas dentro de la cobertura |
 | Cierre | `CUMPLE` con los vehículos en pisos distintos |
+
+> Estado, 6-oct: **prerrequisito resuelto, cierre pendiente.** El 5-oct se encontró y arregló que a
+> los dos vehículos les faltaba `regulatory.db` y no podían transmitir en 5 GHz; con eso, RF-15
+> dio `CUMPLE` sobre 5 GHz (p95 de 11,12 ms). Esa medida se tomó con los dos vehículos **en la
+> misma sala y el mismo punto de acceso**, así que sirve de línea base y no cierra esta tarea. Falta
+> montar la topología y repetir RF-15 con cada vehículo en su piso, y probar el cable entre pisos
+> (paso 7 de `TOPOLOGIA_RED.md`).
 
 ---
 

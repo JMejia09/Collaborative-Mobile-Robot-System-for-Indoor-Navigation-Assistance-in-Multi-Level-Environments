@@ -1,0 +1,73 @@
+Simulacion de dos robots tras la actualizacion de ROS del 2026-10-06 -- extractos de consola
+Fecha: 2026-10-06. Equipo: PC de escritorio del equipo (Ubuntu 22.04, ROS 2 Humble).
+
+QUE ES ESTE FICHERO. Lineas copiadas tal cual de los logs de las corridas que analiza
+S26_simulacion_tras_actualizacion_ros.md. Los logs completos y los bags no se versionan
+(regla de .gitignore: el bag es basura de trabajo, la evidencia es lo que se extrae de el).
+
+== 1. Coordinador: resultado de cada corrida ==
+-- coordinador.log
+[coordinador]: Mision: piso1_representacion -> piso2_ieee
+[coordinador]:   tramo 1/4: robot1 -> piso1_representacion
+[coordinador]:   cancelada: robot1 vuelve a 'piso1_escalera'
+-- coordinador2.log
+[coordinador]: Mision: piso1_representacion -> piso2_ieee
+[coordinador]:   tramo 1/4: robot1 -> piso1_representacion
+[coordinador]:   tramo 1 fallo: Nav2 termino con estado 6
+[coordinador]: Mision terminada SIN exito tras 157.4 s: Nav2 termino con estado 6
+-- coord_aislado.log
+[coordinador]: Mision: piso1_etm2 -> piso1_etm11
+[coordinador]:   tramo 1/2: robot1 -> piso1_etm2
+[coordinador]:   tramo 2/2: robot1 -> piso1_etm11
+[coordinador]: Mision completada en 52.9 s, 0 relevo(s)
+-- coord_c.log
+[coordinador]: Mision: piso1_representacion -> piso2_ieee
+[coordinador]:   tramo 1/4: robot1 -> piso1_representacion
+[coordinador]:   tramo 2/4: robot1 -> piso1_escalera
+[coordinador]:   tramo 3/4: robot2 -> piso2_escalera
+[coordinador]:     confirmado por el usuario tras 2.8 s
+[coordinador]:   tramo 4/4: robot2 -> piso2_ieee
+[coordinador]:   tramo 4 fallo: Nav2 termino con estado 6
+[coordinador]: Mision terminada SIN exito tras 63.9 s: Nav2 termino con estado 6
+-- coord_d.log
+[coordinador]: Mision: piso1_representacion -> piso2_ieee
+[coordinador]:   tramo 1/4: robot1 -> piso1_representacion
+[coordinador]:   tramo 1 fallo: Nav2 termino con estado 6
+[coordinador]: Mision terminada SIN exito tras 158.6 s: Nav2 termino con estado 6
+
+== 2. Nav2 de robot1: el eslabon map -> odom que el controlador ve, contra el que deberia ver ==
+-- r1_limpia.log (primeras dos apariciones)
+Data time: 276s 400000000ns, Transform time: 115s 696000000ns
+Data time: 276s 400000000ns, Transform time: 115s 696000000ns
+-- r1_d.log (primeras dos apariciones)
+Data time: 128s 300000000ns, Transform time: 55s 10000000ns
+Data time: 128s 300000000ns, Transform time: 55s 10000000ns
+-- robot1_nav2.log (primera corrida): primer error, ANTES de que arrancara el coordinador
+TF robot1/map -> robot1/base_link no disponible: Lookup would require extrapolation into the past.  Requested time 30.763000 but the earliest data is at time 30.927000, when looking up transform from frame [robot1/base_link] to frame [robot1/map]
+
+== 3. Lo que AMCL de robot1 SI publico en /tf durante la mision (leido de los bags) ==
+-- PRUEBA_B_02
+   robot1/map->robot1/odom    n= 1494  sellos   288.6 ..   438.0  mayor hueco 0.20 s
+   robot2/map->robot2/odom    n= 1497  sellos   285.9 ..   435.6  mayor hueco 0.20 s
+-- PRUEBA_B_04
+   robot1/map->robot1/odom    n= 1539  sellos   136.8 ..   290.6  mayor hueco 0.20 s
+   robot2/map->robot2/odom    n= 1542  sellos   133.4 ..   287.6  mayor hueco 0.20 s
+
+== 4. RTF de la corrida PRUEBA_B_02 (rtf.json del grabador) ==
+{
+  "rtf": 0.9922,
+  "sim_s": 154.8,
+  "pared_s": 156.011,
+  "metodo": "marcas_clock_alrededor_del_bag"
+}
+
+== 5. Actualizacion de paquetes del 2026-10-06 (de /var/log/apt/history.log) ==
+   inicio 2026-10-06 12:16:08, 452 paquetes
+   ros-humble-rclcpp  16.0.19-1jammy.20260724.021311  ->  16.0.21-1jammy.20260907.213403
+   ros-humble-nav2-amcl  1.1.20-1jammy.20260804.200729  ->  1.1.20-1jammy.20260908.000809
+   ros-humble-rclpy  3.3.21-1jammy.20260724.022150  ->  3.3.22-1jammy.20260907.213431
+   ros-humble-tf2-ros  0.25.22-1jammy.20260804.155840  ->  0.25.23-1jammy.20260907.224752
+   ros-humble-message-filters  4.3.19-1jammy.20260726.111837  ->  4.3.20-1jammy.20260907.223809
+   ros-humble-rmw-fastrtps-cpp  6.2.10-1jammy.20260724.002510  ->  6.2.10-1jammy.20260907.210327
+   ros-humble-tf2  0.25.22-1jammy.20260804.152304  ->  0.25.23-1jammy.20260907.213559
+   ros-humble-nav2-controller  1.1.20-1jammy.20260804.211701  ->  1.1.20-1jammy.20260908.005456
