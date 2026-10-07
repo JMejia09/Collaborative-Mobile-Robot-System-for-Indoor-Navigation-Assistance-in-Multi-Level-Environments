@@ -1,8 +1,24 @@
 # Topología de red para el sitio nuevo — cómo debe quedar
 
-**Fecha:** 2026-10-05
-**Estado:** plan acordado, **sin montar todavía**. Los pasos están en orden y son seguros: en
-ninguno se queda un vehículo sin acceso.
+**Fecha:** 2026-10-05 · **revisado el 2026-10-07**
+**Estado:** **montado a medias.** Los dos puntos de acceso están en puente sobre la misma subred y
+cada vehículo cuelga de uno distinto, que es la forma correcta. Faltan los pasos 2 (canales), 3 y 5
+(SSID por piso), 6 (reservas) y 7-8 (cable entre plantas y la medida que cierra). Los pasos siguen
+en orden y son seguros: en ninguno se queda un vehículo sin acceso.
+
+> **Al día 2026-10-07.** Lo medido en la sesión de hoy está en
+> [`S26_bucle_capa2_y_red_dos_AP.md`](Evidencia/S26_bucle_capa2_y_red_dos_AP.md). Dos cosas:
+>
+> - **Se encontró y se resolvió un bucle de capa 2** que entregaba cada paquete hasta tres veces
+>   (47 % de amplificación) y que el `ping` no delataba, porque informaba `0 % de pérdida`. Lo
+>   causaba un FiberHome en **modo malla** enlazando por aire mientras estaba también cableado. **El
+>   modo malla no se usa en este montaje**, justamente por eso.
+> - **El enlace vehículo↔vehículo quedó en 3,75 ms de promedio con 0,51 ms de variación**, la mejor
+>   cifra del proyecto. Las latencias malas que se veían antes eran del portátil, que mide su propio
+>   salto en 2,4 GHz y no el de los vehículos.
+>
+> **Pendiente y no es de red:** `amss-ez9n` no forma grafo de ROS, ni consigo mismo. Se reinicia
+> primero y se vuelve a mirar (§3.2 de esa evidencia).
 **Evidencia que lo sostiene:**
 [`S26_red_5ghz_regulatorio.md`](Evidencia/S26_red_5ghz_regulatorio.md)
 
