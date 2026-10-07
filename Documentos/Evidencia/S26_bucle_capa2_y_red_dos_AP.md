@@ -162,12 +162,67 @@ Los dos vehículos están publicando nodos con el mismo nombre en el mismo domin
 espacio de nombres `/<ns>/` debería separar, y es una de las mitades que RF-12 tiene pendiente sobre
 hardware. Queda anotado; no se tocó.
 
+## 3.4 Los perfiles de red de los vehículos estaban mal, y uno era peligroso
+
+Al revisar qué más faltaba para dar la red por buena aparecieron cuatro cosas. Tres se corrigieron el
+mismo día; la cuarta necesita una contraseña y queda para el laboratorio.
+
+| Hallazgo | Vehículo | Estado |
+|---|---|---|
+| Perfil de una red ajena, **`Nicolas Internet`**, con autoconexión activada. Si esa red aparece en rango, el vehículo se va a ella y desaparece de la red del proyecto | `amss-jgm9` | **borrado** |
+| **El respaldo al TP-Link no podía funcionar**: el perfil llevaba el SSID `Deepracer` y el equipo emite `DEEPRACER`. Los SSID distinguen mayúsculas | `amss-ez9n` | **corregido** (tenía la contraseña guardada) |
+| Todos los perfiles en prioridad 0, así que NetworkManager elegía por su cuenta entre los dos puntos de acceso del proyecto | los dos | **prioridades puestas** |
+| **No existe ningún respaldo al TP-Link** | `amss-jgm9` | **pendiente**: hay que crearlo y necesita la contraseña |
+
+El segundo merece subrayarse: era un respaldo que **figuraba en la lista y no existía en la
+realidad**, y solo por una diferencia de mayúsculas. Es la misma familia de defecto mudo que el
+`regulatory.db` del 5 de octubre.
+
+Se comprobó también lo que ya estaba bien: **el ahorro de energía de la WiFi está apagado en los
+dos** —la hoja de campo lo señala como causa de colas largas en el p95— y la ambigüedad de
+`deepracer.local` está resuelta, porque los nombres de equipo son distintos.
+
+## 3.5 El aislamiento por particiones: montado y activo, sin probar su efecto
+
+El equipo preguntó si, con los nombres de nodo duplicados, encender los motores de un vehículo podía
+hacer que se moviera con las órdenes del otro. Son dos cosas distintas:
+
+- **Los nombres duplicados son de nomenclatura, no de control.** Que dos nodos se llamen igual no
+  hace que uno obedezca órdenes del otro.
+- **Las órdenes a los servos las protege la partición de Fast DDS**, que cubre
+  `/ctrl_pkg/servo_msg` y `/ctrl_pkg/raw_pwm`.
+
+Verificado el 7 de octubre sobre los dos vehículos:
+
+| | `amss-ez9n` | `amss-jgm9` |
+|---|---|---|
+| `deepracer-core` declara el perfil | ✅ | ✅ |
+| El **proceso de servos** lo tiene cargado, leído de `/proc/<pid>/environ` | ✅ | ✅ |
+| Nombre de partición | `amss-ez9n` | `amss-jgm9` |
+| Son distintos | ✅ | ✅ |
+
+**Pero el efecto sigue sin probarse sobre los vehículos.** El §6 de
+[`DISENO_AISLAMIENTO_DOS_CARROS.md`](../DISENO_AISLAMIENTO_DOS_CARROS.md) lo tiene pendiente desde el
+25 de septiembre: la prueba se hizo en el portátil (Humble), no en un vehículo (Jazzy). El mecanismo
+está montado y los nombres son correctos; lo que falta es ver que una orden a un vehículo no mueva al
+otro.
+
+**Queda como pendiente explícito**, a hacer con las ruedas en el aire antes de encender los motores
+de los dos a la vez.
+
 ## 4. Para la sesión de mañana, en el laboratorio
+
+La lista completa, con lo que toca a cada lado, está en el §3.bis de
+[`TOPOLOGIA_RED.md`](../TOPOLOGIA_RED.md). En resumen:
 
 1. Reiniciar `amss-ez9n` y volver a mirar `ros2 node list`. Si se arregla, confirma el §3.2.
 2. Separar los canales a 36 y 44, con 40 MHz.
-3. SSID por piso y fijar cada vehículo al suyo, sin borrar `DEEPRACER`.
-4. Reservas de DHCP por MAC (`.102` y `.104`).
-5. Repetir RF-15 vehículo↔vehículo. **Con la red en 3,75 ms debería dar `CUMPLE` con mucho margen.**
-6. Y lo que cierra la tarea §2.4 del plan: repetirlo **con un vehículo en cada piso**, con el cable
+3. **Sacar los dos FiberHome de modo malla**: los dos vuelven a anunciar `fhmesh_…`, y es el riesgo
+   latente de que el bucle regrese.
+4. SSID por piso, y rehacer las prioridades de los vehículos con los nombres nuevos.
+5. **Crear el respaldo de `amss-jgm9`**, que no tiene ninguno.
+6. Reservas de DHCP por MAC (`.102` y `.104`).
+7. Repetir RF-15 vehículo↔vehículo. **Con la red en 3,75 ms debería dar `CUMPLE` con mucho margen.**
+8. Y lo que cierra la tarea §2.4 del plan: repetirlo **con un vehículo en cada piso**, con el cable
    entre plantas puesto.
+9. **La prueba de aislamiento de los motores** (§3.5), pendiente desde el 25-sep.

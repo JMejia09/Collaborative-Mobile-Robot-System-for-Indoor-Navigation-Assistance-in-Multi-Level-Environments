@@ -228,6 +228,17 @@ futuro.
 | Si falla | Acercar o mover los repetidores; si no hay cobertura en todo el pasillo, se eligen rutas dentro de la cobertura |
 | Cierre | `CUMPLE` con los vehículos en pisos distintos |
 
+> **Estado, 7-oct: montado a medias, cierre pendiente.** Los dos puntos de acceso están en puente
+> sobre la misma subred y cada vehículo cuelga de uno distinto, que es la forma correcta. Se encontró
+> y se resolvió **un bucle de capa 2** que duplicaba el 47 % del tráfico sin que el `ping` lo
+> delatara, y con él fuera el enlace vehículo↔vehículo quedó en **3,75 ms de promedio con 0,51 de
+> variación**, la mejor cifra del proyecto. Se corrigieron además los perfiles de red de los dos
+> vehículos. **Falta**: separar los canales (los dos están en el 36), sacar los FiberHome de modo
+> malla, los SSID por piso, las reservas de DHCP, el cable entre plantas, y **repetir RF-15 con un
+> vehículo en cada piso**, que es lo único que cierra esta tarea. Lista completa en el §3.bis de
+> [`TOPOLOGIA_RED.md`](TOPOLOGIA_RED.md); lo medido, en
+> [`S26_bucle_capa2_y_red_dos_AP.md`](Evidencia/S26_bucle_capa2_y_red_dos_AP.md).
+>
 > Estado, 6-oct: **prerrequisito resuelto, cierre pendiente.** El 5-oct se encontró y arregló que a
 > los dos vehículos les faltaba `regulatory.db` y no podían transmitir en 5 GHz; con eso, RF-15
 > dio `CUMPLE` sobre 5 GHz (p95 de 11,12 ms). Esa medida se tomó con los dos vehículos **en la

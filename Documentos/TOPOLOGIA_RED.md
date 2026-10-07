@@ -169,6 +169,59 @@ Con cada vehículo en su piso, `medir_latencia_red.py` entre los dos. **Esa medi
 para RF-15 en el documento; la del 5 de octubre se tomó con los dos en el mismo punto de acceso y en
 la misma sala, y solo sirve de línea base.
 
+## 3.bis · Lo hecho el 2026-10-07, y lo que queda para el laboratorio
+
+### Hecho sobre los vehículos
+
+| Vehículo | Cambio |
+|---|---|
+| `amss-jgm9` (racey) | Borrado el perfil ajeno **`Nicolas Internet`**, que tenía autoconexión y podía llevarse el vehículo fuera de la red del proyecto en plena prueba |
+| `amss-jgm9` | Prioridades: `DEEPRACER PRO-5G` 100 · `CLARO_WIFIA40` 50 · `DEEPRACER PRO` 10 |
+| `amss-ez9n` (deepy) | Prioridad `CLARO_WIFIA40` 100 |
+| `amss-ez9n` | **Corregido el SSID del respaldo**: el perfil decía `Deepracer` y el TP-Link emite `DEEPRACER`. Los SSID distinguen mayúsculas, así que ese respaldo no habría enganchado nunca. Tenía la contraseña guardada, así que bastó corregir el nombre |
+
+Ninguno de los dos perdió la conexión al hacerlo.
+
+**Ya estaba bien y no hubo que tocarlo:** el ahorro de energía de la WiFi está **apagado** en los
+dos, y la ambigüedad de `deepracer.local` está resuelta porque los nombres de equipo son distintos.
+
+### Lo que queda, para la sesión de laboratorio
+
+**Del lado de los puntos de acceso:**
+
+1. **Separar los canales: 36 y 44**, ancho 40 MHz. Hoy los dos están en el 36.
+2. **Sacar los dos FiberHome de modo malla.** Los dos vuelven a anunciar `fhmesh_…`. Hoy no hay
+   bucle —comprobado, 0 duplicados— porque anunciar no es emparejarse, pero es un riesgo latente: si
+   llegan a enlazarse por aire estando los dos cableados, el bucle del 7-oct vuelve.
+3. **SSID por piso** (`DEEPRACER_P3` / `DEEPRACER_P4`).
+4. **Reservas de DHCP por MAC.** Hoy las direcciones se mantienen solo porque el TP-Link entrega
+   concesiones infinitas (`dhcp_lease_time = 4294967295`), que es suerte, no diseño.
+5. **Cable entre pisos**, con la prueba de desconectarlo.
+
+**Del lado de los vehículos:**
+
+6. **Reiniciar `amss-ez9n`** y volver a mirar `ros2 node list`. Sigue sin formar grafo ni consigo
+   mismo (§3.2 de [`S26_bucle_capa2_y_red_dos_AP.md`](Evidencia/S26_bucle_capa2_y_red_dos_AP.md)).
+7. **Crear el respaldo de `amss-jgm9`**, que no tiene ninguno hacia el TP-Link. Necesita que alguien
+   escriba la contraseña.
+8. **Rehacer las prioridades** cuando cambien los SSID del paso 3.
+
+**Lo que cierra la tarea §2.4 del plan:**
+
+9. **RF-15 con un vehículo en cada piso**, con el cable puesto. La medida de hoy —3,75 ms de
+   promedio— se tomó con los dos en la misma planta.
+
+### Y una comprobación de seguridad que sigue pendiente
+
+El aislamiento por particiones **está montado y activo en los dos vehículos**, con nombres distintos,
+verificado el 7-oct leyendo el entorno del proceso de servos. Pero **el efecto nunca se ha probado
+sobre los vehículos**: que una orden a uno no mueva al otro. Está en el §6 de
+[`DISENO_AISLAMIENTO_DOS_CARROS.md`](DISENO_AISLAMIENTO_DOS_CARROS.md), puntos 2 y 3, pendiente desde
+el 25 de septiembre.
+
+**Es barata y conviene hacerla antes de encender los motores de los dos a la vez:** un vehículo con
+las ruedas en el aire, una orden desde el otro, y mirar si se mueve.
+
 ## 4. Por qué 40 MHz y no 80
 
 El enlace de prueba negoció **80 MHz**. Un canal de 80 MHz en el 36 ocupa **del 36 al 48 completo**,

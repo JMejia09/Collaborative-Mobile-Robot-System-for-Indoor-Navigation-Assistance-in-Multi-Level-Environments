@@ -146,6 +146,20 @@ repo:
 
 **9 de 9.** La prueba se niega a correr en el dominio 0, el de los vehículos.
 
+**Verificado sobre los dos vehículos el 2026-10-07** (cubre parte del punto 1 de la lista de
+abajo, no lo cierra):
+
+| Comprobación | `amss-ez9n` | `amss-jgm9` |
+|---|---|---|
+| El servicio `deepracer-core` declara el perfil | ✅ | ✅ |
+| **El proceso de servos lo tiene cargado de verdad**, leído de `/proc/<pid>/environ` | ✅ | ✅ |
+| Nombre de partición | `amss-ez9n` | `amss-jgm9` |
+| **Los dos nombres son distintos** | ✅ | ✅ |
+
+Es decir: el mecanismo está montado y activo en los dos vehículos, con nombres distintos. **Lo que
+sigue sin probarse es el efecto**, que es lo que de verdad importa: que una orden a un vehículo no
+mueva al otro.
+
 **Lo que falta, en este orden, y es la primera tarea de la semana:**
 
 1. La misma prueba **en un vehículo**: que el rmw de Jazzy respete los perfiles igual que el de
