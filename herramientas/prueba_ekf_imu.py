@@ -25,12 +25,14 @@ IMU sinteticos en cuatro fases:
      (2,573, 0,573).
   D. 1 s quieto, para que el filtro termine de procesar el giro, y 3 s mas.
 
-Y exige:
+Y exige, comparando cada lectura del filtro con la trayectoria real en el
+instante del sello del mensaje (el ultimo mensaje llega con hasta un ciclo de
+retraso, y a 15 Hz eso son unos 3 cm en la recta):
   1. En A, que el filtro no se mueva: menos de 1 cm y 1 grado.
-  2. Al final de B, x = 2,00 m (+-5 cm), y = 0 y rumbo 0.
-  3. Al final de C, rumbo de +90 grados (+-3): el rumbo sale de la IMU aunque
-     rf2o diga 0. La posicion, cerca de (2,573, 0,573), porque el avance de
-     rf2o se integra con el rumbo del filtro.
+  2. Al final de B, x a 3 cm o menos de la verdad, y = 0 y rumbo 0.
+  3. Al final de C, rumbo a 1,5 grados o menos de la verdad, que pasa de 80:
+     el rumbo sale de la IMU aunque rf2o diga 0. La posicion, a 5 cm o menos
+     de la verdad, porque el avance de rf2o se integra con el rumbo del filtro.
   4. En los ultimos 3 s de D, deriva menor de 1 cm y 0,5 grados.
   5. La TF `robot2/odom -> robot2/base_link` la publica el filtro y coincide
      con `/robot2/odom`.
@@ -71,6 +73,31 @@ def cargar_lanzador():
 
 def yaw_de(q):
     return math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
+
+
+def ahora_ros(nodo):
+    return nodo.get_clock().now().nanoseconds * 1e-9
+
+
+def verdad(tramos, t):
+    """(x, y, rumbo en grados) de la trayectoria real en el instante t (tiempo ROS).
+
+    'tramos' es [(inicio, v, w), ...]: cada fase dura hasta que empieza la
+    siguiente, y la ultima hasta t. Recta si w es 0, arco si no.
+    """
+    x = y = th = 0.0
+    for i, (t0, v, w) in enumerate(tramos):
+        t1 = tramos[i + 1][0] if i + 1 < len(tramos) else t
+        dt = max(0.0, min(t, t1) - t0)
+        if w == 0.0:
+            x, y = x + v * dt * math.cos(th), y + v * dt * math.sin(th)
+        else:
+            x += v / w * (math.sin(th + w * dt) - math.sin(th))
+            y -= v / w * (math.cos(th + w * dt) - math.cos(th))
+            th += w * dt
+        if t <= t1:
+            break
+    return x, y, math.degrees(th)
 
 
 def arrancar(directorio, nombre, paquete, ejecutable, parametros, extra=()):
@@ -137,9 +164,12 @@ def main():
             ejecutor.add_node(nodo)
 
             # Espera a que el filtro este suscrito antes de empezar.
+            # Tambien hay que esperar a ver el publicador del filtro: contarlo nada
+            # mas suscribirse daba 0 de vez en cuando, por descubrimiento y no
+            # porque faltara el filtro (2026-10-07).
             limite = time.monotonic() + 20
-            while (pub_rf2o.get_subscription_count() == 0 or pub_imu.get_subscription_count() == 0) \
-                    and time.monotonic() < limite:
+            while (pub_rf2o.get_subscription_count() == 0 or pub_imu.get_subscription_count() == 0
+                   or nodo.count_publishers(f'/{NS}/odom') == 0) and time.monotonic() < limite:
                 ejecutor.spin_once(timeout_sec=0.1)
             exigir(pub_rf2o.get_subscription_count() > 0 and pub_imu.get_subscription_count() > 0,
                    'el EKF se suscribe a /%s/odom_rf2o y /%s/imu/data' % (NS, NS))
@@ -151,9 +181,11 @@ def main():
             # ciclo no dura exactamente PASO, y rf2o avanzaria mas rapido que v.
             x_rf2o = 0.0
             final = {}
+            tramos = []                 # (inicio en tiempo ROS, v, w), para verdad()
             tic = 0
             proximo = anterior = time.monotonic()
             for fase, duracion, v, w in FASES:
+                tramos.append((ahora_ros(nodo), v, w))
                 fin = time.monotonic() + duracion
                 while time.monotonic() < fin:
                     ahora = time.monotonic()
@@ -182,29 +214,37 @@ def main():
                     while time.monotonic() < proximo:
                         ejecutor.spin_once(timeout_sec=max(0.0, proximo - time.monotonic()))
                 # Se lee al cerrar la fase, sin dejar de publicar: si los sensores
-                # callan, el filtro sigue extrapolando con la ultima velocidad.
+                # callan, el filtro sigue extrapolando con la ultima velocidad. El
+                # ultimo mensaje del filtro llega con hasta un ciclo de retraso (a
+                # 15 Hz y 0,5 m/s, unos 3 cm), asi que se compara con la trayectoria
+                # real en el instante de SU sello, no en el cierre de la fase.
                 if not filtrado:
                     break
-                p = filtrado[-1].pose.pose
-                final[fase] = (p.position.x, p.position.y, math.degrees(yaw_de(p.orientation)))
-                print('  fase %s: x=%.3f  y=%.3f  rumbo=%.1f grados' % ((fase,) + final[fase]))
+                m = filtrado[-1]
+                p = m.pose.pose
+                sello = m.header.stamp.sec + m.header.stamp.nanosec * 1e-9
+                final[fase] = (p.position.x, p.position.y, math.degrees(yaw_de(p.orientation)),
+                               verdad(tramos, sello))
+                print('  fase %s: x=%.3f  y=%.3f  rumbo=%.1f grados   (verdad en el sello: '
+                      'x=%.3f  y=%.3f  rumbo=%.1f)' % ((fase,) + final[fase][:3] + final[fase][3]))
 
             exigir(len(final) == len(FASES), 'el filtro publica /%s/odom en todas las fases' % NS)
             if len(final) == len(FASES):
-                x, y, r = final['A']
+                x, y, r, _ = final['A']
                 exigir(abs(x) < 0.01 and abs(y) < 0.01 and abs(r) < 1.0,
                        'A, quieto: el filtro no se mueve')
-                x, y, r = final['B']
-                exigir(abs(x - 2.0) < 0.05 and abs(y) < 0.02 and abs(r) < 1.0,
-                       'B, recta de 2,0 m: x = %.3f m' % x)
-                x, y, r = final['C']
-                exigir(abs(r - 90.0) < 3.0,
-                       'C, el rumbo sale de la IMU aunque rf2o diga 0: %.1f grados' % r)
-                exigir(math.hypot(x - 2.573, y - 0.573) < 0.10,
-                       'C, el avance de rf2o se integra con ese rumbo: (%.3f, %.3f), '
-                       'se espera (2,573, 0,573)' % (x, y))
-                x, y, r = final['D0']
-                xd, yd, rd = final['D']
+                x, y, r, (xv, yv, rv) = final['B']
+                exigir(abs(x - xv) < 0.03 and abs(y) < 0.02 and abs(r) < 1.0,
+                       'B, recta: x = %.3f m, y la verdad en ese instante %.3f m' % (x, xv))
+                x, y, r, (xv, yv, rv) = final['C']
+                exigir(rv > 80.0 and abs(r - rv) < 1.5,
+                       'C, el rumbo sale de la IMU aunque rf2o diga 0: %.1f grados, y la verdad '
+                       'en ese instante %.1f' % (r, rv))
+                exigir(math.hypot(x - xv, y - yv) < 0.05,
+                       'C, el avance de rf2o se integra con ese rumbo: (%.3f, %.3f), y la verdad '
+                       '(%.3f, %.3f)' % (x, y, xv, yv))
+                x, y, r, _ = final['D0']
+                xd, yd, rd, _ = final['D']
                 exigir(math.hypot(xd - x, yd - y) < 0.01 and abs(rd - r) < 0.5,
                        'D, quieto 3 s: deriva de %.3f m y %.2f grados'
                        % (math.hypot(xd - x, yd - y), rd - r))
